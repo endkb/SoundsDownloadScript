@@ -1,0 +1,36 @@
+# Media Scanning
+MediaDirectory=E:\\AudioTemp\\The Unbelievable Truth
+Recursive=no
+MediaExtension=m4a,mp3
+
+# RSS File
+Directory=E:\\bbcsoundsrss\\rss
+RSSFileName=TheUnbelievableTruth.rss
+
+# Remote Publish
+rcloneConfig=C:\\Program Files (x86)\\VideoLAN\\VLC\\rclone-v1.61.1-windows-amd64\\bbcsoundsrss.conf
+RemotePublishDirectory=bbcsoundsrss_r2:bbcsoundsrss\\
+RemoteRSSFileName=TheUnbelievableTruth.rss
+
+# Podcast Metadata
+PodcastTitle=The Unbelievable Truth
+PodcastDescription=Game show in which panellists compete to see how many nuggets of truth they are able to hide amongst their lies.
+PodcastAuthor=BBC Radio 4
+OwnerName=bbcsoundsrss.media
+OwnerEmail=bbcsoundsrss@gmail.com
+PodcastURL=https://www.bbc.co.uk/programmes/b007mf4f
+PodcastLanguage=en-US
+PodcastCopyright=(C) BBC 2023
+Category=Comedy
+PodcastImage=https://ichef.bbci.co.uk/images/ic/1440x1440/p0c5ydny.jpg
+Explicit=no
+Block=no
+
+# Episode Options
+MediaRootURL=https://feeds.bbcsoundsrss.media/TheUnbelievableTruth/media
+RerunLabel=Repeat:
+RerunFiles=m000k2td,m000k7jr,m000kntz,m000kmk3,m000kw52,m000l2bn,m001mc5p
+RerunTitles=Series 24
+SkipFiles=
+SkipTitles=
+m001ts8t=Seasonal Trimmings
