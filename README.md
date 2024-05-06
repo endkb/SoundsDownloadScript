@@ -6,16 +6,19 @@ __Package:__
 * SoundsDownloadScript.ps1
 * genRSS.ps1
 * SampleProfile (for use with genRSS.ps1)
-* README.htm
+* README.htm (includes installation instructions and how to run)
   
 __Prerequisites:__
-* ffmpeg (I use the full build. I don't know if it matters. Make sure the package you choose comes with ffprobe.)
-* kid3
-* Powershell (I use v7.0.3 on Windows)
-* yt-dlp
+* [ffmpeg](https://www.gyan.dev/ffmpeg/builds/) (I use the full build. I don't know if it matters. Make sure the package you choose comes with ffprobe.)
+* [kid3](https://kid3.kde.org/#download)
+* [Powershell](https://github.com/PowerShell/PowerShell) (I use v7.0.3 on Windows)
+* [yt-dlp](https://github.com/yt-dlp/yt-dlp/releases)
   
 __Optional:__
-* OpenVPN Connect (If you want to download higher quality audio from outside the UK. You must have a VPN provider with UK servers.)
-* rclone (If you want to upload files somewhere like S3 buckets, FTP, or archive.org)
+* [OpenVPN Connect](https://openvpn.net/client/client-connect-vpn-for-windows/) (If you want to download higher quality audio from outside the UK. You must have a VPN provider with UK servers.)
+* [rclone](https://rclone.org/downloads/) (If you want to upload files somewhere like S3 buckets, FTP, or archive.org)
 
 I believe there are Linux versions for all of these packages, but I've only ever used this on Windows. The script may work on Powershell for Linux, but it will likely take a lot of tweaking. There's probably another language that's more appropriate. If you're up for the challenge, feel free to use my logic as a guide and go for it!
+
+## INSTALLATION & HOW TO RUN
+If anyone would like to translate the html instructons to markdown for this document, be my guest!
