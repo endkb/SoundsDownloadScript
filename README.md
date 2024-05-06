@@ -21,4 +21,4 @@ __Optional:__
 I believe there are Linux versions for all of these packages, but I've only ever used this on Windows. The script may work on Powershell for Linux, but it will likely take a lot of tweaking. There's probably another language that's more appropriate. If you're up for the challenge, feel free to use my logic as a guide and go for it!
 
 ## INSTALLATION & HOW TO RUN
-If anyone would like to translate the html instructons to markdown for this document, be my guest!
+Step by step instructions are in the README.htm file in the package. If anyone would like to translate the html instructons to markdown for this document, be my guest!
