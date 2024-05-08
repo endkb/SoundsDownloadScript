@@ -3,10 +3,10 @@ SoundsDownloadScript.ps1 and genRSS.ps1 can work together to download episodes f
 
 ## GETTING STARTED
 __Package:__
-* SoundsDownloadScript.ps1
 * genRSS.ps1
-* SampleProfile (for use with genRSS.ps1)
 * README.htm (includes installation instructions and how to run)
+* SampleProfile (for use with genRSS.ps1)
+* SoundsDownloadScript.ps1
   
 __Prerequisites:__
 * [ffmpeg](https://www.gyan.dev/ffmpeg/builds/) (I use the full build. I don't know if it matters. Make sure the package you choose comes with ffprobe.)
