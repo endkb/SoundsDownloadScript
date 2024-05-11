@@ -1,4 +1,4 @@
-﻿# SoundsDownloadScript v3.1
+# SoundsDownloadScript test-json-metadata
 
 # Expect the following variables to be set as parameters
 param(
@@ -223,14 +223,13 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 	$smartDoubleQuotes = '[\u201C\u201D]'
 	$SoundsShowPage = $SoundsShowPage -replace $smartSingleQuotes,"'" -replace $smartDoubleQuotes,'"'
 
-    # Parse the title from the Sounds page
-    $GetTitle = "(?<=titles`":{)(.*?)(?=})"
-    # Look for the pattern above
-    $TitleResult = [regex]::match($SoundsShowPage, $GetTitle)
-    # Format the match so that it can be put into a hash table
-    $TitleResult = "$TitleResult".Replace('":"', '=').Replace('":', '=').Replace('","', '::').Replace(',"', "::").Trim('"')
-    # Put the match into a hash table
-    $TitleTable = $TitleResult -Split '::' | ConvertFrom-StringData
+	# Parse the metadata section from the Sounds page
+	$Getjson = "(?<=<script> window.__PRELOADED_STATE__ = )(.*?)(?=; </script>)"
+	$jsonResult = [regex]::match($SoundsShowPage, $Getjson)
+	$jsonData = $jsonResult | ConvertFrom-Json
+
+    # Put the titles into a table
+    $TitleTable = $($jsonData.modules.data[0].data.titles)
 
 	If (!$TitleFormat) {
 		$TitleFormat = $DefaultTitleFormat
@@ -238,72 +237,41 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 
     $ShowTitle = $TitleTable.'primary'
     # Parse the synopses to set the comment
-    $GetSynopses = "(?<=synopses`":{)(.*?)(?=})"
-    $SynopsesResult = [regex]::match($SoundsShowPage, $GetSynopses)
-    $SynopsesResult = "$SynopsesResult".Replace('":"', '=').Replace('":', '=').Replace('","', '::').Replace('null,"', 'null::').Trim('"').Replace('''', '''').Replace("`“","`"")
-    $SynopsesTable = $SynopsesResult -Split '::' | ConvertFrom-StringData
+	$SynopsesTable = $($jsonData.modules.data[0].data.synopses)
 
     # Default the comment to the short description
     $Comment = $SynopsesTable.'short'
     # Use the medium description if it's available
-    If (($SynopsesTable.'medium') -AND ($SynopsesTable.'medium' -ne "null")) {
+    If ($SynopsesTable.'medium') {
         $Comment = $SynopsesTable.'medium'
         }
     # Use the long description if it's available
-    If (($SynopsesTable.'long') -AND ($SynopsesTable.'long' -ne "null")) {
+    If ($SynopsesTable.'long') {
         $Comment = $SynopsesTable.'long'
         }
 
-    $GetStation = "(?<=network`":{)(.*?)(?=})"
-    $StationResult = [regex]::match($SoundsShowPage, $GetStation)
-    $StationResult = "$StationResult".Replace('":"', '=').Replace('":', '=').Replace('","', ',').Trim('"')
-    $StationTable = $StationResult -Split ',' | ConvertFrom-StringData
-    $Station = $StationTable.'short_title'
+	# Set the station
+    $Station = $($jsonData.modules.data[0].data.network.short_title)
 
 	# Grab the release date
-    $GetRelease = "(?<=availability`":{)(.*?)(?=})"
-    $ReleaseResult = [regex]::match($SoundsShowPage, $GetRelease)
-    $ReleaseResult = "$ReleaseResult".Replace('":"', '=').Replace('":', '=').Replace('","', ',').Trim('"')
-    $ReleaseTable = $ReleaseResult -Split ',' | ConvertFrom-StringData
-    # Put the release date into datetime for later manipulation
-    $ReleaseDate = [datetime]$ReleaseTable.'from'
+    $ReleaseDate = [datetime]$($jsonData.modules.data[0].data.availability.from)
 
-	$GetTracks = "(?<=tracks`":\[)(.*?)(?=\]}};)"
-    $TracksResult = [regex]::match($SoundsShowPage, $GetTracks)
-	# Make sure it matched data instead of just whitespace
-	If ($TracksResult -match '\S+') {
-		# Put all matches into an array
-		$TrackTable = $TracksResult | Select-String -Pattern "(?<=titles`":{)(.*?)(?=})" -AllMatches | ForEach-Object {$_.Matches} | ForEach-Object {$_.Value}
-		$FormattedTrackTable = @()
-		ForEach ($item in $TrackTable) {
-			# Format and put the data into a hashtable
-			$FormattedTrackTable += "$item".Replace('":"', '=').Replace('":', '=').Replace('","', "`n").Trim('"') | ConvertFrom-StringData
-			}
+	# Put all of the tracks in an array
+	$TrackTable = $($jsonData.tracklist.tracks)
+	If ($TrackTable) {
 		$trackno = 0
-		# Run through all tracks to put them back into a formatted string
-		ForEach ($track in $FormattedTrackTable) {
-			# Attempt to sanity check track metadata
-			If (($FormattedTrackTable[$trackno].'primary' -notmatch 'null') -AND ($FormattedTrackTable[$trackno].'secondary' -notmatch 'null')) {
-				$TrackList = $TrackList + [string]$($trackno+1) + ". " + ($FormattedTrackTable[$trackno].'primary').Replace("`"","'") + "-" + ($FormattedTrackTable[$trackno].'secondary').Replace("`"","'") + "`n"
-				}
-			If (($FormattedTrackTable[$trackno].'primary' -notmatch 'null') -AND ($FormattedTrackTable[$trackno].'secondary' -match 'null')) {
-				$TrackList = $TrackList + [string]$($trackno+1) + ". " + ($FormattedTrackTable[$trackno].'primary').Replace("`"","'") + "`n"
-				}
-				# Build a string with the track info - 1. Artist-Song
-			If (($FormattedTrackTable[$trackno].'primary' -match 'null') -AND ($FormattedTrackTable[$trackno].'secondary' -notmatch 'null')) {
-				$TrackList = $TrackList + [string]$($trackno+1) + ". " + ($FormattedTrackTable[$trackno].'secondary').Replace("`"","'") + "`n"
-				}
-			# Go to the next track
+		# Run through each track to build the track list
+		ForEach ($item in $TrackTable) {
+			# Build the track list line by line
+			$TrackList = $TrackList + "$([string]$($trackno+1)). $($item.titles.primary)-$($item.titles.secondary)`n"
 			$trackno++
 			}
-		# Add the tracklist to the existing comments
+		# Add the track list to the comments
 		$Comment = $Comment + "`n`nTracklist:`n" + $TrackList
 		}
 
 	# Get the cover art
-    $GetCover = "(?<=background-image:url\()(.*?)(?=\))"
-    $CoverResult = [regex]::match($SoundsShowPage, $GetCover)
-	$CoverResult = $CoverResult.Value.Trim('.webp')
+	$CoverResult = $($jsonData.modules.data[0].data.image_url).replace("{recipe}","1024x1024")
 
 	# Format the episode title (after pulling all other metadata)
 	$EpisodeTitle = $TitleFormat -f $TitleTable.'primary', $TitleTable.'secondary', $TitleTable.'tertiary', $ReleaseDate.ToUniversalTime(), [System.TimeZoneInfo]::ConvertTimeBySystemTimeZoneId($ReleaseDate, 'GMT Standard Time')
