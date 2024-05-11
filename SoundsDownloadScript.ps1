@@ -1,4 +1,4 @@
-# SoundsDownloadScript test-json-metadata
+# SoundsDownloadScript vX
 
 # Expect the following variables to be set as parameters
 param(
@@ -223,7 +223,7 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 	$smartDoubleQuotes = '[\u201C\u201D]'
 	$SoundsShowPage = $SoundsShowPage -replace $smartSingleQuotes,"'" -replace $smartDoubleQuotes,'"'
 
-	# Parse the metadata section from the Sounds page
+	# Parse the metadata section from the Sounds page and read it as JSON
 	$Getjson = "(?<=<script> window.__PRELOADED_STATE__ = )(.*?)(?=; </script>)"
 	$jsonResult = [regex]::match($SoundsShowPage, $Getjson)
 	$jsonData = $jsonResult | ConvertFrom-Json
@@ -235,7 +235,9 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 		$TitleFormat = $DefaultTitleFormat
 		}
 
+	# Set the name of the program
     $ShowTitle = $TitleTable.'primary'
+	
     # Parse the synopses to set the comment
 	$SynopsesTable = $($jsonData.modules.data[0].data.synopses)
 
@@ -274,7 +276,8 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 	$CoverResult = $($jsonData.modules.data[0].data.image_url).replace("{recipe}","1024x1024")
 
 	# Format the episode title (after pulling all other metadata)
-	$EpisodeTitle = $TitleFormat -f $TitleTable.'primary', $TitleTable.'secondary', $TitleTable.'tertiary', $ReleaseDate.ToUniversalTime(), [System.TimeZoneInfo]::ConvertTimeBySystemTimeZoneId($ReleaseDate, 'GMT Standard Time')
+	$TitleFormatArray = $TitleTable.'primary', $TitleTable.'secondary', $TitleTable.'tertiary', $ReleaseDate.ToUniversalTime(), [System.TimeZoneInfo]::ConvertTimeBySystemTimeZoneId($ReleaseDate, 'GMT Standard Time')
+	$EpisodeTitle = $TitleFormat -f $TitleFormatArray
 
 	# Handle null title elements
 	If ($EpisodeTitle -match 'null') {
@@ -290,6 +293,26 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 			$EpisodeTitle = $TitleTable.'tertiary'
 			}
 		}
+
+	$TitleCheckVarArray=[Regex]::Matches($TitleFormat, '(?={)(.*?})') | ForEach-Object {$_.Groups[1].value}
+	:TitleCheck ForEach ($var in $TitleCheckVarArray) {
+		$TitleCheck = $var -f $TitleFormatArray
+		If ($TitleCheck -eq '') {
+			Write-Host "**Correcting null title: $EpisodeTitle"
+			# Set the title to the primary (usually the show name)
+			$EpisodeTitle = $TitleTable.'primary'
+			# Use the secondary title if it's available
+			If ($TitleTable.'secondary') {
+				$EpisodeTitle = $TitleTable.'secondary'
+				}
+			# Use the tertiary title if it's available
+			If ($TitleTable.'tertiary') {
+				$EpisodeTitle = $TitleTable.'tertiary'
+				}
+			Break TitleCheck
+			}
+		}
+		
 
 	Write-Host "**Episode Title: $EpisodeTitle"
 	Write-Host "  {0} $($TitleTable.'primary')"
