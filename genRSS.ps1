@@ -6,8 +6,6 @@ param(
 	[Switch]$Force
 	)
 
-[Console]::OutputEncoding = [System.Text.Encoding]::utf8
-
 ###################################### Configure options here ######################################
 
 # Set the path to kid3.exe here
@@ -16,13 +14,9 @@ $kid3Exe = (Get-ChildItem -Path $PSScriptRoot -Filter "kid3-cli.exe" -Recurse | 
 # Set the path to rclone.exe here
 $rcloneExe = (Get-ChildItem -Path $PSScriptRoot -Filter "rclone.exe" -Recurse | Select-Object -First 1 | % { $_.FullName })
 
-# Enable or disable console logging here
-$Debug = $true
-
-# Set the directory to save log files here
-$DebugDirectory = 'E:\FilesTemp\Debug'
-
 ####################################################################################################
+
+[Console]::OutputEncoding = [System.Text.Encoding]::utf8
 
 $Recurse = $false
 
@@ -31,6 +25,9 @@ $ScriptDir = Split-Path $script:MyInvocation.MyCommand.Path
 $ProfilePath = Join-Path $ScriptDir $Profile
 
 $Config = Get-Content -Raw -Path $ProfilePath | ConvertFrom-StringData
+
+$Debug = $Config['Debug']
+$DebugDirectory = $Config['DebugDirectory']
 
 If ($Debug) {
 	$i=0
