@@ -13,7 +13,7 @@ param(
 [String]$VPNConfig,						# Path to the ovpn file(s) separated by comma - also create and set auth-user-pass file if applicable
 [String]$rcloneConfig,					# Path to the rclone config file - rclone.exe config create
 [String]$rcloneSyncDir,					# Remote and directory rclone should upload to separated by comma if multiple - for AWS S3 use config:bucket\directory
-[String]$DotSrcConfig,					# 
+[String]$DotSrcConfig,					# Path to external .ps1 script file containing script configuration options
 [Switch]$NoDL,							# Grab the metadata only - Don't download the episode
 [Switch]$Force,							# Download the episode even if it's already downloaded - Will not overwrite existing
 [Switch]$Debug							# Output the console to a text file in the DebugDirectory
