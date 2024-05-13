@@ -13,6 +13,7 @@ param(
 [String]$VPNConfig,						# Path to the ovpn file(s) separated by comma - also create and set auth-user-pass file if applicable
 [String]$rcloneConfig,					# Path to the rclone config file - rclone.exe config create
 [String]$rcloneSyncDir,					# Remote and directory rclone should upload to separated by comma if multiple - for AWS S3 use config:bucket\directory
+[String]$DotSrcConfig,					# 
 [Switch]$NoDL,							# Grab the metadata only - Don't download the episode
 [Switch]$Force,							# Download the episode even if it's already downloaded - Will not overwrite existing
 [Switch]$Debug							# Output the console to a text file in the DebugDirectory
@@ -89,6 +90,34 @@ $remote_r2 = {If ($RemoteConfig.$Remote.provider -eq "Cloudflare") {
  <#		┌────────────────────────────────────────────────────────────────────────────────┐
 		│                   ▲    End script configuration options    ▲                   │
 		└────────────────────────────────────────────────────────────────────────────────┘		#>
+
+# This will override any of the config options above with whatever is specified in $DotSrcConfig file
+If ($DotSrcConfig) {
+	If (Test-Path $DotSrcConfig) {
+		$DotSrcConfig = Get-Item -Path $DotSrcConfig -ErrorAction SilentlyContinue
+		If ([System.IO.Path]::GetExtension($DotSrcConfig) -eq '.ps1') {
+			# Check for necessary variables before importing the script
+			If ((Select-String -Path $DotSrcConfig -Pattern '^[ ]*(\$DumpDirectory)[ ]*=') -AND
+				(Select-String -Path $DotSrcConfig -Pattern '^[ ]*(\$ffmpegExe)[ ]*=') -AND
+				(Select-String -Path $DotSrcConfig -Pattern '^[ ]*(\$ffprobeExe)[ ]*=') -AND
+				(Select-String -Path $DotSrcConfig -Pattern '^[ ]*(\$kid3Exe)[ ]*=') -AND
+				(Select-String -Path $DotSrcConfig -Pattern '^[ ]*(\$ytdlpExe)[ ]*=')) {
+				Write-Host "**Importing external script configuration options: $DotSrcConfig"
+				# Import the script
+				. $DotSrcConfig
+				} Else {
+					Write-Host "**Var(s) missing from external script configuration options: $DotSrcConfig"
+					Exit
+					}
+			} Else {
+				Write-Host "**External script configuration options file must be .ps1: $DotSrcConfig"
+				Exit
+				}
+		} Else {
+			Write-Host "**Couldn't access external script configuration options: $DotSrcConfig"
+			Exit
+			}
+	}
 
 Function ExitRoutine {
 	# Clean up the cover art from the DumpDirectory
