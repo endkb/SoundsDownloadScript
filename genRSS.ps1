@@ -22,21 +22,20 @@ $Recurse = $false
 
 $ScriptDir = Split-Path $script:MyInvocation.MyCommand.Path
 
-$ProfilePath = Join-Path $ScriptDir $Profile
-
-$Config = Get-Content -Raw -Path $ProfilePath | ConvertFrom-StringData
+$Config = Get-Content -Raw -Path $Profile | ConvertFrom-StringData
 
 If ($Config['Debug'] -eq 'yes') {
 	$Debug = $true
  	$DebugDirectory = $Config['DebugDirectory']
+	Write-Host $DebugDirectory
 	}
 
 If ($Debug) {
 	$i=0
-	While (Test-Path "$DebugDirectory\genRSS_$Profile-$PID-$i-Console+Vars.log") {
+	While (Test-Path "$DebugDirectory\genRSS_$([io.path]::GetFileNameWithoutExtension($Profile))-$PID-$i-Console+Vars.log") {
 		$i += 1
 		}
-	Start-Transcript -Path "$DebugDirectory\genRSS_$Profile-$PID-$i-Console+Vars.log" -Append -IncludeInvocationHeader -Verbose
+	Start-Transcript -Path "$DebugDirectory\genRSS_$([io.path]::GetFileNameWithoutExtension($Profile))-$PID-$i-Console+Vars.log" -Append -IncludeInvocationHeader -Verbose
 	}
 
 $MediaFilter = $("*." + $($Config['MediaExtension'].Split(",") -Join ",*.")).Split(",")
@@ -64,7 +63,7 @@ If ((!$Force) -AND (Test-Path $_filename)) {
 		If ($Debug) {
 			Stop-Transcript
 			# Spit list of variables and values to file
-			Get-Variable | Out-File "$DebugDirectory\genRSS_$Profile-$PID-$i-Console+Vars.log" -Append -Encoding utf8 -Width 500
+			Get-Variable | Out-File "$DebugDirectory\genRSS_$([io.path]::GetFileNameWithoutExtension($Profile))-$PID-$i-Console+Vars.log" -Append -Encoding utf8 -Width 500
 			}
 		Exit
 		}
@@ -311,7 +310,7 @@ If (($Config['rcloneConfig']) -and ($Config['RemotePublishDirectory']) -and ($Co
 If ($Debug) {
 	Stop-Transcript
 	# Spit list of variables and values to file
-	Get-Variable | Out-File "$DebugDirectory\genRSS_$Profile-$PID-$i-Console+Vars.log" -Append -Encoding utf8 -Width 500
+	Get-Variable | Out-File "$DebugDirectory\genRSS_$([io.path]::GetFileNameWithoutExtension($Profile))-$PID-$i-Console+Vars.log" -Append -Encoding utf8 -Width 500
 	}
 
 Exit
