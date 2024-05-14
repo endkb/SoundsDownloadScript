@@ -26,8 +26,10 @@ $ProfilePath = Join-Path $ScriptDir $Profile
 
 $Config = Get-Content -Raw -Path $ProfilePath | ConvertFrom-StringData
 
-$Debug = $Config['Debug']
-$DebugDirectory = $Config['DebugDirectory']
+If ($Config['Debug'] -eq 'yes') {
+	$Debug = $true
+ 	$DebugDirectory = $Config['DebugDirectory']
+	}
 
 If ($Debug) {
 	$i=0
