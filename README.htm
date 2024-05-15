@@ -204,7 +204,11 @@
 					<li><code>&lt;BBCProgramID&gt;=Desired Title</code>: You can force it to use a custom title on specific episodes. One line for each episode. genRSS will use that title for the episode instead of pulling it from the metadata. Examples:<br>
 						<code class="block">m001ts8t=Seasonal Trimmings</code><br>
 						<code class="block">m002tc9v=Year in Review</code>
-					</li>
+					<br><br></li>
+					
+					<li><code>Debug</code>: Output the console and variables to a text file in the <code>$DebugDirectory</code>. Log file name structure is 'genRSS_&lt;ProfileName&gt;-&lt;PID&gt;-&lt;IncNo&gt;-Console+Vars.log'. The random characters are included to avoid appending to existing log files. <em>Switch</em>.</li>
+					<li><code>DebugDirectory</code>: The directory to save log files if -Debug is enabled. <em>Directory Path</em>.</li>
+					
 				</ul>
 		</ol>
 		<br>
@@ -248,7 +252,7 @@
 			<li><code>-Profile</code>: The name of the profile config file to run. File must be located in the same directory as genRSS.ps1. <em>File name</em>.</li>
 			<li><code>-Test</code>: A local file name to generate a test RSS file to. This option will not upload anything remotely. It is useful for testing without messing up a public RSS feed. <em>File name</em>.</li>
 			<li><code>-Force</code>: Force the script to update the RSS file, even if it doesn't need to be. This is useful for testing or pushing changes. <em>Switch</em>.</li>
-			<li><code>-Debug</code>: Output the console and variables to a text file in the <code>$DebugDirectory</code>. Log file name structure is 'genRSS_&lt;ProfileName&gt;-&lt;PID&gt;-&lt;IncNo&gt;-Console+Vars.log'  . The random characters are included to avoid appending to existing log files. <em>Switch</em>.</li>
+			<li><code>-Debug</code>: Output the console and variables to a text file in the <code>$DebugDirectory</code>. Log file name structure is 'genRSS_&lt;ProfileName&gt;-&lt;PID&gt;-&lt;IncNo&gt;-Console+Vars.log'. The random characters are included to avoid appending to existing log files. <em>Switch</em>.</li>
 			<li><code>-DebugDirectory</code>: The directory to save log files if -Debug is enabled. <em>Directory Path</em>.</li>
 		</ul>
 
