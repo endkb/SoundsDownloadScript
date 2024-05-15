@@ -3,7 +3,7 @@
 # Expect the following variables to be set as parameters
 param(
 [String]$ProgramURL,					# bbc.co.uk/programmes URL of the show to download the latest ep or bbc.co.uk/sounds/play
-[String]$SaveDir,						# The directory to publish the finished audio file
+[String]$SaveDir,						# Directory to publish the finished audio file
 [String]$ShortTitle,					# Short reference for the filename
 [String]$TrackNoFormat,					# Set track no as DateTime format string: c(r) = count up (recurs), o = one digit year, jjj = Julian date
 [String]$TitleFormat,					# Format the title: {0} = primary, {1} = secondary, {2} = tertiary, {3} = UTC release date, {4} = UK rel
@@ -16,7 +16,8 @@ param(
 [String]$DotSrcConfig,					# Path to external .ps1 script file containing script configuration options
 [Switch]$NoDL,							# Grab the metadata only - Don't download the episode
 [Switch]$Force,							# Download the episode even if it's already downloaded - Will not overwrite existing
-[Switch]$Debug							# Output the console to a text file in the DebugDirectory
+[Switch]$Debug,							# Output the console to a text file in the DebugDirectory
+[String]$DebugDirectory					# Directory path to save the debug log files if enabled
 )
  <#		┌────────────────────────────────────────────────────────────────────────────────┐
 		│                  ▼    Begin script configuration options    ▼                  │
@@ -91,34 +92,6 @@ $remote_r2 = {If ($RemoteConfig.$Remote.provider -eq "Cloudflare") {
 		│                   ▲    End script configuration options    ▲                   │
 		└────────────────────────────────────────────────────────────────────────────────┘		#>
 
-# This will override any of the config options above with whatever is specified in $DotSrcConfig file
-If ($DotSrcConfig) {
-	If (Test-Path $DotSrcConfig) {
-		$DotSrcConfig = Get-Item -Path $DotSrcConfig -ErrorAction SilentlyContinue
-		If ([System.IO.Path]::GetExtension($DotSrcConfig) -eq '.ps1') {
-			# Check for necessary variables before importing the script
-			If ((Select-String -Path $DotSrcConfig -Pattern '^[ ]*(\$DumpDirectory)[ ]*=') -AND
-				(Select-String -Path $DotSrcConfig -Pattern '^[ ]*(\$ffmpegExe)[ ]*=') -AND
-				(Select-String -Path $DotSrcConfig -Pattern '^[ ]*(\$ffprobeExe)[ ]*=') -AND
-				(Select-String -Path $DotSrcConfig -Pattern '^[ ]*(\$kid3Exe)[ ]*=') -AND
-				(Select-String -Path $DotSrcConfig -Pattern '^[ ]*(\$ytdlpExe)[ ]*=')) {
-				Write-Host "**Importing external script configuration options: $DotSrcConfig"
-				# Import the script
-				. $DotSrcConfig
-				} Else {
-					Write-Host "**Var(s) missing from external script configuration options: $DotSrcConfig"
-					Exit
-					}
-			} Else {
-				Write-Host "**External script configuration options file must be .ps1: $DotSrcConfig"
-				Exit
-				}
-		} Else {
-			Write-Host "**Couldn't access external script configuration options: $DotSrcConfig"
-			Exit
-			}
-	}
-
 Function ExitRoutine {
 	# Clean up the cover art from the DumpDirectory
 	If ($ImageName) {Get-Childitem -Path $DumpDirectory -Filter $ImageName -Recurse | Remove-Item -Force}
@@ -156,9 +129,9 @@ Function Get-IniContent ($FilePath) {
 	Return $ini
     }
 
-If ($Debug) {
+Function StartDebug {
 	# Create the directory to save/move debug logs to
-	New-Item -ItemType Directory -Force -Path "$DebugDirectory"
+	New-Item -ItemType Directory -Force -Path "$DebugDirectory" > $null
 	# Generate a random string
 	$RandLogID = -join ((97..122) | Get-Random -Count 3 | ForEach-Object {[char]$_})
 	# Build a command line arguments for openvpn and rclone to output logs
@@ -166,7 +139,46 @@ If ($Debug) {
 	$rcloneDebugArgs = "--log-file", "$DebugDirectory\$ShortTitle-$PID-$RandLogID-rclone.log"
 	# Start recording the console
 	Start-Transcript -Path "$DebugDirectory\$ShortTitle-$PID-$RandLogID-Console+Vars.log" -Append -IncludeInvocationHeader -Verbose
+	$Script:TranscriptStarted = $true
 	Write-Host "**Debugging: Saving log files to $DebugDirectory\$ShortTitle-$PID-$RandLogID*.log"
+	}
+
+# Start debug logging if enabled via cli parameters or inline config options
+If ($Debug) {
+	StartDebug
+	}
+
+# This will override any of the config options above with whatever is specified in $DotSrcConfig file
+If ($DotSrcConfig) {
+	If (Test-Path $DotSrcConfig) {
+		$DotSrcConfig = Get-Item -Path $DotSrcConfig -ErrorAction SilentlyContinue
+		If ([System.IO.Path]::GetExtension($DotSrcConfig) -eq '.ps1') {
+			# Check for necessary variables before importing the script
+			If ((Select-String -Path $DotSrcConfig -Pattern '^[ ]*(\$DumpDirectory)[ ]*=') -AND
+				(Select-String -Path $DotSrcConfig -Pattern '^[ ]*(\$ffmpegExe)[ ]*=') -AND
+				(Select-String -Path $DotSrcConfig -Pattern '^[ ]*(\$ffprobeExe)[ ]*=') -AND
+				(Select-String -Path $DotSrcConfig -Pattern '^[ ]*(\$kid3Exe)[ ]*=') -AND
+				(Select-String -Path $DotSrcConfig -Pattern '^[ ]*(\$ytdlpExe)[ ]*=')) {
+				Write-Host "**Importing external script configuration options: $DotSrcConfig"
+				# Import the script
+				. $DotSrcConfig
+				} Else {
+					Write-Host "**Var(s) missing from external script configuration options: $DotSrcConfig"
+					ExitRoutine
+					}
+			} Else {
+				Write-Host "**External script configuration options file must be .ps1: $DotSrcConfig"
+				ExitRoutine
+				}
+		} Else {
+			Write-Host "**Couldn't access external script configuration options: $DotSrcConfig"
+			ExitRoutine
+			}
+	}
+
+# Start debug logging if enabled in a $DotSrcConfig script and not enabled earlier
+If (($Debug) -AND ($TranscriptStarted -ne $true)) {
+	StartDebug
 	}
 
 # Don't bother searching the page if ProgramURL is already a Sounds link
