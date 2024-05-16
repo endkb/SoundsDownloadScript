@@ -47,7 +47,7 @@ If (($Debug) -AND (!$TranscriptStarted)) {
 	While (Test-Path $(Get-DebugPath)) {
 		$i += 1
 		}
-	try {Start-Transcript -Path $(Get-DebugPath) -Append -IncludeInvocationHeader -Verbose} catch {}
+	Start-Transcript -Path $(Get-DebugPath) -Append -IncludeInvocationHeader -Verbose
 	}
 
 $MediaFilter = $("*." + $($Config['MediaExtension'].Split(",") -Join ",*.")).Split(",")
