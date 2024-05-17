@@ -18,7 +18,7 @@ __Optional:__
 * [OpenVPN Connect](https://openvpn.net/client/client-connect-vpn-for-windows/) (If you want to download higher quality audio from outside the UK. You must have a VPN provider with UK servers.)
 * [rclone](https://rclone.org/downloads/) (If you want to upload files somewhere like S3 buckets, FTP, or archive.org)
 
-I believe there are Linux versions for all of these packages, but I've only ever used this on Windows. The script may work on Powershell for Linux, but it will likely take a lot of tweaking. There's probably another language that's more appropriate. If you're up for the challenge, feel free to use my logic as a guide and go for it!
+I believe there are Linux versions for all of these packages, but I've only ever used this on Windows. The script may work on Powershell for Linux, but it will likely take a lot of tweaking. There's probably another language that's more appropriate. If you're up for the challenge, feel free to use the logic as a guide and go for it!
 
 ## INSTALLATION & HOW TO RUN
 Step by step instructions and other notes are in the [README.htm](https://htmlpreview.github.io/?https://github.com/endkb/SoundsDownloadScript/blob/main/README.htm) file in the package. If anyone would like to translate the html instructons to markdown for this document, be my guest!
