@@ -320,22 +320,9 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 	$TitleFormatArray = $TitleTable.'primary', $TitleTable.'secondary', $TitleTable.'tertiary', $ReleaseDate.ToUniversalTime(), [System.TimeZoneInfo]::ConvertTimeBySystemTimeZoneId($ReleaseDate, 'GMT Standard Time')
 	$EpisodeTitle = $TitleFormat -f $TitleFormatArray
 
-	# Handle null title elements
-	If ($EpisodeTitle -match 'null') {
-		Write-Host "**Correcting null title: $EpisodeTitle"
-		# Set the title to the primary (usually the show name)
-		$EpisodeTitle = $TitleTable.'primary'
-		# Use the secondary title if it's available
-		If (($TitleTable.'secondary') -AND ($TitleTable.'secondary' -ne 'null')) {
-			$EpisodeTitle = $TitleTable.'secondary'
-			}
-		# Use the tertiary title if it's available
-		If (($TitleTable.'tertiary') -AND ($TitleTable.'tertiary' -ne 'null')) {
-			$EpisodeTitle = $TitleTable.'tertiary'
-			}
-		}
-
+	# Put each variable in the title format into an array
 	$TitleCheckVarArray=[Regex]::Matches($TitleFormat, '(?={)(.*?})') | ForEach-Object {$_.Groups[1].value}
+ 	# Run through the array and look for blank variables
 	:TitleCheck ForEach ($var in $TitleCheckVarArray) {
 		$TitleCheck = $var -f $TitleFormatArray
 		If ($TitleCheck -eq '') {
