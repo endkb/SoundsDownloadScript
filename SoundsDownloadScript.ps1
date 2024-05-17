@@ -133,10 +133,10 @@ Function StartDebug {
 	# Create the directory to save/move debug logs to
 	New-Item -ItemType Directory -Force -Path "$DebugDirectory" > $null
 	# Generate a random string
-	$Script:$RandLogID = -join ((97..122) | Get-Random -Count 3 | ForEach-Object {[char]$_})
+	$Script:RandLogID = -join ((97..122) | Get-Random -Count 3 | ForEach-Object {[char]$_})
 	# Build a command line arguments for openvpn and rclone to output logs
-	$Script:$vpnDebugArgs = "--log-append `"$DebugDirectory\$ShortTitle-$PID-$RandLogID-vpn.log`""
-	$Script:$rcloneDebugArgs = "--log-file", "$DebugDirectory\$ShortTitle-$PID-$RandLogID-rclone.log"
+	$Script:vpnDebugArgs = "--log-append `"$DebugDirectory\$ShortTitle-$PID-$RandLogID-vpn.log`""
+	$Script:rcloneDebugArgs = "--log-file", "$DebugDirectory\$ShortTitle-$PID-$RandLogID-rclone.log"
 	# Start recording the console
 	Start-Transcript -Path "$DebugDirectory\$ShortTitle-$PID-$RandLogID-Console+Vars.log" -Append -IncludeInvocationHeader -Verbose
 	$Script:TranscriptStarted = $true
