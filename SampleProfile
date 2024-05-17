@@ -34,3 +34,7 @@ RerunTitles=Series 24
 SkipFiles=
 SkipTitles=
 m001ts8t=Seasonal Trimmings
+
+# Debug Logging
+Debug=yes
+DebugDirectory=E:\\FilesTemp\\Debug
