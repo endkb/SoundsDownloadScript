@@ -9,15 +9,15 @@ param(
 [String]$TitleFormat,					# Format the title: {0} = primary, {1} = secondary, {2} = tertiary, {3} = UTC release date, {4} = UK rel
 [Switch]$mp3,							# Transcode the audio file to mp3 after downloading
 [Int32]$Archive,						# The number of episodes to keep - omit or set to 0 to keep everything
-[Switch]$Days,							# Measure Archive by the number of days instead of the number of episodes to keep
+[Switch]$Days,							# Measure -Archive by the number of days instead of the number of episodes to keep
 [String]$VPNConfig,						# Path to the ovpn file(s) separated by comma - also create and set auth-user-pass file if applicable
 [String]$rcloneConfig,					# Path to the rclone config file - rclone.exe config create
 [String]$rcloneSyncDir,					# Remote and directory rclone should upload to separated by comma if multiple - for AWS S3 use config:bucket\directory
 [String]$DotSrcConfig,					# Path to external .ps1 script file containing script configuration options
-[Switch]$NoDL,							# Grab the metadata only - Don't download the episode
-[Switch]$Force,							# Download the episode even if it's already downloaded - Will not overwrite existing
 [Switch]$Debug,							# Output the console to a text file in the DebugDirectory
-[String]$DebugDirectory					# Directory path to save the debug log files if enabled
+[String]$DebugDirectory,					# Directory path to save the debug log files if enabled
+[Switch]$NoDL,							# Grab the metadata only - Don't download the episode
+[Switch]$Force							# Download the episode even if it's already downloaded - Will not overwrite existing
 )
  <#		┌────────────────────────────────────────────────────────────────────────────────┐
 		│                  ▼    Begin script configuration options    ▼                  │
@@ -52,7 +52,7 @@ $rcloneExe = (Get-ChildItem -Path $PSScriptRoot -Filter "rclone.exe" -Recurse | 
 $vpnExe = (Get-ChildItem -Path $env:Programfiles -Filter 'openvpn.exe' -Recurse -ErrorAction SilentlyContinue |  Sort-Object -Descending -Property LastWriteTime | Select-Object -First 1 | % { $_.FullName })
 $ytdlpExe = (Get-ChildItem -Path $PSScriptRoot -Filter "yt-dlp.exe" -Recurse |  Sort-Object -Descending -Property LastWriteTime | Select-Object -First 1 | % { $_.FullName })
 
-$SortArticles = 						# String of definite articles to trim from fields for sorting tags - separate with a pipe, ^ is begining of string
+$SortArticles = 						# String of definite articles to trim from fields for sorting tags - separate with a pipe, ^ is beginning of string
 "^a |^an |^el |^l'|^la |^las |^le |^les |^lo |^los |^the |^un |^una |^une "
 
 <#	SCRIPT BLOCKS: Configure script blocks below to run rclone commands depending on the remote backend. New ones can be included. Script blocks must be 
@@ -140,7 +140,7 @@ Function StartDebug {
 	# Start recording the console
 	Start-Transcript -Path "$DebugDirectory\$ShortTitle-$PID-$RandLogID-Console+Vars.log" -Append -IncludeInvocationHeader -Verbose
 	$Script:TranscriptStarted = $true
-	Write-Host "**Debugging: Saving log files to $DebugDirectory\$ShortTitle-$PID-$RandLogID*.log"
+	Write-Host "**Debugging: Saving log files to $DebugDirectory\$ShortTitle-$PID-$RandLogID-*.log"
 	}
 
 # Start debug logging if enabled via cli parameters or inline config options
@@ -353,7 +353,6 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 			Break TitleCheck
 			}
 		}
-		
 
 	Write-Host "**Episode Title: $EpisodeTitle"
 	Write-Host "  {0} $($TitleTable.'primary')"
@@ -395,7 +394,7 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 			Write-Host "**Connecting to the VPN using $VPNServer"
 			# Wait until the VPN connects - Check link is up has IP and DNS
 			Do { #Wait
-				} Until ((($(Get-NetAdapter -Name $VPNAdapter).Status -eq "Up") -And ($(Get-NetIPConfiguration -InterfaceAlias $VPNAdapter).IPv4Address) -And ($(Get-NetIPConfiguration -InterfaceAlias $VPNAdapter).DNSServer)) -Or ($VPNConnectionTimer.Elapsed.TotalSeconds -gt $VPNTimeout))
+				} Until ((($(Get-NetAdapter -Name $VPNAdapter).Status -eq "Up") -AND ($(Get-NetIPConfiguration -InterfaceAlias $VPNAdapter).IPv4Address) -AND ($(Get-NetIPConfiguration -InterfaceAlias $VPNAdapter).DNSServer)) -OR ($VPNConnectionTimer.Elapsed.TotalSeconds -gt $VPNTimeout))
 			If ($VPNConnectionTimer.Elapsed.TotalSeconds -gt $VPNTimeout) {
 				Write-Host "**Could not connect to the VPN"
 				Stop-Process -Id $VPNApp.Id
