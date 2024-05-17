@@ -19,6 +19,7 @@ param(
 [Switch]$NoDL,							# Grab the metadata only - Don't download the episode
 [Switch]$Force							# Download the episode even if it's already downloaded - Will not overwrite existing
 )
+
  <#		┌────────────────────────────────────────────────────────────────────────────────┐
 		│                  ▼    Begin script configuration options    ▼                  │
 		└────────────────────────────────────────────────────────────────────────────────┘ 		#>
