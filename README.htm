@@ -216,7 +216,7 @@
 		<h2 id="HowToRun">HOW TO RUN:</h2>
 		<p>The scripts can be called manually from a Powershell console, but I use the Windows Task Scheduler unless I'm doing testing or downloading a one-off episode. Each show has its own task. For most weekly shows, I have it check for new episodes twice a day. Sometimes shows will do out-of-cycle specials around the holidays and this will catch those. For daily shows, I have it check around the time the show is done airing on the BBC schedule and then keep checking every 20 to 30 minutes. Caution: if you set the frequency to run too often, I've noticed that it can get hung up if the same task is still running while it keeps trying. Basically, make sure you allow enough of an interval to let the script finish downloading and uploading an audio file before setting it to retry. I blame Task Scheduler, but that's the way it is.</p>
 
-		<h3 id="HowToRun_1">SoundsDownloadScript.ps1:</h3>
+		<h3 id="HowToRun_1">SoundsDownloadScript.ps1</h3>
 		<p><em>Command line parameters:</em></p>
 		<ul>
 			<li><code>-ProgramURL</code>: This is the bbc.co.uk/programmes URL of the show to download the latest ep. Sometimes https://www.bbc.co.uk/programmes/&lt;BBCProgramID&gt;/episodes/player works better, especially if the program releases special features. You can get that link by clicking on the program page and selecting available episodes. You can also use the https://bbc.co.uk/sounds/play/&lt;BBCProgramID&gt; link if you want to download only a specific episode. <em>URL</em>.</li>
@@ -246,7 +246,7 @@
 			<li><code>-DebugDirectory</code>: The directory to save log files if <code>-Debug</code> is enabled. <em>Directory Path</em>.</li>
 		</ul>
 
-		<h3 id="HowToRun_2">genRSS.ps1 (if using):</h3>
+		<h3 id="HowToRun_2">genRSS.ps1 (if using)</h3>
 		<p><em>Command line parameters:</em></p>
 		<ul>
 			<li><code>-Profile</code>: The name of the profile config file to run. File must be located in the same directory as genRSS.ps1. <em>File name</em>.</li>
@@ -256,7 +256,7 @@
 			<li><code>-DebugDirectory</code>: The directory to save log files if <code>-Debug</code> is enabled. <em>Directory Path</em>.</li>
 		</ul>
 
-		<h3 id="HowToRun_3">Windows Task Scheduler Examples:</h3>
+		<h3 id="HowToRun_3">Windows Task Scheduler Examples</h3>
 		<p>If you're using Windows Task Scheduler, here are some examples of how to format the actions:</p>
 		<em>Basic download:</em>
 		<ul><li><b>Program:</b> <code>"C:\Program Files\PowerShell\7\pwsh.exe"</code> <b>Arguments:</b> <code>"-Command & 'C:\Program Files\VideoLAN\VLC\SoundsDownloadScript.ps1' -ProgramURL https://www.bbc.co.uk/programmes/b006r9yq -SaveDir 'F:\Audio\The News Quiz' -ShortTitle TheNewsQuiz -TitleFormat '{1} - {2}' -Archive 0 -Debug -DebugDirectory 'C:\DebugLogs'"</code></li></ul>
