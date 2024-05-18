@@ -263,7 +263,7 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 	# Parse the metadata section from the Sounds page and read it as JSON
 	$Getjson = "(?<=<script> window.__PRELOADED_STATE__ = )(.*?)(?=; </script>)"
 	$jsonResult = [regex]::match($SoundsShowPage, $Getjson)
-	 # Clean up stupid smart quotes
+	# Clean up stupid smart quotes
 	$jsonResult = "$jsonResult" -replace '[\u201C\u201D\u201E\u201F\u2033\u2036]', "$([char]92)$([char]34)" -replace "[\u2018\u2019\u201A\u201B\u2032\u2035]", "$([char]39)"
 	$jsonData = $jsonResult | ConvertFrom-Json
 
