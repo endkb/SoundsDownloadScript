@@ -249,8 +249,8 @@
 		<h3 id="HowToRun_2">genRSS.ps1 (if using)</h3>
 		<p><em>Command line parameters:</em></p>
 		<ul>
-			<li><code>-Profile</code>: The name of the profile config file to run. File must be located in the same directory as genRSS.ps1. <em>File name</em>.</li>
-			<li><code>-Test</code>: A local file name to generate a test RSS file to. This option will not upload anything remotely. It is useful for testing without messing up a public RSS feed. <em>File name</em>.</li>
+			<li><code>-Profile</code>: The path to the profile config file to use. <em>File Path</em>.</li>
+			<li><code>-Test</code>: A local file name to generate a test RSS file to. This option will not upload anything remotely. It is useful for testing without messing up a public RSS feed. <em>File Path</em>.</li>
 			<li><code>-Force</code>: Force the script to update the RSS file, even if it doesn't need to be. This is useful for testing or pushing changes. <em>Switch</em>.</li>
 			<li><code>-Debug</code>: Output the console and variables to a text file in the <code>$DebugDirectory</code>. Log file name structure is 'genRSS_&lt;Profile Name&gt;-&lt;Script PID&gt;-&lt;Inc No&gt;-Console+Vars.log'. <em>Switch</em>.</li>
 			<li><code>-DebugDirectory</code>: The directory to save log files if <code>-Debug</code> is enabled. <em>Directory Path</em>.</li>
@@ -264,7 +264,7 @@
 		<em>Uploading to CloudFlare R2 and generate an RSS:</em>
 		<ul>
 			<li><b>Program:</b> <code>"C:\Program Files\PowerShell\7\pwsh.exe"</code> <b>Arguments:</b> <code>"-Command & 'C:\Program Files\VideoLAN\VLC\SoundsDownloadScript.ps1' -ProgramURL https://www.bbc.co.uk/programmes/b006qfvv -SaveDir 'F:\Audio\Shipping Forecast' -ShortTitle ShippingForecast -TitleFormat '{1} {4:HH:mm}' -rcloneConfig 'C:\Program Files\VideoLAN\VLC\rclone\rclone.conf' -rcloneSyncDir 'bbcsoundsrss_r2:bbcsoundsrss\ShippingForecast\media' -Archive 7 -Days -Debug -DebugDirectory 'C:\DebugLogs'"</code></li>
-			<li><b>Program:</b> <code>"C:\Program Files\PowerShell\7\pwsh.exe"</code> <b>Arguments:</b> <code>"-Command & 'C:\Program Files\VideoLAN\VLC\genRSS.ps1' -Profile ShippingForecast -Debug -DebugDirectory 'C:\DebugLogs'"</code></li>
+			<li><b>Program:</b> <code>"C:\Program Files\PowerShell\7\pwsh.exe"</code> <b>Arguments:</b> <code>"-Command & 'C:\Program Files\VideoLAN\VLC\genRSS.ps1' -Profile 'E:\FeedProfiles\ShippingForecast' -Debug -DebugDirectory 'C:\DebugLogs'"</code></li>
 		</ul>
 		<br>
 		<em>Using VPN and uploading to archive.org:</em>
