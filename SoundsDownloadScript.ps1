@@ -260,14 +260,11 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
     # Load the Sounds page to grab the tag information
     $SoundsShowPage = (Invoke-WebRequest –Uri $SoundsPlayLink -Method Get -UseBasicParsing -ContentType "text/plain; charset=utf-8").Content
 
-	# Replace any fancy quotes with normal ones
-	$smartSingleQuotes = '[\u2019\u2018]'
-	$smartDoubleQuotes = '[\u201C\u201D]'
-	$SoundsShowPage = $SoundsShowPage -replace $smartSingleQuotes,"'" -replace $smartDoubleQuotes,'"'
-
 	# Parse the metadata section from the Sounds page and read it as JSON
 	$Getjson = "(?<=<script> window.__PRELOADED_STATE__ = )(.*?)(?=; </script>)"
 	$jsonResult = [regex]::match($SoundsShowPage, $Getjson)
+	 # Clean up stupid smart quotes
+	$jsonResult = "$jsonResult" -replace '[\u201C\u201D\u201E\u201F\u2033\u2036]', "$([char]92)$([char]34)" -replace "[\u2018\u2019\u201A\u201B\u2032\u2035]", "$([char]39)"
 	$jsonData = $jsonResult | ConvertFrom-Json
 
     # Put the titles into a table
