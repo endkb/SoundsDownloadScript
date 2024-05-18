@@ -224,9 +224,9 @@ If (($ScriptInstanceControl) -AND (!$NoDL)) {
 				# Check the lock file directory for old lock files
 				$GetLockFiles = Get-ChildItem -Path $LockFileDirectory -Filter "*.lock" -Force | Where-Object {$_.CreationTime -lt (Get-Date).AddSeconds($LockFileMaxDuration*-1)}
 				# Delete each one
-				ForEach ($LockFile in $GetLockFiles) {
-					Remove-Item $LockFile.FullName
-					Write-Host "**Released $LockFile (possibly orphaned)"
+				ForEach ($OrphanedLockFile in $GetLockFiles) {
+					Remove-Item $OrphanedLockFile.FullName
+					Write-Host "**Released $OrphanedLockFile (possibly orphaned)"
 					}
 				# Only check every 4 instances to save resources
 				$NextCheck = $NextCheck+4
