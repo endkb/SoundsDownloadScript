@@ -24,7 +24,9 @@
 	</head>
 	<body>
 		<h1>SoundsDownloadScript.ps1 + genRSS.ps1</h1>
+		<p><em>*Updated: 19-May-2024 19:03 GMT</em></p>
 		<p>These instructions are very crude and messy. Sorry about the word vomit. I hope they help, though. If someone wants to convert this file into a markdown README.md for github, be my guest. The scripts are a little tedious to set up the first time, but once you get them working they're pretty reliable.</p>
+		<p>I recommend you check the <a href="https://github.com/endkb/SoundsDownloadScript">repo</a> on github for the <a href="https://html-preview.github.io/?url=https://github.com/endkb/SoundsDownloadScript/blob/main/README.htm">latest version of this file</a> before continuing.</p>
 		<p>If you find a bug in the scripts or something is incorrect or incomplete in the documentation, feel free to <a href="https://github.com/endkb/SoundsDownloadScript/issues">open an issue on github</a>.</p>
 		<ul>
 			<li><a href="#About">About</a></li>
@@ -129,7 +131,10 @@
 					<li><code>$ffprobeExe</code>: Path or Get-ChildItem cmdlet to <code>ffprobe.exe</code>. <em>File path</em>.</li>
 					<li><code>$kid3Exe</code>: Path or Get-ChildItem cmdlet to <code>kid3-cli.exe</code>. <em>File path</em>.</li>
 					<li><code>$rcloneExe</code>: Path or Get-ChildItem cmdlet to <code>rclone.exe</code> (you can comment this line out with <code>#</code> if not using). <em>File path</em></li>
-					<li><code>$vpnExe</code>: Path or Get-ChildItem cmdlet to <code>openvpn.exe</code>. This must be the command line executable, not the gui (you can comment this line out with <code>#</code> if not using). <em>File path</em></li>
+					<li><code>$vpnExe</code>: Path to openvpn.exe. Since OpenVPN is usually installed into the Program Files directory, you can use the Get-ChildItem cmdlet to <code>openvpn.exe</code>.
+						<code class="block">(Get-ChildItem -Path $env:Programfiles -Filter 'openvpn.exe' -Recurse -ErrorAction SilentlyContinue |  Sort-Object -Descending -Property LastWriteTime | Select-Object -First 1 | % { $_.FullName })</code>
+						<br>
+						This must be the command line executable, not the gui. You can comment this line out with <code>#</code> if not using a VPN. <em>File path</em>.</li>
 					<li><code>$ytdlpExe</code>: Path or Get-ChildItem cmdlet to <code>yt-dlp.exe</code>. <em>File path</em>.<br><br></li>
 
 					<li><code>$SortArticles</code>: This isn't used much. This is a string of definite articles in various languages separated by a pipe (|). The script will strip these to fill tags specifically used for sorting. For example 'The Beatles' sort tags will become 'Beatles' and will get sorted in the Bs instead of the Ts. You can add your own for other languages, if needed. The caret (^)denotes the beginning of the string. Without it, it will also strip characters from the middle. Put a space after the definite article if it's its own word. For contractions like l', don't put a space. The defaults should be fine for most people, especially since this isn't music. <em>Delimited string</em>.<br><br></li>
@@ -191,10 +196,10 @@
 					<li><code>RSSFileName</code>: Name of the RSS file to save locally. This is the file that will get uploaded. <em>File name</em>.<br><br></li>
 
 					<li><code>rcloneConfig</code>: Path to the rclone ini config file. <em>File path</em>.</li>
-					<li><code>RemotePublishDirectory</code>: This is the remote and directory that rclone should upload the RSS file to. It should be in the form of 'Remote:Directory'. Remote is the name of the appropriate config found in the config file specified in rcloneConfig. For S3 API services, use Remote:BucketName\Directory. <em>String</em>.</li>
+					<li><code>RemotePublishDirectory</code>: This is the remote and directory that rclone should upload the RSS file to. It should be in the form of 'Remote:Directory'. Remote is the name of the appropriate config found in the config file specified in rcloneConfig. For services that use the S3 API, use Remote:BucketName\Directory. <em>String</em>.</li>
 					<li><code>RemoteRSSFileName</code>: Name of the RSS file to publish remotely. <em>File name</em>.<br><br></li>
 
-					<li><code>Block</code>: If this is set to <code>yes</code>, some podcast aggregators like Podcast Addict will not publish it in their directories, sort of like noindex. You might want to use this for testing when you first create a podcast feed. <em>yes/no</em>.<br><br></li>
+					<li><code>Block</code>: If this is set to <code>yes</code>, some podcast aggregators like Podcast Addict will not publish it in their directories, sort of like noindex. You might want to use this for testing when you first create a podcast feed. If this is absent, <code>no</code> is assumed. <em>yes/no</em>.<br><br></li>
 
 					<li><code>MediaRootURL</code>: This should be the publicly accessible URL path that podcast tools can download the episodes. <em>URL</em>.</li>
 					<li><code>RerunLabel</code>: A label to prepend to episode titles when the episode is a rerun according to the criteria in <code>RerunFiles</code> or <code>RerunTitles</code>. Include a delimiting character like a colon or dash if you'd like. A space is automatically inserted. A good default is <code>Repeat:</code> <em>String</em>.</li>
