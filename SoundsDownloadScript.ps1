@@ -1,7 +1,7 @@
 # SoundsDownloadScript vX
 
-# Copyright (c) 2024 <github.com/endkb>
-# MIT License (see README file for details)
+# Copyright (c) 2024 endkb <http://github.com/endkb>
+# MIT License (see README.htm for details)
 
 # Expect the following variables to be set as parameters
 param(
