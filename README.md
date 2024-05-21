@@ -2,7 +2,7 @@
 SoundsDownloadScript.ps1 and genRSS.ps1 are Powershell scripts that can work together to download episodes from the BBC Sounds website and then publish them to a podcast feed. SoundsDownloadScript.ps1 can work without genRSS.ps1 if you just want to download the audio files, but genRSS.ps1 won't really work with audio files tagged with other tools because they won't be tagged properly to build a podcast feed.
 
 ## GETTING STARTED
-__Package:__
+__Package:__ ([Latest release](https://github.com/endkb/SoundsDownloadScript/releases/latest))
 * genRSS.ps1
 * README.htm (includes installation instructions and how to run)
 * SampleProfile (for use with genRSS.ps1)
