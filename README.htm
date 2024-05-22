@@ -21,11 +21,10 @@
 				text-indent: -2em;
 				}	
 		</style>
-		<title>README.htm</title>
 	</head>
 	<body>
 		<h1>SoundsDownloadScript.ps1 + genRSS.ps1</h1>
-		<p><em>*Updated: 21-May-2024 23:36 GMT</em></p>
+		<p><em>*Updated: 19-May-2024 21:44 GMT</em></p>
 		<p>These instructions are very crude and messy. Sorry about the word vomit. I hope they help, though. If someone wants to convert this file into a markdown README.md for github, be my guest. The scripts are a little tedious to set up the first time, but once you get them working they're pretty reliable.</p>
 		<p>I recommend you check the <a href="https://github.com/endkb/SoundsDownloadScript">repo</a> on github for the <a href="https://html-preview.github.io/?url=https://github.com/endkb/SoundsDownloadScript/blob/main/README.htm">latest version of this README</a> before continuing.</p>
 		<p>If you find a bug in the scripts or something is incorrect or incomplete in the documentation, feel free to <a href="https://github.com/endkb/SoundsDownloadScript/issues">open an issue on github</a>.</p>
@@ -47,7 +46,6 @@
 				</ul>
 			</li>
 			<li><a href="#CodeQuirks">Code Quirks</a>
-			<li><a href="#MITLicense">MIT License</a>
 		</ul>
 		<br>
 
@@ -56,7 +54,7 @@
 		<p>SoundsDownloadScript.ps1 can work without genRSS.ps1 if you just want to download the audio files, but genRSS.ps1 won't really work with audio files tagged with other tools because they won't be tagged properly to build a podcast feed (<a href="#ID3Tags">see this note</a>).</p>
 		<br>
 		<h2 id="GettingStarted">GETTING STARTED:</h2>
-		<h3>Package (<a href="https://github.com/endkb/SoundsDownloadScript/releases/latest">latest from github</a>)</h3>
+		<h3>Package (<a href="https://github.com/endkb/SoundsDownloadScript">from github</a>)</h3>
 		<ul>
 			<li>genRSS.ps1</li>
 			<li>README.htm (this file)</li>
@@ -198,7 +196,7 @@
 					<li><code>RSSFileName</code>: Name of the RSS file to save locally. This is the file that will get uploaded. <em>File name</em>.<br><br></li>
 
 					<li><code>rcloneConfig</code>: Path to the rclone ini config file. <em>File path</em>.</li>
-					<li><code>RemotePublishDirectory</code>: This is the remote and directory that rclone should upload the RSS file to. It should be in the form of 'Remote:Directory'. Remote is the name of the appropriate config found in the config file specified in <code>-rcloneConfig</code>. For services that use the S3 API, use Remote:BucketName\Directory. <em>String</em>.</li>
+					<li><code>RemotePublishDirectory</code>: This is the remote and directory that rclone should upload the RSS file to. It should be in the form of 'Remote:Directory'. Remote is the name of the appropriate config found in the config file specified in rcloneConfig. For services that use the S3 API, use Remote:BucketName\Directory. <em>String</em>.</li>
 					<li><code>RemoteRSSFileName</code>: Name of the RSS file to publish remotely. <em>File name</em>.<br><br></li>
 
 					<li><code>Block</code>: If this is set to <code>yes</code>, some podcast aggregators like Podcast Addict will not publish it in their directories, sort of like noindex. You might want to use this for testing when you first create a podcast feed. If this is absent, <code>no</code> is assumed. <em>yes/no</em>.<br><br></li>
@@ -299,12 +297,6 @@
 		to see exactly what kid3 is reading from the audio file and passing to the script. Sometimes special characters can trip it up and it might be necessary to add to the <code>$StringToFormat</code> variable in the Format-kid3CommandString function. It will probably take some troubleshooting. Turn on the debug logs to help.</p>
 		<h3>genRSS.ps1:</h3>
 		<p>I heavily modified <a href="https://gist.github.com/arebee/a7a77044c77443effaeddbe3730af4ad">this script</a> to create genRSS.ps1. I don't really understand the XML writer part of it, only that it just seems to work. The whole script is messy and very inefficient. Good luck!</p>
-		<br>
-		<h2 id="MITLicense">MIT LICENSE:</h2>
-		<p>Copyright &copy; 2024 endkb &lt;https://github.com/endkb&gt;</p>
-		<p>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:</p>
-		<p>The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.</p>
-		<p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
 		<br>
 	</body>
 </html>
