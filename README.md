@@ -22,7 +22,3 @@ I believe there are Linux versions for all of these packages, but I've only ever
 
 ## INSTALLATION & HOW TO RUN
 Step by step instructions and other notes are in the [README.htm](https://html-preview.github.io/?url=https://github.com/endkb/SoundsDownloadScript/blob/main/README.htm) file in the package. If anyone would like to translate the html instructons to markdown for this document, be my guest!
-
-## LICENSE
-Copyright © 2024 endkb &lt;https://github.com/endkb&gt;   
-MIT License (see [README.htm](https://html-preview.github.io/?url=https://github.com/endkb/SoundsDownloadScript/blob/main/README.htm#MITLicense) for details)
