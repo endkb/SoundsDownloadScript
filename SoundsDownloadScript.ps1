@@ -1,5 +1,8 @@
 # SoundsDownloadScript vX
 
+# Copyright (c) 2024 endkb <https://github.com/endkb>
+# MIT License (see README.htm for details)
+
 # Expect the following variables to be set as parameters
 param(
 [String]$ProgramURL,					# bbc.co.uk/programmes URL of the show to download the latest ep or bbc.co.uk/sounds/play
