@@ -1,5 +1,4 @@
-# Copyright (c) 2024 endkb <http://github.com/endkb>
-# MIT License (see README.htm for details)
+# Based on the format described at http://podcast411.com/howto_1.html
 
 param(
 	[String]$Profile,
