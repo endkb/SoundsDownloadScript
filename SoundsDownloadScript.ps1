@@ -5,46 +5,46 @@
 
 # Expect the following variables to be set as parameters
 param(
-[String]$ProgramURL,					# bbc.co.uk/programmes URL of the show to download the latest ep or bbc.co.uk/sounds/play
-[String]$SaveDir,						# Directory to publish the finished audio file
-[String]$ShortTitle,					# Short reference for the filename
-[String]$TrackNoFormat,					# Set track no as DateTime format string: c(r) = count up (recurs), o = one digit year, jjj = Julian date
-[String]$TitleFormat,					# Format the title: {0} = primary, {1} = secondary, {2} = tertiary, {3} = UTC release date, {4} = UK rel
-[Switch]$mp3,							# Transcode the audio file to mp3 after downloading
-[Int32]$Archive,						# The number of episodes to keep - omit or set to 0 to keep everything
-[Switch]$Days,							# Measure -Archive by the number of days instead of the number of episodes to keep
-[String]$VPNConfig,						# Path to the ovpn file(s) separated by comma - also create and set auth-user-pass file if applicable
-[String]$rcloneConfig,					# Path to the rclone config file - rclone.exe config create
-[String]$rcloneSyncDir,					# Remote and directory rclone should upload to separated by comma if multiple - for AWS S3 use config:bucket\directory
-[String]$DotSrcConfig,					# Path to external .ps1 script file containing script configuration options
-[Switch]$Debug,							# Output the console to a text file in the DebugDirectory
-[String]$DebugDirectory,				# Directory path to save the debug log files if enabled
-[Switch]$NoDL,							# Grab the metadata only - Don't download the episode
-[Switch]$Force							# Download the episode even if it's already downloaded - Will not overwrite existing
+[String]$ProgramURL,                        # bbc.co.uk/programmes URL of the show to download the latest ep or bbc.co.uk/sounds/play
+[String]$SaveDir,                           # Directory to publish the finished audio file
+[String]$ShortTitle,                        # Short reference for the filename
+[String]$TrackNoFormat,                     # Set track no as DateTime format string: c(r) = count up (recurs), o = one digit year, jjj = Julian date
+[String]$TitleFormat,                       # Format the title: {0} = primary, {1} = secondary, {2} = tertiary, {3} = UTC release date, {4} = UK rel
+[Switch]$mp3,                               # Transcode the audio file to mp3 after downloading
+[Int32]$Archive,                            # The number of episodes to keep - omit or set to 0 to keep everything
+[Switch]$Days,                              # Measure -Archive by the number of days instead of the number of episodes to keep
+[String]$VPNConfig,                         # Path to the ovpn file(s) separated by comma - also create and set auth-user-pass file if applicable
+[String]$rcloneConfig,                      # Path to the rclone config file - rclone.exe config create
+[String]$rcloneSyncDir,                     # Remote and directory rclone should upload to separated by comma if multiple - for AWS S3 use config:bucket\directory
+[String]$DotSrcConfig,                      # Path to external .ps1 script file containing script configuration options
+[Switch]$Debug,                             # Output the console to a text file in the DebugDirectory
+[String]$DebugDirectory,                    # Directory path to save the debug log files if enabled
+[Switch]$NoDL,                              # Grab the metadata only - Don't download the episode
+[Switch]$Force                              # Download the episode even if it's already downloaded - Will not overwrite existing
 )
 
- <#		┌────────────────────────────────────────────────────────────────────────────────┐
-		│                  ▼    Begin script configuration options    ▼                  │
-		└────────────────────────────────────────────────────────────────────────────────┘ 		#>
+ <#     ┌────────────────────────────────────────────────────────────────────────────────┐
+        │                  ▼    Begin script configuration options    ▼                  │
+        └────────────────────────────────────────────────────────────────────────────────┘ 		#>
 
-$DefaultTrackNoFormat = 'c'         	# DateTime format string to set the track number if $TrackNoFormat is not set
-$DefaultTitleFormat = '{1}'				# Format string to set episode title to if $TitleFormat is not set
+$DefaultTrackNoFormat = 'c'                 # DateTime format string to set the track number if $TrackNoFormat is not set
+$DefaultTitleFormat = '{1}'                 # Format string to set episode title to if $TitleFormat is not set
 
-$DumpDirectory = $env:TEMP      		# Directory to save the stream to while working on it - to use the win temp dir: $env:TEMP
+$DumpDirectory = $env:TEMP                  # Directory to save the stream to while working on it - to use the win temp dir: $env:TEMP
 
-$VPNAdapter = 'OpenVPN TAP-Windows6'	# Name of the adapter used by OpenVPN
-$VPNTimeout = 60						# Number of seconds to wait before giving up on VPN if it doesn't connect
-$VPNBitrateThresh = 300000				# Bitrate check: If bitrate is below this number it didn't download HQ - 0 = Disabled
+$VPNAdapter = 'OpenVPN TAP-Windows6'        # Name of the adapter used by OpenVPN
+$VPNTimeout = 60                            # Number of seconds to wait before giving up on VPN if it doesn't connect
+$VPNBitrateThresh = 300000                  # Bitrate check: If bitrate is below this number it didn't download HQ - 0 = Disabled
 
-$ScriptInstanceControl = $true			# Allow only one instance of script to download at a time: Set to $true if using VPN
-$LockFileDirectory = $env:TEMP			# If using ScriptInstanceControl: Specify non-env dir if running script under different users
-$LockFileMaxDuration = 10800			# Max age in seconds before lock files are considered orphaned and deleted - 0 = Disabled
+$ScriptInstanceControl = $true              # Allow only one instance of script to download at a time: Set to $true if using VPN
+$LockFileDirectory = $env:TEMP              # If using ScriptInstanceControl: Specify non-env dir if running script under different users
+$LockFileMaxDuration = 10800                # Max age in seconds before lock files are considered orphaned and deleted - 0 = Disabled
 
-$ytdlpUpdate = $false					# Download yt-dlp updates before running script
-$rcloneUpdate = $false					# Update rclone to the latest stable version
+$ytdlpUpdate = $false                       # Download yt-dlp updates before running script
+$rcloneUpdate = $false                      # Update rclone to the latest stable version
 
-$Debug = $true							# Force global debugging - $true = Force logging on, $false = Force no logging, $Debug = Honor cmd line parameter
-$DebugDirectory = 'E:\FilesTemp\Debug'	# Directory to save/move logs to when Debug switch is present
+$Debug = $true                              # Force global debugging - $true = Force logging on, $false = Force no logging, $Debug = Honor cmd line parameter
+$DebugDirectory = 'E:\FilesTemp\Debug'      # Directory to save/move logs to when Debug switch is present
 
 <#	Paths to ffmpeg, ffprobe kid3-cli, openvpn (optional), rclone, and yt-dlp executables - or use the following:
 		(Get-ChildItem -Path $PSScriptRoot -Filter "<name-of.exe>" -Recurse | Sort-Object -Descending -Property LastWriteTime | Select-Object -First 1 | % { $_.FullName })
@@ -56,7 +56,7 @@ $rcloneExe = (Get-ChildItem -Path $PSScriptRoot -Filter "rclone.exe" -Recurse | 
 $vpnExe = (Get-ChildItem -Path $env:Programfiles -Filter 'openvpn.exe' -Recurse -ErrorAction SilentlyContinue |  Sort-Object -Descending -Property LastWriteTime | Select-Object -First 1 | % { $_.FullName })
 $ytdlpExe = (Get-ChildItem -Path $PSScriptRoot -Filter "yt-dlp.exe" -Recurse |  Sort-Object -Descending -Property LastWriteTime | Select-Object -First 1 | % { $_.FullName })
 
-$SortArticles = 						# String of definite articles to trim from fields for sorting tags - separate with a pipe, ^ is beginning of string
+$SortArticles =                             # String of definite articles to trim from fields for sorting tags - separate with a pipe, ^ is beginning of string
 "^a |^an |^el |^l'|^la |^las |^le |^les |^lo |^los |^the |^un |^una |^une "
 
 <#	SCRIPT BLOCKS: Configure script blocks below to run rclone commands depending on the remote backend. New ones can be included. Script blocks must be 
@@ -92,9 +92,9 @@ $remote_r2 = {If ($RemoteConfig.$Remote.provider -eq "Cloudflare") {
 	& $rcloneExe sync $SaveDir $rcloneSyncDir --create-empty-src-dirs --progress --config $rcloneConfig -v $rcloneDebugArgs
 	}}
 
- <#		┌────────────────────────────────────────────────────────────────────────────────┐
-		│                   ▲    End script configuration options    ▲                   │
-		└────────────────────────────────────────────────────────────────────────────────┘		#>
+ <#	    ┌────────────────────────────────────────────────────────────────────────────────┐
+        │                   ▲    End script configuration options    ▲                   │
+        └────────────────────────────────────────────────────────────────────────────────┘		#>
 
 Function ExitRoutine {
 	# Clean up the cover art from the DumpDirectory
