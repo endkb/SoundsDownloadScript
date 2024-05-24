@@ -25,10 +25,11 @@
 	</head>
 	<body>
 		<h1>SoundsDownloadScript.ps1 + genRSS.ps1</h1>
-		<p><em>*Updated: 21-May-2024 23:53 GMT</em></p>
+		<p><em>*Updated: 24-May-2024 23:19 GMT</em></p>
 		<p>These instructions are very crude and messy. Sorry about the word vomit. I hope they help, though. If someone wants to convert this file into a markdown README.md for github, be my guest. The scripts are a little tedious to set up the first time, but once you get them working they're pretty reliable.</p>
 		<p>I recommend you check the <a href="https://github.com/endkb/SoundsDownloadScript">repo</a> on github for the <a href="https://html-preview.github.io/?url=https://github.com/endkb/SoundsDownloadScript/blob/main/README.htm">latest version of this README</a> before continuing.</p>
 		<p>If you find a bug in the scripts or something is incorrect or incomplete in the documentation, feel free to <a href="https://github.com/endkb/SoundsDownloadScript/issues">open an issue on github</a>.</p>
+		<h3>Contents</h3>
 		<ul>
 			<li><a href="#About">About</a></li>
 			<li><a href="#GettingStarted">Getting Started</a></li>
@@ -72,7 +73,7 @@
 		</ul>
 		<h3>Optional</h3>
 		<ul>
-			<li><a href="https://openvpn.net/client/client-connect-vpn-for-windows/">OpenVPN Connect</a> (If you want to download higher quality audio from outside the UK. You must have a VPN provider with UK servers.)</li>
+			<li><a href="https://community.openvpn.net/openvpn/wiki/Downloads">OpenVPN Community</a> (If you want to download higher quality audio from outside the UK. You must have a VPN provider with UK servers.)</li>
 			<li><a href="https://rclone.org/downloads/">rclone</a> (If you want to upload files somewhere like S3 buckets, FTP, or archive.org)</li>
 		</ul>
 		<p>I believe there are Linux versions for all of these packages, but I've only ever used this on Windows. The script may work on Powershell for Linux, but it will likely take a lot of tweaking. There's probably another language that's more appropriate. If you're up for the challenge, feel free to use my logic as a guide and go for it!</p>
@@ -91,16 +92,16 @@
 			<li>Unpack kid3 to a directory (recommend a subdirectory inside the directory  SoundsDownloadScript.ps1 is in).</li>
 			<li>Copy yt-dlp.exe to a directory (recommend inside the directory SoundsDownloadScript.ps1 is in).</li>
 			<li>If using rclone, unpack rclone to a directory (recommend a subdirectory inside the directory SoundsDownloadScript.ps1 is in).</li>
-			<li>If using OpenVPN, install it using the default options. Installing it as a service is not required.</li>
+			<li>If using OpenVPN, install it using the default options (should be everything except OpenSSL Utilities). Information and support can be found <a href="https://openvpn.net/community-resources/installing-openvpn/">here</a>. Note: This must be the Community edition, not OpenVPN Connect.</li>
 			<li>Edit SoundsDownloadScript.ps1 before using and set the following variables:
 				<ul>
 					<li><code>$DefaultTrackNoFormat</code>: DateTime formatted string (see <a href="https://www.sharepointdiary.com/2021/11/date-format-in-powershell.html">https://www.sharepointdiary.com/2021/11/date-format-in-powershell.html</a>) to set the track number if the <code>-TrackNoFormat</code> parameter is not set. Setting this to <code>'c'</code> will count up the track number from the last episode, <code>'c(r)'</code> does the same but searches recursive directories. Also, <code>'o'</code> can be included in a DateTime as a one digit year, and <code>'jjj'</code> can be included in a DateTime as a Julian date. <em>String</em>.</li>
-					<li><code>$DefaultTitleFormat</code>: Default format string to set episode title to if <code>$TitleFormat</code> is not set. The string may contain the following variables in curly brackets:
+					<li><code>$DefaultTitleFormat</code>: Default format string to set episode title to if <code>-TitleFormat</code> is not set. The string may contain the following variables in curly brackets:
 						<ul>
 							<li><code>{0}</code> = The BBC's primary title. This is usually the show's title.</li>
 							<li><code>{1}</code> = The BBC's secondary title. This is usually the title of the episode or the series number.</li>
 							<li><code>{2}</code> = The BBC's tertiary title, usually an episode subtitle or episode number in the series. It's often blank.</li>
-							<li><code>{3}</code> = The release date and/or time in UTC. A DateTime format should follow. An example would be (3:&lt;DateTimeFormat&gt;} ex: <code>{3:HH:mm}</code></li>
+							<li><code>{3}</code> = The release date and/or time in UTC. A DateTime format should follow. An example would be (<code>3:</code>&lt;DateTimeFormat&gt;} ex: <code>{3:HH:mm}</code></li>
 							<li><code>{4}</code> = The release date and/or time in UK time. See above.</li>
 						</ul><br>
 					</li>
@@ -156,7 +157,7 @@
 			<li>If using rclone to upload the files to a remote that isn't an S3 bucket or the Internet Archive, edit SoundsDownloadScript.ps1 to configure the script blocks to configure the <code>rclone.exe</code> command line. Script blocks must start with <code>$remote_</code> in order to be run. You will need to be a little familiar with Powershell. Use an If statement to qualify the script block (otherwise it will always run). Something like:
 				<span><code class="block">$remote_test = {If ($RemoteConfig.$Remote.type -eq "internetarchive") {& $rcloneExe sync $SaveDir $rcloneSyncDir --create-empty-src-dirs --progress --config $rcloneConfig -v $rcloneDebugArgs}}</code></span>
 				<br>
-				The <code>If</code> statement reads the ini file and checks that the remote matches the one specified. In this case, "internetarchive". You can have it check any of the properties in the ini file.	
+				The <code>If</code> statement reads the ini file and checks that the remote matches the one specified. In this case, "internetarchive". You can have it check any of the properties in the ini file to match.	
 				<ul>
 					<li><code>$RemoteConfig</code> is the location of the rclone configuration file</li>
 					<li><code>$Remote</code> is the currently specified remote</li>
@@ -169,7 +170,7 @@
 					<li><code>--config $RemoteConfig</code> is the location of the rclone configuration file</li>
 					<li><code>-v $rcloneDebugArgs</code> is the location to save the log file if enabled</li>
 				</ul>		
-				Sometimes you'll need to include additional things like headers, depending on the remote. Read the rclone documentation for the remote you're using and be ready to troubleshoot. The <a href="https://forum.rclone.org">rclone support forums</a> are very helpful. Note: the way the script is set up, rclone will not delete files from a remote unless the <code>sync</code> option is used. When it does its cleanup, it does not call  rclone, it just removes files locally.
+				Different providers will need different rclone commands and options. Sometimes you'll need to include additional things like headers, depending on the remote. The script blocks can be tough to set up at first, but they allow for maximum flexibility. <a href="https://rclone.org/docs/">Read the rclone documentation for the remote you're using</a> and be ready to troubleshoot. The <a href="https://forum.rclone.org">rclone support forums</a> are very helpful. Note: the way the script is set up, rclone will not delete files from a remote unless the <code>sync</code> option is used. When it does its cleanup, it does not call  rclone, it just removes files locally.
 		</ol>
 
 		<h3 id="Installation_2">genRSS.ps1 (if using)</h3>
@@ -179,12 +180,12 @@
 				<ul>
 					<li><code>$kid3Exe</code>: Path to kid3-cli.exe. <em>File path</em>.</li>
 					<li><code>$rcloneExe</code>: Path to rclone.exe (you can comment this line out with <code>#</code> if not using). <em>File path</em>.</li>
-					<li><code>$Debug</code>: Can be used to force debug logs on or off for all instances. Logs will be saved in the <code>$DebugDirectory</code> specified below.
+					<li><code>$Debug</code>: Can be used to force debug logs on or off for all instances. Logs will be saved in the <code>$DebugDirectory</code> specified below. This can also be set in each profile using <code>Debug</code> or from the command line using the <code>-Debug</code> switch parameter.
 						<ul>
 							<li><code>$true</code> = Save debug logs for all downloads</li>
 							<li><code>$false</code> = Don't save debug logs for any downloads</li>
 						</ul>
-					<li><code>$DebugDirectory</code>: This is the directory to move logs to when <code>$Debug</code> is set to <code>$true</code>. <em>File path</em>.</li>
+					<li><code>$DebugDirectory</code>: This is the directory to move logs to when <code>$Debug</code> is set to <code>$true</code>. This can also be set in each profile using the <code>DebugDirectory</code> option or from the command line using the <code>-DebugDirectory</code> parameter. <em>File path</em>.</li>
 				</ul>
 			<li>Copy SampleProfile file to the directory that genRSS.ps1 is in.</li>
 			<li>Copy and edit the SampleProfile file:<br>
