@@ -46,7 +46,7 @@ $rcloneUpdate = $false                      # Update rclone to the latest stable
 $Debug = $true                              # Force global debugging - $true = Force logging on, $false = Force no logging, $Debug = Honor cmd line parameter
 $DebugDirectory = 'E:\FilesTemp\Debug'      # Directory to save/move logs to when Debug switch is present
 
-<#	Paths to ffmpeg, ffprobe kid3-cli, openvpn (optional), rclone, and yt-dlp executables - or use the following:
+<#	Paths to ffmpeg, ffprobe kid3-cli, openvpn (optional), rclone (optional), and yt-dlp executables - or use the following:
 		(Get-ChildItem -Path $PSScriptRoot -Filter "<name-of.exe>" -Recurse | Sort-Object -Descending -Property LastWriteTime | Select-Object -First 1 | % { $_.FullName })
 	to recurively search subdirectories for these files  #>
 $ffmpegExe = (Get-ChildItem -Path $PSScriptRoot -Filter "ffmpeg.exe" -Recurse | Sort-Object -Descending -Property LastWriteTime | Select-Object -First 1 | % { $_.FullName })
