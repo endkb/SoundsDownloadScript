@@ -1,4 +1,4 @@
-# SoundsDownloadScript v4
+# SoundsDownloadScript vX
 
 # Copyright (c) 2024 endkb <https://github.com/endkb>
 # MIT License (see README.htm for details)
