@@ -1,4 +1,4 @@
-# SoundsDownloadScript vX
+# SoundsDownloadScript v4
 
 # Copyright (c) 2024 endkb <https://github.com/endkb>
 # MIT License (see README.htm for details)
@@ -23,9 +23,9 @@ param(
 [Switch]$Force                              # Download the episode even if it's already downloaded - Will not overwrite existing
 )
 
- <#     ┌────────────────────────────────────────────────────────────────────────────────┐
+<#      ┌────────────────────────────────────────────────────────────────────────────────┐
         │                  ▼    Begin script configuration options    ▼                  │
-        └────────────────────────────────────────────────────────────────────────────────┘ 		#>
+        └────────────────────────────────────────────────────────────────────────────────┘      #>
 
 $DefaultTrackNoFormat = 'c'                 # DateTime format string to set the track number if $TrackNoFormat is not set
 $DefaultTitleFormat = '{1}'                 # Format string to set episode title to if $TitleFormat is not set
@@ -92,9 +92,9 @@ $remote_r2 = {If ($RemoteConfig.$Remote.provider -eq "Cloudflare") {
 	& $rcloneExe sync $SaveDir $rcloneSyncDir --create-empty-src-dirs --progress --config $rcloneConfig -v $rcloneDebugArgs
 	}}
 
- <#	    ┌────────────────────────────────────────────────────────────────────────────────┐
+<#      ┌────────────────────────────────────────────────────────────────────────────────┐
         │                   ▲    End script configuration options    ▲                   │
-        └────────────────────────────────────────────────────────────────────────────────┘		#>
+        └────────────────────────────────────────────────────────────────────────────────┘      #>
 
 Function ExitRoutine {
 	# Clean up the cover art from the DumpDirectory
