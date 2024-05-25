@@ -5,48 +5,48 @@
 
 # Expect the following variables to be set as parameters
 param(
-[String]$ProgramURL,					# bbc.co.uk/programmes URL of the show to download the latest ep or bbc.co.uk/sounds/play
-[String]$SaveDir,						# Directory to publish the finished audio file
-[String]$ShortTitle,					# Short reference for the filename
-[String]$TrackNoFormat,					# Set track no as DateTime format string: c(r) = count up (recurs), o = one digit year, jjj = Julian date
-[String]$TitleFormat,					# Format the title: {0} = primary, {1} = secondary, {2} = tertiary, {3} = UTC release date, {4} = UK rel
-[Switch]$mp3,							# Transcode the audio file to mp3 after downloading
-[Int32]$Archive,						# The number of episodes to keep - omit or set to 0 to keep everything
-[Switch]$Days,							# Measure -Archive by the number of days instead of the number of episodes to keep
-[String]$VPNConfig,						# Path to the ovpn file(s) separated by comma - also create and set auth-user-pass file if applicable
-[String]$rcloneConfig,					# Path to the rclone config file - rclone.exe config create
-[String]$rcloneSyncDir,					# Remote and directory rclone should upload to separated by comma if multiple - for AWS S3 use config:bucket\directory
-[String]$DotSrcConfig,					# Path to external .ps1 script file containing script configuration options
-[Switch]$Debug,							# Output the console to a text file in the DebugDirectory
-[String]$DebugDirectory,				# Directory path to save the debug log files if enabled
-[Switch]$NoDL,							# Grab the metadata only - Don't download the episode
-[Switch]$Force							# Download the episode even if it's already downloaded - Will not overwrite existing
+[String]$ProgramURL,                        # bbc.co.uk/programmes URL of the show to download the latest ep or bbc.co.uk/sounds/play
+[String]$SaveDir,                           # Directory to publish the finished audio file
+[String]$ShortTitle,                        # Short reference for the filename
+[String]$TrackNoFormat,                     # Set track no as DateTime format string: c(r) = count up (recurs), o = one digit year, jjj = Julian date
+[String]$TitleFormat,                       # Format the title: {0} = primary, {1} = secondary, {2} = tertiary, {3} = UTC release date, {4} = UK rel
+[Switch]$mp3,                               # Transcode the audio file to mp3 after downloading
+[Int32]$Archive,                            # The number of episodes to keep - omit or set to 0 to keep everything
+[Switch]$Days,                              # Measure -Archive by the number of days instead of the number of episodes to keep
+[String]$VPNConfig,                         # Path to the ovpn file(s) separated by comma - also create and set auth-user-pass file if applicable
+[String]$rcloneConfig,                      # Path to the rclone config file - rclone.exe config create
+[String]$rcloneSyncDir,                     # Remote and directory rclone should upload to separated by comma if multiple - for AWS S3 use config:bucket\directory
+[String]$DotSrcConfig,                      # Path to external .ps1 script file containing script configuration options
+[Switch]$Debug,                             # Output the console to a text file in the DebugDirectory
+[String]$DebugDirectory,                    # Directory path to save the debug log files if enabled
+[Switch]$NoDL,                              # Grab the metadata only - Don't download the episode
+[Switch]$Force                              # Download the episode even if it's already downloaded - Will not overwrite existing
 )
 
- <#		┌────────────────────────────────────────────────────────────────────────────────┐
-		│                  ▼    Begin script configuration options    ▼                  │
-		└────────────────────────────────────────────────────────────────────────────────┘ 		#>
+<#      ┌────────────────────────────────────────────────────────────────────────────────┐
+        │                  ▼    Begin script configuration options    ▼                  │
+        └────────────────────────────────────────────────────────────────────────────────┘      #>
 
-$DefaultTrackNoFormat = 'c'         	# DateTime format string to set the track number if $TrackNoFormat is not set
-$DefaultTitleFormat = '{1}'				# Format string to set episode title to if $TitleFormat is not set
+$DefaultTrackNoFormat = 'c'                 # DateTime format string to set the track number if $TrackNoFormat is not set
+$DefaultTitleFormat = '{1}'                 # Format string to set episode title to if $TitleFormat is not set
 
-$DumpDirectory = $env:TEMP      		# Directory to save the stream to while working on it - to use the win temp dir: $env:TEMP
+$DumpDirectory = $env:TEMP                  # Directory to save the stream to while working on it - to use the win temp dir: $env:TEMP
 
-$VPNAdapter = 'OpenVPN TAP-Windows6'	# Name of the adapter used by OpenVPN
-$VPNTimeout = 60						# Number of seconds to wait before giving up on VPN if it doesn't connect
-$VPNBitrateThresh = 300000				# Bitrate check: If bitrate is below this number it didn't download HQ - 0 = Disabled
+$VPNAdapter = 'OpenVPN TAP-Windows6'        # Name of the adapter used by OpenVPN
+$VPNTimeout = 60                            # Number of seconds to wait before giving up on VPN if it doesn't connect
+$VPNBitrateThresh = 300000                  # Bitrate check: If bitrate is below this number it didn't download HQ - 0 = Disabled
 
-$ScriptInstanceControl = $true			# Allow only one instance of script to download at a time: Set to $true if using VPN
-$LockFileDirectory = $env:TEMP			# If using ScriptInstanceControl: Specify non-env dir if running script under different users
-$LockFileMaxDuration = 10800			# Max age in seconds before lock files are considered orphaned and deleted - 0 = Disabled
+$ScriptInstanceControl = $true              # Allow only one instance of script to download at a time: Set to $true if using VPN
+$LockFileDirectory = $env:TEMP              # If using ScriptInstanceControl: Specify non-env dir if running script under different users
+$LockFileMaxDuration = 10800                # Max age in seconds before lock files are considered orphaned and deleted - 0 = Disabled
 
-$ytdlpUpdate = $false					# Download yt-dlp updates before running script
-$rcloneUpdate = $false					# Update rclone to the latest stable version
+$ytdlpUpdate = $false                       # Download yt-dlp updates before running script
+$rcloneUpdate = $false                      # Update rclone to the latest stable version
 
-$Debug = $true							# Force global debugging - $true = Force logging on, $false = Force no logging, $Debug = Honor cmd line parameter
-$DebugDirectory = 'E:\FilesTemp\Debug'	# Directory to save/move logs to when Debug switch is present
+$Debug = $true                              # Force global debugging - $true = Force logging on, $false = Force no logging, $Debug = Honor cmd line parameter
+$DebugDirectory = 'E:\FilesTemp\Debug'      # Directory to save/move logs to when Debug switch is present
 
-<#	Paths to ffmpeg, ffprobe kid3-cli, openvpn (optional), rclone, and yt-dlp executables - or use the following:
+<#	Paths to ffmpeg, ffprobe kid3-cli, openvpn (optional), rclone (optional), and yt-dlp executables - or use the following:
 		(Get-ChildItem -Path $PSScriptRoot -Filter "<name-of.exe>" -Recurse | Sort-Object -Descending -Property LastWriteTime | Select-Object -First 1 | % { $_.FullName })
 	to recurively search subdirectories for these files  #>
 $ffmpegExe = (Get-ChildItem -Path $PSScriptRoot -Filter "ffmpeg.exe" -Recurse | Sort-Object -Descending -Property LastWriteTime | Select-Object -First 1 | % { $_.FullName })
@@ -56,7 +56,7 @@ $rcloneExe = (Get-ChildItem -Path $PSScriptRoot -Filter "rclone.exe" -Recurse | 
 $vpnExe = (Get-ChildItem -Path $env:Programfiles -Filter 'openvpn.exe' -Recurse -ErrorAction SilentlyContinue |  Sort-Object -Descending -Property LastWriteTime | Select-Object -First 1 | % { $_.FullName })
 $ytdlpExe = (Get-ChildItem -Path $PSScriptRoot -Filter "yt-dlp.exe" -Recurse |  Sort-Object -Descending -Property LastWriteTime | Select-Object -First 1 | % { $_.FullName })
 
-$SortArticles = 						# String of definite articles to trim from fields for sorting tags - separate with a pipe, ^ is beginning of string
+$SortArticles =                             # String of definite articles to trim from fields for sorting tags - separate with a pipe, ^ is beginning of string
 "^a |^an |^el |^l'|^la |^las |^le |^les |^lo |^los |^the |^un |^una |^une "
 
 <#	SCRIPT BLOCKS: Configure script blocks below to run rclone commands depending on the remote backend. New ones can be included. Script blocks must be 
@@ -92,9 +92,9 @@ $remote_r2 = {If ($RemoteConfig.$Remote.provider -eq "Cloudflare") {
 	& $rcloneExe sync $SaveDir $rcloneSyncDir --create-empty-src-dirs --progress --config $rcloneConfig -v $rcloneDebugArgs
 	}}
 
- <#		┌────────────────────────────────────────────────────────────────────────────────┐
-		│                   ▲    End script configuration options    ▲                   │
-		└────────────────────────────────────────────────────────────────────────────────┘		#>
+<#      ┌────────────────────────────────────────────────────────────────────────────────┐
+        │                   ▲    End script configuration options    ▲                   │
+        └────────────────────────────────────────────────────────────────────────────────┘      #>
 
 Function ExitRoutine {
 	# Clean up the cover art from the DumpDirectory
@@ -111,27 +111,27 @@ Function ExitRoutine {
 Function Get-IniContent ($FilePath) {
 	$ini = @{}
 	Switch -regex -File $FilePath {
-        # Parse section headers
-    	“^\[(.+)\]” {
-        	$Section = $matches[1]
-        	$ini[$section] = @{}
-        	$CommentCount = 0
-    	    }
-        # Parse comments
-    	“^(;.*)$” {
-        	$Value = $matches[1]
-        	$CommentCount = $CommentCount + 1
-        	$Name = “Comment” + $CommentCount
-        	$ini[$section][$name] = $Value.Trim()
-    	    }
-        # Parse keys
-    	“(.+?)\s*=(.*)” {
-        	$Name,$Value = $matches[1..2]
-        	$ini[$section][$name] = $value.Trim()
-    	    }
-	    }
+		# Parse section headers
+		“^\[(.+)\]” {
+			$Section = $matches[1]
+			$ini[$section] = @{}
+			$CommentCount = 0
+			}
+		# Parse comments
+		“^(;.*)$” {
+			$Value = $matches[1]
+			$CommentCount = $CommentCount + 1
+			$Name = “Comment” + $CommentCount
+			$ini[$section][$name] = $Value.Trim()
+			}
+		# Parse keys
+		“(.+?)\s*=(.*)” {
+			$Name,$Value = $matches[1..2]
+			$ini[$section][$name] = $value.Trim()
+			}
+		}
 	Return $ini
-    }
+	}
 
 Function StartDebug {
 	# Create the directory to save/move debug logs to
@@ -252,16 +252,16 @@ $Download = 1
 # List all files in SaveDir to see if it's been downloaded
 $Files = Get-ChildItem $SaveDir -ErrorAction SilentlyContinue
 ForEach ($File in $Files) {
-    # If a file with the same ProgramID exists don't redownload it
-    If ($File.Name -match $ProgramID) {$Download = 0}
-    }
+	# If a file with the same ProgramID exists don't redownload it
+	If ($File.Name -match $ProgramID) {$Download = 0}
+	}
 
 If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
-    # Check for yt-dlp updates and download
-    If ((!$NoDL) -AND ($ytdlpUpdate -eq $true)) {& $ytdlpExe -U}
+	# Check for yt-dlp updates and download
+	If ((!$NoDL) -AND ($ytdlpUpdate -eq $true)) {& $ytdlpExe -U}
 
-    # Load the Sounds page to grab the tag information
-    $SoundsShowPage = (Invoke-WebRequest –Uri $SoundsPlayLink -Method Get -UseBasicParsing -ContentType "text/plain; charset=utf-8").Content
+	# Load the Sounds page to grab the tag information
+	$SoundsShowPage = (Invoke-WebRequest –Uri $SoundsPlayLink -Method Get -UseBasicParsing -ContentType "text/plain; charset=utf-8").Content
 
 	# Parse the metadata section from the Sounds page and read it as JSON
 	$Getjson = "(?<=<script> window.__PRELOADED_STATE__ = )(.*?)(?=; </script>)"
@@ -270,35 +270,35 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 	$jsonResult = "$jsonResult" -replace '[\u201C\u201D\u201E\u201F\u2033\u2036]', "$([char]92)$([char]34)" -replace "[\u2018\u2019\u201A\u201B\u2032\u2035]", "$([char]39)"
 	$jsonData = $jsonResult | ConvertFrom-Json
 
-    # Put the titles into a table
-    $TitleTable = $($jsonData.modules.data[0].data.titles)
+	# Put the titles into a table
+	$TitleTable = $($jsonData.modules.data[0].data.titles)
 
 	If (!$TitleFormat) {
 		$TitleFormat = $DefaultTitleFormat
 		}
 
 	# Set the name of the program
-    $ShowTitle = $TitleTable.'primary'
-	
-    # Parse the synopses to set the comment
+	$ShowTitle = $TitleTable.'primary'
+
+	# Parse the synopses to set the comment
 	$SynopsesTable = $($jsonData.modules.data[0].data.synopses)
 
-    # Default the comment to the short description
-    $Comment = $SynopsesTable.'short'
-    # Use the medium description if it's available
-    If ($SynopsesTable.'medium') {
-        $Comment = $SynopsesTable.'medium'
-        }
-    # Use the long description if it's available
-    If ($SynopsesTable.'long') {
-        $Comment = $SynopsesTable.'long'
-        }
+	# Default the comment to the short description
+	$Comment = $SynopsesTable.'short'
+	# Use the medium description if it's available
+	If ($SynopsesTable.'medium') {
+		$Comment = $SynopsesTable.'medium'
+		}
+	# Use the long description if it's available
+	If ($SynopsesTable.'long') {
+		$Comment = $SynopsesTable.'long'
+		}
 
 	# Set the station
-    $Station = $($jsonData.modules.data[0].data.network.short_title)
+	$Station = $($jsonData.modules.data[0].data.network.short_title)
 
 	# Grab the release date
-    $ReleaseDate = [datetime]$($jsonData.modules.data[0].data.availability.from)
+	$ReleaseDate = [datetime]$($jsonData.modules.data[0].data.availability.from)
 
 	# Put all of the tracks in an array
 	$TrackTable = $($jsonData.tracklist.tracks)
@@ -346,7 +346,7 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 	Write-Host "  {0} $($TitleTable.'primary')"
 	Write-Host "  {1} $($TitleTable.'secondary')"
 	Write-Host "  {2} $($TitleTable.'tertiary')"
-    Write-Host "**Show: $ShowTitle"
+	Write-Host "**Show: $ShowTitle"
 	Write-Host "**Description: $Comment"
 	Write-Host "**Station: $Station"
 	Write-Host "**Released On: $ReleaseDate"
@@ -354,11 +354,11 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 
 	If ($NoDL) {ExitRoutine}
 
-    # Build the DumpFile path
-    $NakedName = "$ProgramID-media"
-    $DumpFile = "$DumpDirectory\$NakedName"
+	# Build the DumpFile path
+	$NakedName = "$ProgramID-media"
+	$DumpFile = "$DumpDirectory\$NakedName"
 
-    If ($VPNConfig) {
+	If ($VPNConfig) {
 		# Put the VPN config paths into an array for looping
 		$VPNArray = $VPNConfig.Split(",")
 		# Build an array to keep track of PIDs for VPN processes you start for closing later
@@ -455,7 +455,7 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 		}
 
 	# Determine the extention of the DumpFile - Used later for kid3
-    $ext = [System.IO.Path]::GetExtension((Get-ChildItem -Path $DumpDirectory -Recurse -Filter "*$NakedName.*"))
+	$ext = [System.IO.Path]::GetExtension((Get-ChildItem -Path $DumpDirectory -Recurse -Filter "*$NakedName.*"))
 
 	# Check if the audio file needs to transcoded to mp3
 	If (($mp3) -AND ($ext -ne ".mp3")) {
@@ -467,43 +467,43 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 		$ext = ".mp3"
 		}
 
-    # Parse the image name and file extension from the url
-    $ImageName = "$CoverResult".Substring("$CoverResult".lastIndexOf('/')+1)
-    # Download the image to the dump directory
-    $WClient = New-Object System.Net.WebClient
-    $WClient.DownloadFile("$CoverResult", "$DumpDirectory\$ImageName")
+	# Parse the image name and file extension from the url
+	$ImageName = "$CoverResult".Substring("$CoverResult".lastIndexOf('/')+1)
+	# Download the image to the dump directory
+	$WClient = New-Object System.Net.WebClient
+	$WClient.DownloadFile("$CoverResult", "$DumpDirectory\$ImageName")
 
-    # If TrackNoFormat is not set in the command line, then use the DefaultTrackNoFormat
-    If (!$TrackNoFormat) {$TrackNoFormat = $DefaultTrackNoFormat}
+	# If TrackNoFormat is not set in the command line, then use the DefaultTrackNoFormat
+	If (!$TrackNoFormat) {$TrackNoFormat = $DefaultTrackNoFormat}
 
-    Function TrackNoCount([Switch]$Recurse) {
-        # Build the array to store the track numbers from kid3
-        $TrackNumbers = @(0)
-        # Search the save dir for files matching the short title - sort by creation time
-        Get-ChildItem $SaveDir -Recurse:$Recurse -Force | Where-Object { $_.Name -match $("$ShortTitle-([0-9]*)-([A-Za-z0-9]*|[A-Za-z0-9]*_[0-9]*)\.") } | Sort-Object CreationTime -Descending | Foreach-Object {
-            # Run kid3 on all files to pull the track number
-            $GetTrackNo = & $kid3Exe -c 'get track' $_.FullName
-            # Put the track number in the array
-            $TrackNumbers += $GetTrackNo
-            }
-	    # Find the highest number in the array
-        $TrackNoCount = (($TrackNumbers | Measure -Max).Maximum)
+	Function TrackNoCount([Switch]$Recurse) {
+		# Build the array to store the track numbers from kid3
+		$TrackNumbers = @(0)
+		# Search the save dir for files matching the short title - sort by creation time
+		Get-ChildItem $SaveDir -Recurse:$Recurse -Force | Where-Object { $_.Name -match $("$ShortTitle-([0-9]*)-([A-Za-z0-9]*|[A-Za-z0-9]*_[0-9]*)\.") } | Sort-Object CreationTime -Descending | Foreach-Object {
+			# Run kid3 on all files to pull the track number
+			$GetTrackNo = & $kid3Exe -c 'get track' $_.FullName
+			# Put the track number in the array
+			$TrackNumbers += $GetTrackNo
+			}
+		# Find the highest number in the array
+		$TrackNoCount = (($TrackNumbers | Measure -Max).Maximum)
 
-        Return $TrackNoCount
-	    }
+		Return $TrackNoCount
+		}
 
-    # Store the track number format in a temporary variable to work with
-    $TrackNoFormatWk = $TrackNoFormat
-    # If format contains cr - then run the function to recursively figure out the track number and add 1
-    $TrackNoFormatWk = $TrackNoFormatWk -creplace "cr", ((TrackNoCount -Recurse)+1)
-    # If format contains c - then run the function to nonrecursively figure out the track number and add 1
-    $TrackNoFormatWk = $TrackNoFormatWk -creplace "c", ((TrackNoCount)+1)
-    # Determine the day of the year (Julian date)
-    $TrackNoFormatWk = $TrackNoFormatWk -creplace "jjj", ("{0:D3}" -f $ReleaseDate.DayofYear)
-    # Break down the two digit year to a single digit
-    $TrackNoFormatWk = $TrackNoFormatWk -creplace "o", $ReleaseDate.ToString("yy").substring(1,1)
-    # Format the AvailabilityDate to the TrackNoFormat - add a leading 0 to make it at least two digits or it fails
-    $TrackNumber = $ReleaseDate.ToString(($TrackNoFormatWk).PadLeft(2, '0'))
+	# Store the track number format in a temporary variable to work with
+	$TrackNoFormatWk = $TrackNoFormat
+	# If format contains cr - then run the function to recursively figure out the track number and add 1
+	$TrackNoFormatWk = $TrackNoFormatWk -creplace "cr", ((TrackNoCount -Recurse)+1)
+	# If format contains c - then run the function to nonrecursively figure out the track number and add 1
+	$TrackNoFormatWk = $TrackNoFormatWk -creplace "c", ((TrackNoCount)+1)
+	# Determine the day of the year (Julian date)
+	$TrackNoFormatWk = $TrackNoFormatWk -creplace "jjj", ("{0:D3}" -f $ReleaseDate.DayofYear)
+	# Break down the two digit year to a single digit
+	$TrackNoFormatWk = $TrackNoFormatWk -creplace "o", $ReleaseDate.ToString("yy").substring(1,1)
+	# Format the AvailabilityDate to the TrackNoFormat - add a leading 0 to make it at least two digits or it fails
+	$TrackNumber = $ReleaseDate.ToString(($TrackNoFormatWk).PadLeft(2, '0'))
 
 	# Set the episode program page - more permanent than the Sounds page (also used by genRSS to set the guid)
 	$EpisodePage  = "https://www.bbc.co.uk/programmes/$ProgramID"
@@ -513,56 +513,56 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 		Return $StringToFormat.replace("'","\'").replace("\`"","`"").replace("`"","\`"").replace("|","\|")
 		}
 
-    # Build the arguments to set the id3 tags with kid3-cli - also add escape \ to apostrophes
-    $tagtitle = "set title '" + $(Format-kid3CommandString($EpisodeTitle)) + "'"
-    $tagtitlesort = "set TSOT '" + $(Format-kid3CommandString($EpisodeTitle -replace $SortArticles)) + "'"
-    $tagartist = "set artist '" + $(Format-kid3CommandString($Station)) + "'"
-    $tagsortalbart = "set TSO2 '" + $(Format-kid3CommandString($Station -replace $SortArticles)) + "'"
-    $tagsortart = "set TSOP '" + $(Format-kid3CommandString($Station -replace $SortArticles)) + "'"
-    $tagalbart = "set AlbumArtist '" + $(Format-kid3CommandString($Station)) + "'"
-    $tagalbum = "set album '" + $(Format-kid3CommandString($ShowTitle)) + "'"
-    $tagalbumsort = "set TSOA '" + $(Format-kid3CommandString($ShowTitle -replace $SortArticles)) + "'"
-    $tagdate = "set date '" + $ReleaseDate.ToString("yyyy-MM-dd") + "'"
-    $tagorigdate = "set OriginalDate '" + $ReleaseDate.ToUniversalTime() + "'"
+	# Build the arguments to set the id3 tags with kid3-cli - also add escape \ to apostrophes
+	$tagtitle = "set title '" + $(Format-kid3CommandString($EpisodeTitle)) + "'"
+	$tagtitlesort = "set TSOT '" + $(Format-kid3CommandString($EpisodeTitle -replace $SortArticles)) + "'"
+	$tagartist = "set artist '" + $(Format-kid3CommandString($Station)) + "'"
+	$tagsortalbart = "set TSO2 '" + $(Format-kid3CommandString($Station -replace $SortArticles)) + "'"
+	$tagsortart = "set TSOP '" + $(Format-kid3CommandString($Station -replace $SortArticles)) + "'"
+	$tagalbart = "set AlbumArtist '" + $(Format-kid3CommandString($Station)) + "'"
+	$tagalbum = "set album '" + $(Format-kid3CommandString($ShowTitle)) + "'"
+	$tagalbumsort = "set TSOA '" + $(Format-kid3CommandString($ShowTitle -replace $SortArticles)) + "'"
+	$tagdate = "set date '" + $ReleaseDate.ToString("yyyy-MM-dd") + "'"
+	$tagorigdate = "set OriginalDate '" + $ReleaseDate.ToUniversalTime() + "'"
 	$tagorigdatemp3 = "set TOAL '" + $ReleaseDate.ToUniversalTime() + "'"
 	$tagyear = "set TDOR '" + $ReleaseDate.ToString("yyyy") + "'"
-    $tagtrack = "set track '" + $TrackNumber + "'"
-    $tagpub = "set publisher '" + $(Format-kid3CommandString($Station)) + "'"
+	$tagtrack = "set track '" + $TrackNumber + "'"
+	$tagpub = "set publisher '" + $(Format-kid3CommandString($Station)) + "'"
 	$tagencby = "set ©enc '" + $(Format-kid3CommandString((Get-Content $PSCommandpath -First 1).TrimStart('#').Trim())) + "'"
 	$tagsource = "set WEBSITE '" + $EpisodePage + "'"
 	$tagsourcemp3 = "set WOAR '" + $EpisodePage + "'"
-    $tagurl = "set AudioSourceURL '" + $SoundsPlayLink + "'"
-    $tagcomment = "set comment '" + $(Format-kid3CommandString($Comment)) + "'"
-    $setpicture = "set Picture:'$DumpDirectory\$ImageName' ''"
-    $albumart = "set albumart '$CoverResult'"
+	$tagurl = "set AudioSourceURL '" + $SoundsPlayLink + "'"
+	$tagcomment = "set comment '" + $(Format-kid3CommandString($Comment)) + "'"
+	$setpicture = "set Picture:'$DumpDirectory\$ImageName' ''"
+	$albumart = "set albumart '$CoverResult'"
 
-    # Get the yt-dlp version info
-    $ytdlpName = (Get-Item -Path $ytdlpExe).VersionInfo.ProductName
-    $ytdlpVer = (Get-Item -Path $ytdlpExe).VersionInfo.ProductVersion
-    # Update the id3 tag argument for kid3-cli
-    $tagencset = "set TSSE '$ytdlpName $ytdlpVer'"
+	# Get the yt-dlp version info
+	$ytdlpName = (Get-Item -Path $ytdlpExe).VersionInfo.ProductName
+	$ytdlpVer = (Get-Item -Path $ytdlpExe).VersionInfo.ProductVersion
+	# Update the id3 tag argument for kid3-cli
+	$tagencset = "set TSSE '$ytdlpName $ytdlpVer'"
 
-    # Run kid3-cli to apply the tags
-    & $kid3Exe -c $tagtitle -c $tagtitlesort -c $tagartist -c $tagsortalbart -c $tagsortart -c $tagalbart -c $tagalbum -c $tagalbumsort -c $tagdate -c $tagorigdate -c $tagorigdatemp3 -c $tagyear -c $tagtrack -c $tagpub -c $tagencby -c $tagencset -c $setpicture -c $albumart -c $tagsource -c $tagsourcemp3 -c $tagurl -c $tagcomment $DumpFile$Ext
+	# Run kid3-cli to apply the tags
+	& $kid3Exe -c $tagtitle -c $tagtitlesort -c $tagartist -c $tagsortalbart -c $tagsortart -c $tagalbart -c $tagalbum -c $tagalbumsort -c $tagdate -c $tagorigdate -c $tagorigdatemp3 -c $tagyear -c $tagtrack -c $tagpub -c $tagencby -c $tagencset -c $setpicture -c $albumart -c $tagsource -c $tagsourcemp3 -c $tagurl -c $tagcomment $DumpFile$Ext
 
-    # Create the save directory if it doesn't exist
-    New-Item -ItemType Directory -Force -Path $SaveDir
+	# Create the save directory if it doesn't exist
+	New-Item -ItemType Directory -Force -Path $SaveDir
 
-    # Build the new filename
-    [System.IO.Path]::GetExtension($DumpFile)
-    $MoveLoc = $SaveDir + "\" + $ShortTitle + "-" + $ReleaseDate.ToString("yyyyMMdd") + "-" + $ProgramID + $Ext
+	# Build the new filename
+	[System.IO.Path]::GetExtension($DumpFile)
+	$MoveLoc = $SaveDir + "\" + $ShortTitle + "-" + $ReleaseDate.ToString("yyyyMMdd") + "-" + $ProgramID + $Ext
 
-    # Make sure the filename doesn't already exist
-    If (Test-Path $MoveLoc) {
-        $i = 0
-        # Keep trying with a different instance until the filename doesn't exist
-        While (Test-Path $MoveLoc) {
-            # Increase the instance on each loop
-            $i += 1
-            # Rebuild the filename and append the loop instance
-            $MoveLoc = $SaveDir + "\" + $ShortTitle + "-" + $ReleaseDate.ToString("yyyyMMdd") + "-" + $ProgramID + "_" + $i + $ext
-            }
-        }
+	# Make sure the filename doesn't already exist
+	If (Test-Path $MoveLoc) {
+		$i = 0
+		# Keep trying with a different instance until the filename doesn't exist
+		While (Test-Path $MoveLoc) {
+			# Increase the instance on each loop
+			$i += 1
+			# Rebuild the filename and append the loop instance
+			$MoveLoc = $SaveDir + "\" + $ShortTitle + "-" + $ReleaseDate.ToString("yyyyMMdd") + "-" + $ProgramID + "_" + $i + $ext
+			}
+		}
 
 	# Run ffprobe to check that kid3 set the tags before moving the file
 	$ffprobeCheckTags = & $ffprobeExe -v quiet -hide_banner -of default=noprint_wrappers=0 -print_format xml -select_streams v:0 -show_format $DumpFile$ext | Out-String
@@ -578,10 +578,10 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 			ExitRoutine
 			}
 
-    # Don't clean up unless the file was sucessfully moved (for troubleshooting purposes)
-    If ([System.IO.File]::Exists($MoveLoc)) {
-        # Check if $Archive value is set
-        If ($Archive -ge 1) {
+	# Don't clean up unless the file was sucessfully moved (for troubleshooting purposes)
+	If ([System.IO.File]::Exists($MoveLoc)) {
+		# Check if $Archive value is set
+		If ($Archive -ge 1) {
 			# RegEx pattern looks for the number pattern after the dash to account for dashes in the $ShortTitle
 			$TitleMatchPattern = "$ShortTitle-([0-9]*)-([A-Za-z0-9]*|[A-Za-z0-9]*_[0-9]*)\."
 			If (!$Days) {
@@ -603,7 +603,7 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 					}
 				}
 			}
-        }
+		}
 
 	If (($rcloneConfig) -AND ($rcloneSyncDir)) {
 		# Function to escape double quotes in parameters before passing them to rclone
@@ -632,7 +632,7 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 			}
 		}
 
-    } Else {
+	} Else {
 		Write-Host "**Program ID $ProgramID already downloaded"
 		If ($ScriptInstanceControl) {ReleaseControl}
 		}
