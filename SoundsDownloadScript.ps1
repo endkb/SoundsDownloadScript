@@ -10,7 +10,7 @@ param(
 [String]$ShortTitle,                        # Short reference for the filename
 [String]$TrackNoFormat,                     # Set track no as DateTime format string: c(r) = count up (recurs), o = one digit year, jjj = Julian date
 [String]$TitleFormat,                       # Format the title: {0} = primary, {1} = secondary, {2} = tertiary, {3} = UTC release date, {4} = UK rel
-[Int32]$Bitrate,                            # Bitrate to download: 48, 96, 128, or 320, 0 = Download best available
+[Int32]$Bitrate,                            # Download a specific available bitrate: 48, 96, 128, or 320, 0 = Download highest available
 [Switch]$mp3,                               # Transcode the audio file to mp3 after downloading
 [Int32]$Archive,                            # The number of episodes to keep - omit or set to 0 to keep everything
 [Switch]$Days,                              # Measure -Archive by the number of days instead of the number of episodes to keep
@@ -30,7 +30,7 @@ param(
 
 $DefaultTrackNoFormat = 'c'                 # DateTime format string to set the track number if $TrackNoFormat is not set
 $DefaultTitleFormat = '{1}'                 # Format string to set episode title to if $TitleFormat is not set
-$DefaultBitrate = 0                         # Bitrate to download if $Bitrate is not set: 48, 96, 128, or 320, 0 = Download best available
+$DefaultBitrate = 0                         # Bitrate to download if $Bitrate is not set: 48, 96, 128, 320, 0 = Download highest available
 
 $DumpDirectory = $env:TEMP                  # Directory to save the stream to while working on it - to use the win temp dir: $env:TEMP
 
@@ -135,12 +135,15 @@ Function Get-IniContent ($FilePath) {
 	}
 	
 Function Start-ytdlp {
+	# Use the default bitrate if not speficied in CL
 	If (!$Bitrate) {
 		$Bitrate = $DefaultBitrate
 		}
 	If ($Bitrate -ge 1) {
+ 		# Build the yt-dlp argument to specify the bitrate
 		$ytdlpBitrate = "[abr=$Bitrate]"
 		}
+  	# Start yt-dlp
 	& $ytdlpExe --ffmpeg-location $ffmpegExe --audio-quality 0 -f ba[ext=m4a]$ytdlpBitrate -o "$DumpFile.%(ext)s" $SoundsPlayLink
 	}
 
