@@ -9,9 +9,9 @@ __Package:__ ([Latest release](https://github.com/endkb/SoundsDownloadScript/rel
 * SoundsDownloadScript.ps1
   
 __Prerequisites:__
-* [ffmpeg](https://www.gyan.dev/ffmpeg/builds/) (I use the full build. I don't know if it matters. Make sure the package you choose comes with ffprobe.)
+* [ffmpeg](https://www.gyan.dev/ffmpeg/builds/) (Make sure the package you choose comes with ffprobe.)
 * [kid3](https://kid3.kde.org/#download)
-* [Powershell](https://github.com/PowerShell/PowerShell) (I use v7.0.3 on Windows)
+* [Powershell](https://github.com/PowerShell/PowerShell) (The scripts were developed and tested on v7.0.3 for Windows)
 * [yt-dlp](https://github.com/yt-dlp/yt-dlp/releases)
   
 __Optional:__
