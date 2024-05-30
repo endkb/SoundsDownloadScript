@@ -11,12 +11,12 @@ __Package:__ ([Latest release](https://github.com/endkb/SoundsDownloadScript/rel
 __Prerequisites:__
 * [ffmpeg](https://www.gyan.dev/ffmpeg/builds/) (Make sure the package you choose comes with ffprobe.)
 * [kid3](https://kid3.kde.org/#download)
-* [Powershell](https://github.com/PowerShell/PowerShell) (The scripts were developed and tested on v7.0.3 for Windows)
+* [Powershell](https://github.com/PowerShell/PowerShell) (The scripts were developed and tested on v7.0.3 for Windows.)
 * [yt-dlp](https://github.com/yt-dlp/yt-dlp/releases)
   
 __Optional:__
 * [OpenVPN Community](https://community.openvpn.net/openvpn/wiki/Downloads) (If you want to download higher quality audio from outside the UK. You must have a VPN provider with UK servers.)
-* [rclone](https://rclone.org/downloads/) (If you want to upload files somewhere like S3 buckets, FTP, or archive.org)
+* [rclone](https://rclone.org/downloads/) (If you want to upload files somewhere like S3 buckets, FTP, or archive.org.)
 
 I believe there are Linux versions for all of these packages, but I've only ever used this on Windows. The script may work on Powershell for Linux, but it will likely take a lot of tweaking. There's probably another language that's more appropriate. If you're up for the challenge, feel free to use the logic as a guide and go for it!
 
