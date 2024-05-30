@@ -10,6 +10,7 @@ param(
 [String]$ShortTitle,                        # Short reference for the filename
 [String]$TrackNoFormat,                     # Set track no as DateTime format string: c(r) = count up (recurs), o = one digit year, jjj = Julian date
 [String]$TitleFormat,                       # Format the title: {0} = primary, {1} = secondary, {2} = tertiary, {3} = UTC release date, {4} = UK rel
+[Int32]$Bitrate,                            # Download a specific available bitrate: 48, 96, 128, or 320, 0 = Download highest available
 [Switch]$mp3,                               # Transcode the audio file to mp3 after downloading
 [Int32]$Archive,                            # The number of episodes to keep - omit or set to 0 to keep everything
 [Switch]$Days,                              # Measure -Archive by the number of days instead of the number of episodes to keep
@@ -29,12 +30,12 @@ param(
 
 $DefaultTrackNoFormat = 'c'                 # DateTime format string to set the track number if $TrackNoFormat is not set
 $DefaultTitleFormat = '{1}'                 # Format string to set episode title to if $TitleFormat is not set
+$DefaultBitrate = 0                         # Bitrate to download if $Bitrate is not set: 48, 96, 128, 320, 0 = Download highest available
 
 $DumpDirectory = $env:TEMP                  # Directory to save the stream to while working on it - to use the win temp dir: $env:TEMP
 
 $VPNAdapter = 'OpenVPN TAP-Windows6'        # Name of the adapter used by OpenVPN
 $VPNTimeout = 60                            # Number of seconds to wait before giving up on VPN if it doesn't connect
-$VPNBitrateThresh = 300000                  # Bitrate check: If bitrate is below this number it didn't download HQ - 0 = Disabled
 
 $ScriptInstanceControl = $true              # Allow only one instance of script to download at a time: Set to $true if using VPN
 $LockFileDirectory = $env:TEMP              # If using ScriptInstanceControl: Specify non-env dir if running script under different users
@@ -131,6 +132,19 @@ Function Get-IniContent ($FilePath) {
 			}
 		}
 	Return $ini
+	}
+	
+Function Start-ytdlp {
+	# Use the default bitrate if not speficied in CL
+	If (!$Bitrate) {
+		$Bitrate = $DefaultBitrate
+		}
+	If ($Bitrate -ge 1) {
+ 		# Build the yt-dlp argument to specify the bitrate
+		$ytdlpBitrate = "[abr=$Bitrate]"
+		}
+  	# Start yt-dlp
+	& $ytdlpExe --ffmpeg-location $ffmpegExe --audio-quality 0 -f ba[ext=m4a]$ytdlpBitrate -o "$DumpFile.%(ext)s" $SoundsPlayLink
 	}
 
 Function StartDebug {
@@ -390,20 +404,11 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 				}
 			If ($(Get-NetAdapter -Name $VPNAdapter).Status -eq "Up") {
 				Write-Host "**Connected to the VPN"
+				
+				# Call yt-dlp to download the file
+				Start-ytdlp
 				}
 
-			# Call yt-dlp to get the metadata and send it to a variable
-			& $ytdlpExe $SoundsPlayLink --get-format | Tee-Object -Variable ytdlpData
-			$GetBitRate = "(?<=mf_cloudfront_nonbidi-audio_eng.*=)(.*?)(?=-)"
-			# Pick out the bitrate
-			$ytdlpBitRateResult = [regex]::match([String]$ytdlpData, $GetBitRate).ToString()
-			# If the match is not a number, it's not needed get rid of it
-			If ($ytdlpBitRateResult -notmatch "^\d+$") {$ytdlpBitRateResult = $null}
-			# If the bitrate variable doesn't exist or it's more than the threshold download the file
-			If ((!$ytdlpBitRateResult) -OR ([Int32]$ytdlpBitRateResult -gt [Int32]$VPNBitrateThresh)) {
-				# Call yt-dlp to download the file
-				& $ytdlpExe --ffmpeg-location $ffmpegExe --audio-quality 0 -f ba[ext=m4a] -o "$DumpFile.%(ext)s" $SoundsPlayLink
-				} Else {Write-Host "**Bitrate pre-check failed: Would be $ytdlpBitRateResult"}
 
 			ForEach ($VPNPID in $VPNPIDArray) {
 				Stop-Process -Id $VPNPID -ErrorAction SilentlyContinue
@@ -411,21 +416,8 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 
 			# Search for the DumpFile to see if yt-dlp finished downloading
 			$FinishedFile = Get-ChildItem -Path $DumpDirectory\$NakedName.* -Exclude *.part, *.ytdl | Select-Object -Last 1
-			If ($FinishedFile) {
-				If ($VPNBitrateThresh -gt 0) {
-					# If it did then run ffprobe to get the bitrate
-					$ffprobeData = & $ffprobeExe -v quiet -hide_banner -of default=noprint_wrappers=0 -print_format xml -select_streams v:0 -show_format $FinishedFile | Out-String
-					[xml]$MetaData = $ffprobeData
-					[Int32]$BitRate = $MetaData.ffprobe.format.bit_rate
-					If ($BitRate -gt $VPNBitrateThresh) {
-						Write-Host "**Bitrate check passed: $FinishedFile is $BitRate"
-						Break VPNLoop
-						} Else {
-							Write-Host "**Bitrate check failed: $FinishedFile is $BitRate"
-							Remove-Item -Path $FinishedFile -Force
-							}
-					} Else {Break VPNLoop}
-				}
+			If ($FinishedFile) {Break VPNLoop}
+				
 			}
 
 		Write-Host "**Disconnecting from the VPN"
@@ -440,8 +432,7 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 
 	# Call yt-dlp to download the file if the VPN isn't used
 	If (!$VPNConfig) {
-		#& $ytdlpExe --ffmpeg-location "C:\Program Files (x86)\VideoLAN\VLC\ffmpeg-4.4.1-full_build\bin" -x --audio-format mp3 --audio-quality 0 -o "$DumpFile.%(ext)s" $SoundsPlayLink
-		& $ytdlpExe --ffmpeg-location $ffmpegExe --audio-quality 0 -f ba[ext=m4a] -o "$DumpFile.%(ext)s" $SoundsPlayLink
+		Start-ytdlp
 		}
 
 	# No more downloading after this - release the control for other scripts

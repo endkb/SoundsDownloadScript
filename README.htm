@@ -15,7 +15,7 @@
 				text-indent: -2em;
 				}
 			.block {
-				display: inline-block;
+				display: block;
 				margin-left: 2em;
 				padding-left: 2em;
 				text-indent: -2em;
@@ -25,7 +25,7 @@
 	</head>
 	<body>
 		<h1>SoundsDownloadScript.ps1 + genRSS.ps1</h1>
-		<p><em>*Updated: 24-May-2024 23:19 GMT</em></p>
+		<p><em>*Updated: 30-May-2024 01:38 GMT</em></p>
 		<p>These instructions are very crude and messy. Sorry about the word vomit. I hope they help, though. If someone wants to convert this file into a markdown README.md for github, be my guest. The scripts are a little tedious to set up the first time, but once you get them working they're pretty reliable.</p>
 		<p>I recommend you check the <a href="https://github.com/endkb/SoundsDownloadScript">repo</a> on github for the <a href="https://html-preview.github.io/?url=https://github.com/endkb/SoundsDownloadScript/blob/main/README.htm">latest version of this README</a> before continuing.</p>
 		<p>If you find a bug in the scripts or something is incorrect or incomplete in the documentation, feel free to <a href="https://github.com/endkb/SoundsDownloadScript/issues">open an issue on github</a>.</p>
@@ -66,15 +66,15 @@
 		</ul>
 		<h3>Prerequisites</h3>
 		<ul>
-			<li><a href="https://www.gyan.dev/ffmpeg/builds/">ffmpeg</a> (I use the full build. It probably doesn't matter. Make sure the package you choose comes with ffprobe.)</li>
+			<li><a href="https://www.gyan.dev/ffmpeg/builds/">ffmpeg</a> (Make sure the package you choose comes with ffprobe.)</li>
 			<li><a href="https://kid3.kde.org/#download">kid3</a></li>
-			<li><a href="https://github.com/PowerShell/PowerShell">Powershell</a> (I use v7.0.3 on Windows)</li>
+			<li><a href="https://github.com/PowerShell/PowerShell">Powershell</a> (Scripts were developed and tested on v7.0.3 for Windows.)</li>
 			<li><a href="https://github.com/yt-dlp/yt-dlp/releases">yt-dlp</a></li>
 		</ul>
 		<h3>Optional</h3>
 		<ul>
 			<li><a href="https://community.openvpn.net/openvpn/wiki/Downloads">OpenVPN Community</a> (If you want to download higher quality audio from outside the UK. You must have a VPN provider with UK servers.)</li>
-			<li><a href="https://rclone.org/downloads/">rclone</a> (If you want to upload files somewhere like S3 buckets, FTP, or archive.org)</li>
+			<li><a href="https://rclone.org/downloads/">rclone</a> (If you want to upload files somewhere like S3 buckets, FTP, or archive.org.)</li>
 		</ul>
 		<p>I believe there are Linux versions for all of these packages, but I've only ever used this on Windows. The script may work on Powershell for Linux, but it will likely take a lot of tweaking. There's probably another language that's more appropriate. If you're up for the challenge, feel free to use my logic as a guide and go for it!</p>
 		<br>
@@ -103,14 +103,18 @@
 							<li><code>{2}</code> = The BBC's tertiary title, usually an episode subtitle or episode number in the series. It's often blank.</li>
 							<li><code>{3}</code> = The release date and/or time in UTC. A DateTime format should follow. An example would be (<code>3:</code>&lt;DateTimeFormat&gt;} ex: <code>{3:HH:mm}</code></li>
 							<li><code>{4}</code> = The release date and/or time in UK time. See above.</li>
-						</ul><br>
+						</ul>
 					</li>
+					<li><code>$DefaultBitrate</code>: Specify the bitrate stream that yt-dlp should download if <code>-Bitrate</code> is not set in the command line. Set to <code>0</code> to have yt-dlp download the highest bitrate available. It must be the number of kilobits per second (kbps), and only the number. The higher the bitrate, the higher the audio the quality and the bigger the file size. Available bitrates are generally <code>48</code>, <code>96</code>, <code>128</code>, and <code>320</code>. If the specified bitrate is not available, yt-dlp will fail to download the program and throw an error that says <code>Requested format is not available</code>. You can view the bitrates that are available for a particular stream by running:
+						<code class="block">yt-dlp.exe --list-formats [URL...]</code>
+						The BBC only makes its content available worldwide in <code>48</code> and <code>96</code> kbps. If you are outside the UK, and want to download a higher bitrate, you will need to combine this option with <code>-VPNConfig</code> and have a VPN provider with UK servers that can access those streams. <em>Number of kilobits</em>.
+					</li>
+					<br>
 					<li><code>$DumpDirectory</code>: Directory to save the stream files and artwork to while  working on it. To use the win temp dir, use <code>$env:TEMP</code>. <em>Directory path</em>.<br><br></li>
 
 					<li><code>$VPNAdapter</code>: Name of the adapter used by OpenVPN. Run <code>Get-NetAdapter</code> in Powershell to get your list of adapter names. You'll want the Name, not the InterfaceDescription. Mine is 'OpenVPN TAP-Windows6'. The script will use this to determine when the VPN is connected and disconnected to continue on. Only needed if using VPN. <em>String</em>.</li>
 					<li><code>$VPNTimeout</code>: Number of seconds to wait before giving up on VPN if it doesn't connect. Remember that while it's waiting, the script will pause and could tie up other instances that are also waiting to run, so set it for a reasonable number of seconds. Only needed if using VPN.  <em>Number of seconds</em>.</li>
-					<li><code>$VPNBitrateThresh</code>: Perform a bitrate check. If bitrate is below this number, it didn't download high quality and it will reject the download. A good default is <code>300000</code> since the BBC's HQ audio on Sounds is available at 320kbps. To disable the check, set it to <code>0</code>. Only needed if you're outside the UK and using VPN. <em>Number of bits per second</em>.<br><br></li>
-
+					<br>
 					<li><code>$ScriptInstanceControl</code>: This controls the instances of the script that can download at a time. If ANY of your instances are using VPN, you should set this to <code>$true</code>. If it's enabled, it works like this: If an instance is not configured to use VPN, other instances that are also not using the VPN can download at the same time. If an instance that needs VPN wants to download, it must wait until all other instances are done instances are done. If another script is downloading, the  current one will wait. If multiple scripts are connecting and disconnecting the VPN it will screw up downloads. Only needed if using ScriptInstanceControl. <em>$true/$false</em>.</li>
 					<li><code>$LockFileDirectory</code>: Directory to save lock files for <code>$ScriptInstanceControl</code>. Specify a non-environment dir (like not the user's temp dir) if the script is running under different user accounts. The paths will need to be accessible by all accounts and have read and write permissions for it to work properly. Only needed if using <code>$ScriptInstanceControl</code>. <em>Directory path</em>.</li>
 					<li><code>$LockFileMaxDuration</code>: This is the maximum age in seconds before lock files are deleted. This keeps script from getting hung up by orphaned lock files. It's rare, but it can happen if the script is interrupted during a download. To disable (not recommended), set to <code>0</code>. Only needed if using <code>$ScriptInstanceControl</code>. <em>Number of seconds</em>.<br><br></li>
@@ -129,18 +133,16 @@
 
 					<li><code>$ffmpegExe</code>: Path to ffmpeg.exe. You can also use the Get-ChildItem cmdlet:
 						<code class="block">(Get-ChildItem -Path $PSScriptRoot -Filter "ffmpeg.exe" -Recurse | Sort-Object -Descending -Property LastWriteTime | Select-Object -First 1 | % {$_.FullName })</code>
-						<br>
 						to recursively search for the most recent executable in the directory. <em>File path</em>.</li>
 					<li><code>$ffprobeExe</code>: Path or Get-ChildItem cmdlet to <code>ffprobe.exe</code>. <em>File path</em>.</li>
 					<li><code>$kid3Exe</code>: Path or Get-ChildItem cmdlet to <code>kid3-cli.exe</code>. <em>File path</em>.</li>
 					<li><code>$rcloneExe</code>: Path or Get-ChildItem cmdlet to <code>rclone.exe</code> (you can comment this line out with <code>#</code> if not using). <em>File path</em></li>
 					<li><code>$vpnExe</code>: Path to openvpn.exe. Since OpenVPN is usually installed into the Program Files directory, you can use the Get-ChildItem cmdlet to <code>openvpn.exe</code>.
 						<code class="block">(Get-ChildItem -Path $env:Programfiles -Filter 'openvpn.exe' -Recurse -ErrorAction SilentlyContinue |  Sort-Object -Descending -Property LastWriteTime | Select-Object -First 1 | % { $_.FullName })</code>
-						<br>
 						This must be the command line executable, not the gui. You can comment this line out with <code>#</code> if not using a VPN. <em>File path</em>.</li>
 					<li><code>$ytdlpExe</code>: Path or Get-ChildItem cmdlet to <code>yt-dlp.exe</code>. <em>File path</em>.<br><br></li>
 
-					<li><code>$SortArticles</code>: This isn't used much. This is a string of definite articles in various languages separated by a pipe (|). The script will strip these to fill tags specifically used for sorting. For example 'The Beatles' sort tags will become 'Beatles' and will get sorted in the Bs instead of the Ts. You can add your own for other languages, if needed. The caret (^)denotes the beginning of the string. Without it, it will also strip characters from the middle. Put a space after the definite article if it's its own word. For contractions like l', don't put a space. The defaults should be fine for most people, especially since this isn't music. <em>Delimited string</em>.<br><br></li>
+					<li><code>$SortArticles</code>: This isn't used much. This is a string of definite articles in various languages separated by a pipe (|). The script will strip these to fill tags specifically used for sorting. For example 'The Beatles' sort tags will become 'Beatles' and will get sorted in the Bs instead of the Ts. You can add your own for other languages, if needed. The caret (^)denotes the beginning of the string. Without it, it will also strip characters from the middle. Put a space after the definite article if it's its own word. For contractions like l', don't put a space. The defaults should be fine for most people, especially since this isn't music. <em>Delimited string</em>.<br></li>
 				</ul>
 				<li>If using rclone, configure it by setting up remotes: <code>rclone.exe config</code><br>
 				<ul>
@@ -152,11 +154,9 @@
 			<li>If using OpenVPN, you'll need to download or create .ovpn config files. This will be different for each VPN provider. I use one called <a href="https://www.privateinternetaccess.com/">Private Internet Access</a> (PIA), which offers multiple UK servers and makes pre-made config files available for download. In the OpenVPN config directory, you'll also need to create a text file with your VPN username in the first line and your password in the second line. Then, in each .ovpn file you'll need to add:
 				<br>
 				<code class="block">auth-user-pass "C:\\Program Files\\OpenVPN\\config\\&lt;YourPasswordFile&gt;.txt"</code>
-				<br>
 				This will let OpenVPN connect without having to enter the credentials every time. Note the double back-slashes (\\) in the path.</li>
 			<li>If using rclone to upload the files to a remote that isn't an S3 bucket or the Internet Archive, edit SoundsDownloadScript.ps1 to configure the script blocks to configure the <code>rclone.exe</code> command line. Script blocks must start with <code>$remote_</code> in order to be run. You will need to be a little familiar with Powershell. Use an If statement to qualify the script block (otherwise it will always run). Something like:
 				<span><code class="block">$remote_test = {If ($RemoteConfig.$Remote.type -eq "internetarchive") {& $rcloneExe sync $SaveDir $rcloneSyncDir --create-empty-src-dirs --progress --config $rcloneConfig -v $rcloneDebugArgs}}</code></span>
-				<br>
 				The <code>If</code> statement reads the ini file and checks that the remote matches the one specified. In this case, "internetarchive". You can have it check any of the properties in the ini file to match.	
 				<ul>
 					<li><code>$RemoteConfig</code> is the location of the rclone configuration file</li>
@@ -180,12 +180,6 @@
 				<ul>
 					<li><code>$kid3Exe</code>: Path to kid3-cli.exe. <em>File path</em>.</li>
 					<li><code>$rcloneExe</code>: Path to rclone.exe (you can comment this line out with <code>#</code> if not using). <em>File path</em>.</li>
-					<li><code>$Debug</code>: Can be used to force debug logs on or off for all instances. Logs will be saved in the <code>$DebugDirectory</code> specified below. This can also be set in each profile using <code>Debug</code> or from the command line using the <code>-Debug</code> switch parameter.
-						<ul>
-							<li><code>$true</code> = Save debug logs for all downloads</li>
-							<li><code>$false</code> = Don't save debug logs for any downloads</li>
-						</ul>
-					<li><code>$DebugDirectory</code>: This is the directory to move logs to when <code>$Debug</code> is set to <code>$true</code>. This can also be set in each profile using the <code>DebugDirectory</code> option or from the command line using the <code>-DebugDirectory</code> parameter. <em>File path</em>.</li>
 				</ul>
 			<li>Copy SampleProfile file to the directory that genRSS.ps1 is in.</li>
 			<li>Copy and edit the SampleProfile file:<br>
@@ -210,10 +204,10 @@
 					<li><code>RerunTitles</code>: Searches the episode titles for this text to decide whether it's a rerun. Separate entries by a comma and without a space. I suggest putting the Series numbers in here (Ex: <code>Series 21,Series 22</code>). <em>String</em>.</li>
 					<li><code>SkipFiles</code>: Searches the episode file names for this text to decide whether to skip the file. Separate entries by a comma. I recommend using the BBC program ID. These episodes will not be included in the RSS. <em>String</em>.</li>
 					<li><code>SkipTitles</code>: Searches the episode titles for this text to decide whether to skip the file. Separate entries by a comma. These episodes will not be included in the RSS. <em>String</em>.</li>
-					<li><code>&lt;BBCProgramID&gt;=Desired Title</code>: You can force it to use a custom title on specific episodes. One line for each episode. genRSS will use that title for the episode instead of pulling it from the metadata. Examples:<br>
-						<code class="block">m001ts8t=Seasonal Trimmings</code><br>
+					<li><code>&lt;BBCProgramID&gt;=Desired Title</code>: You can force it to use a custom title on specific episodes. One line for each episode. genRSS will use that title for the episode instead of pulling it from the metadata. Examples:
+						<code class="block">m001ts8t=Seasonal Trimmings</code>
 						<code class="block">m002tc9v=Year in Review</code>
-					<br><br></li>
+					<br></li>
 					
 					<li><code>Debug</code>: Output the console and variables to a text file in the <code>$DebugDirectory</code>. Log file name structure is 'genRSS_&lt;Profile Name&gt;-&lt;Script PID&gt;-&lt;Inc No&gt;-Console+Vars.log'. This can be set with a command line parameter, instead. <em>yes/no</em>.</li>
 					<li><code>DebugDirectory</code>: The directory to save log files if <code>-Debug</code> is enabled. This can be set with a command line parameter, instead. <em>Directory path</em>.</li>
@@ -241,6 +235,10 @@
 					<li><code>{4}</code> = The release date and/or time in UK time. See above.</li>
 				</ul>
 				An often useful format for serialized shows is <code>'{1} - {2}'</code> which will set the series and episode numbers: Series 15 - Episode 4. <em>String</em>.
+			</li>
+			<li><code>-Bitrate</code>: Specify the bitrate stream that yt-dlp should download. Set to <code>0</code> to have yt-dlp download the highest bitrate available. It must be the number of kilobits per second (kbps), and only the number. The higher the bitrate, the higher the audio the quality and the bigger the file size. Available bitrates are generally <code>48</code>, <code>96</code>, <code>128</code>, and <code>320</code>. If the specified bitrate is not available, yt-dlp will fail to download the program and will throw an error that says <code>Requested format is not available</code>. You can view the bitrates that are available for a particular stream by running:
+				<code class="block">yt-dlp.exe --list-formats [URL...]</code>
+				The BBC only makes its content available worldwide in <code>48</code> and <code>96</code> kbps. If you are outside the UK, and want to download a higher bitrate, you will need to combine this option with <code>-VPNConfig</code> and have a VPN provider with UK servers that can access those streams. <em>Number of kilobits</em>.
 			</li>
 			<li><code>-mp3</code>: Transcode the audio file to mp3 using ffmpeg after downloading. The default is file type is m4a. <em>Switch</em>.</li>
 			<li><code>-Archive</code>: The number of episodes to keep. After the script downloads the latest one, it will delete excess ones. <em>Number</em>.</li>
@@ -279,6 +277,7 @@
 		<em>Using VPN and uploading to archive.org:</em>
 		<ul><li><b>Program:</b> <code>"C:\Program Files\PowerShell\7\pwsh.exe"</code> <b>Arguments:</b> <code>"-Command & 'C:\Program Files\VideoLAN\VLC\SoundsDownloadScript.ps1' -ProgramURL https://www.bbc.co.uk/programmes/b0100rp6 -SaveDir 'F:\Audio\Radcliffe and Maconie' -ShortTitle RadMac -VPNConfig 'C:\Program Files\OpenVPN\config\uk_streaming.ovpn,C:\Program Files\OpenVPN\config\uk_southampton.ovpn,C:\Program Files\OpenVPN\config\uk_manchester.ovpn,C:\Program Files\OpenVPN\config\uk_london.ovpn' -rcloneConfig 'C:\Program Files\VideoLAN\VLC\rclone\rclone.conf' -rcloneSyncDir 'internetarchive_config:' -Archive 0"</code></li></ul>	
 		<br>
+
 		<h2 id="CodeQuirks">CODE QUIRKS:</h2>
 		<p>Feel free to mess around in the code if you're comfortable with Powershell. I tried to make SoundsDownloadScript.ps1 fairly modular and include comments to help. However, there are a few things to keep in mind:</p>
 		<h3>Audio file name:</h3>
@@ -296,7 +295,7 @@
 			<li>AudioSourceURL: The URL to the BBC Sounds episode page</li>			
 		</ul>
 		<p>SoundsDownloadScript.ps1 uses kid3 to set tags. If you want to change them or add additional ones, <a href="https://kid3.sourceforge.io/kid3_en.html#frame-list">The Kid3 Handbook</a> has a breakout of what tags it supports. genRSS.ps1 also uses kid3 to read tags. kid3 spits out the tags in JSON format and then the script parses it. If you're having trouble, you can run<br>
-			<code class="block">.\kid3-cli.exe -c '{\"method\":\"get\"}' '[FILE...]'</code><br>
+			<code class="block">.\kid3-cli.exe -c '{\"method\":\"get\"}' '[FILE...]'</code>
 		to see exactly what kid3 is reading from the audio file and passing to the script. Sometimes special characters can trip it up and it might be necessary to add to the <code>$StringToFormat</code> variable in the Format-kid3CommandString function. It will probably take some troubleshooting. Turn on the debug logs to help.</p>
 		<h3>genRSS.ps1:</h3>
 		<p>I heavily modified <a href="https://gist.github.com/arebee/a7a77044c77443effaeddbe3730af4ad">this script</a> to create genRSS.ps1. I don't really understand the XML writer part of it, only that it just seems to work. The whole script is messy and very inefficient. Good luck!</p>
