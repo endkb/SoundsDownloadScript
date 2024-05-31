@@ -6,7 +6,6 @@
 		<style>
 			code {
 				display: inline;
-				font-weight: bold;
 				}
 			html {
 				font-size: 14px;
@@ -29,7 +28,7 @@
 	</head>
 	<body>
 		<h1>SoundsDownloadScript.ps1 + genRSS.ps1</h1>
-		<p><em>*Updated: 31-May-2024 00:52 GMT</em></p>
+		<p><em>*Updated: 31-May-2024 03:25 GMT</em></p>
 		<p>These instructions are very crude and messy. Sorry about the word vomit. I hope they help, though. If someone wants to convert this file into a markdown README.md for github, be my guest. The scripts are a little tedious to set up the first time, but once you get them working they're pretty reliable.</p>
 		<p>I recommend you check the <a href="https://github.com/endkb/SoundsDownloadScript">repo</a> on github for the <a href="https://html-preview.github.io/?url=https://github.com/endkb/SoundsDownloadScript/blob/main/README.htm">latest version of this README</a> before continuing.</p>
 		<p>If you find a bug in the scripts or something is incorrect or incomplete in the documentation, feel free to <a href="https://github.com/endkb/SoundsDownloadScript/issues">open an issue on github</a>.</p>
@@ -261,8 +260,12 @@
 			<li><code>-Force</code>: Download the episode even if it's already downloaded. It will append an underscore number to the end so as not to overwrite an existing file. This can be useful for testing. <em>Switch</em>.</li>
 		</ul>
 		<p><em>TerminatingError(Invoke-WebRequest):</em></p>
-		<p>Sometimes the BBC updates the program page before it releases the episode on Sounds. This will cause SoundsDownloadScript.ps1 to try to download the episode that isn't available yet. In the Console+Vars debug log, you'll see: <code>PS>TerminatingError(Invoke-WebRequest):</code> followed by a lot of html and <code>Sorry, the page you are looking for cannot be found!</code>. If this happens, just wait and run the script again later after the episode has been released.</p>
-
+		<p>Sometimes the BBC updates the program page before it releases the episode on Sounds. This will cause SoundsDownloadScript.ps1 to try to download the episode that isn't available yet. In the Console+Vars debug log, you'll see:</p>
+		<p><code class="block">PS>TerminatingError(Invoke-WebRequest): "<br>
+		<br>
+		<br>
+		  BBC Sounds</code></p>
+		<p>followed by a lot of html and the message <code>Sorry, the page you are looking for cannot be found!</code>. If this happens, just wait and run the script again later after the episode has been released.</p>
 		<h3 id="HowToRun_2">genRSS.ps1 (if using)</h3>
 		<p><em>Command line parameters:</em></p>
 		<ul>
