@@ -1,5 +1,4 @@
-# Copyright (c) 2024 endkb <https://github.com/endkb>
-# MIT License (see README.htm for details)
+# Based on the format described at http://podcast411.com/howto_1.html
 
 param(
 	[String]$Profile,
@@ -214,11 +213,8 @@ try {$SkipTitles = $Config['SkipTitles'].Split(",")} catch {}
 			}
 		}
 
-	If ($($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'WEBSITE'}).value) {
+	If ($($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'Website'}).value) {
 		$Link = $($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'WEBSITE'}).value
-		}
-	If ($($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'User-defined URL'}).value) {
-		$Link = $($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'User-defined URL'}).value
 		}
 
 	$EpisodeCode = $Link.split('/')[-1]
@@ -258,13 +254,10 @@ try {$SkipTitles = $Config['SkipTitles'].Split(",")} catch {}
 			}
 		}
 
-	$ItemCover = $($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'albumart'}).value
+	$ItemCover = $($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'AlbumArt'}).value
 
-	If ($($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'TOAL'}).value) {
-		[DateTime]$ReleaseDate = $($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'TOAL'}).value
-		}
-	If ($($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'Original Album'}).value) {
-		[DateTime]$ReleaseDate = $($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'Original Album'}).value
+	If ($($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'Release Date'}).value) {
+		[DateTime]$ReleaseDate = $($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'Release Date'}).value
 		}
 	If (!$ReleaseDate) {
 		[DateTime]$ReleaseDate = $item.CreationTime.ToUniversalTime()
