@@ -30,7 +30,7 @@ param(
 
 $DefaultTrackNoFormat = 'c'                 # DateTime format string to set the track number if $TrackNoFormat is not set
 $DefaultTitleFormat = '{1}'                 # Format string to set episode title to if $TitleFormat is not set
-$DefaultBitrate = 0                         # Bitrate to download if $Bitrate is not set: 48, 96, 128, 320, 0 = Download highest available
+$DefaultBitrate = 96                        # Bitrate to download if $Bitrate is not set: 48, 96, 128, 320, 0 = Download highest available
 
 $DumpDirectory = $env:TEMP                  # Directory to save the stream to while working on it - to use the win temp dir: $env:TEMP
 
@@ -499,42 +499,73 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 	# Set the episode program page - more permanent than the Sounds page (also used by genRSS to set the guid)
 	$EpisodePage  = "https://www.bbc.co.uk/programmes/$ProgramID"
 
+	# Allows HTMLDecode to be used later to get rid of HTML entities
+	Add-Type -AssemblyName System.Web
+	# Pull the genre links from the program page and put into array
+	$GetGenres = ((Invoke-WebRequest –Uri $EpisodePage -UseBasicParsing).Links | Where-Object {$_.href -like "/programmes/genres/*"}).outerHTML | % {[regex]::matches( $_ , '(?<=>)(.*)*(?=<\/a>)')} | Select -ExpandProperty value
+
+	# Get the yt-dlp version info
+	$ytdlpName = (Get-Item -Path $ytdlpExe).VersionInfo.ProductName
+	$ytdlpVer = (Get-Item -Path $ytdlpExe).VersionInfo.ProductVersion
+
 	# Function to escape quotes in tags before passing them to kid3
 	Function Format-kid3CommandString ($StringToFormat) {
 		Return $StringToFormat.replace("'","\'").replace("\`"","`"").replace("`"","\`"").replace("|","\|")
 		}
 
-	# Build the arguments to set the id3 tags with kid3-cli - also add escape \ to apostrophes
-	$tagtitle = "set title '" + $(Format-kid3CommandString($EpisodeTitle)) + "'"
-	$tagtitlesort = "set TSOT '" + $(Format-kid3CommandString($EpisodeTitle -replace $SortArticles)) + "'"
-	$tagartist = "set artist '" + $(Format-kid3CommandString($Station)) + "'"
-	$tagsortalbart = "set TSO2 '" + $(Format-kid3CommandString($Station -replace $SortArticles)) + "'"
-	$tagsortart = "set TSOP '" + $(Format-kid3CommandString($Station -replace $SortArticles)) + "'"
-	$tagalbart = "set AlbumArtist '" + $(Format-kid3CommandString($Station)) + "'"
-	$tagalbum = "set album '" + $(Format-kid3CommandString($ShowTitle)) + "'"
-	$tagalbumsort = "set TSOA '" + $(Format-kid3CommandString($ShowTitle -replace $SortArticles)) + "'"
-	$tagdate = "set date '" + $ReleaseDate.ToString("yyyy-MM-dd") + "'"
-	$tagorigdate = "set OriginalDate '" + $ReleaseDate.ToUniversalTime() + "'"
-	$tagorigdatemp3 = "set TOAL '" + $ReleaseDate.ToUniversalTime() + "'"
-	$tagyear = "set TDOR '" + $ReleaseDate.ToString("yyyy") + "'"
-	$tagtrack = "set track '" + $TrackNumber + "'"
-	$tagpub = "set publisher '" + $(Format-kid3CommandString($Station)) + "'"
-	$tagencby = "set ©enc '" + $(Format-kid3CommandString((Get-Content $PSCommandpath -First 1).TrimStart('#').Trim())) + "'"
-	$tagsource = "set WEBSITE '" + $EpisodePage + "'"
-	$tagsourcemp3 = "set WOAR '" + $EpisodePage + "'"
-	$tagurl = "set AudioSourceURL '" + $SoundsPlayLink + "'"
-	$tagcomment = "set comment '" + $(Format-kid3CommandString($Comment)) + "'"
-	$setpicture = "set Picture:'$DumpDirectory\$ImageName' ''"
-	$albumart = "set albumart '$CoverResult'"
-
-	# Get the yt-dlp version info
-	$ytdlpName = (Get-Item -Path $ytdlpExe).VersionInfo.ProductName
-	$ytdlpVer = (Get-Item -Path $ytdlpExe).VersionInfo.ProductVersion
-	# Update the id3 tag argument for kid3-cli
-	$tagencset = "set TSSE '$ytdlpName $ytdlpVer'"
+	$kid3Commands = @( )
+	If ($Ext -eq ".m4a") {
+		# Build MP4 metadata commands to pass to kid3 - See kid3 handbook
+		$kid3Commands += "-c", "set ©nam '$(Format-kid3CommandString($EpisodeTitle))'"
+		$kid3Commands += "-c", "set sonm '$(Format-kid3CommandString($EpisodeTitle -replace $SortArticles))'"
+		$kid3Commands += "-c", "set ©ART '$(Format-kid3CommandString($Station))'"
+		$kid3Commands += "-c", "set soaa '$(Format-kid3CommandString($Station -replace $SortArticles))'"
+		$kid3Commands += "-c", "set soar '$(Format-kid3CommandString($Station -replace $SortArticles))'"	
+		$kid3Commands += "-c", "set aART '$(Format-kid3CommandString($Station))'"
+		$kid3Commands += "-c", "set ©alb '$(Format-kid3CommandString($ShowTitle))'"
+		$kid3Commands += "-c", "set soal '$(Format-kid3CommandString($ShowTitle -replace $SortArticles))'"
+		$kid3Commands += "-c", "set ©day '$($ReleaseDate.ToString(`"yyyy-MM-dd`"))'"
+		$kid3Commands += "-c", "set RELEASEDATE '$($ReleaseDate.ToUniversalTime())'"
+		$kid3Commands += "-c", "set ORIGINALDATE '$($ReleaseDate.ToString(`"yyyy`"))'"
+		$kid3Commands += "-c", "set trkn '$TrackNumber'"
+		$kid3Commands += "-c", "set PUBLISHER '$(Format-kid3CommandString($Station))'"
+		$kid3Commands += "-c", "set ©enc '$(Format-kid3CommandString((Get-Content $PSCommandpath -First 1).TrimStart('#').Trim()))'"
+		$kid3Commands += "-c", "set WEBSITE '$EpisodePage'"
+		$kid3Commands += "-c", "set AudioSourceURL '$SoundsPlayLink'"
+		$kid3Commands += "-c", "set ©cmt '$(Format-kid3CommandString($Comment))'"
+		If ($GetGenres -ne $null) {
+			$kid3Commands += "-c", "set ©gen '$([System.Web.HttpUtility]::HTMLDecode($GetGenres[0]))'"
+			}
+		$kid3Commands += "-c", "set ©too '$ytdlpName $ytdlpVer'"
+		} Else {
+			# If not m4a build ID3v2.4 tags instead 
+			$kid3Commands += "-c", "set TIT2 '$(Format-kid3CommandString($EpisodeTitle))'"
+			$kid3Commands += "-c", "set TSOT '$(Format-kid3CommandString($EpisodeTitle -replace $SortArticles))'"
+			$kid3Commands += "-c", "set TPE1 '$(Format-kid3CommandString($Station))'"
+			$kid3Commands += "-c", "set TSO2 '$(Format-kid3CommandString($Station -replace $SortArticles))'"
+			$kid3Commands += "-c", "set TSOP '$(Format-kid3CommandString($Station -replace $SortArticles))'"
+			$kid3Commands += "-c", "set TPE2 '$(Format-kid3CommandString($Station))'"
+			$kid3Commands += "-c", "set TALB '$(Format-kid3CommandString($ShowTitle))'"
+			$kid3Commands += "-c", "set TSOA '$(Format-kid3CommandString($ShowTitle -replace $SortArticles))'"
+			$kid3Commands += "-c", "set TDRC '$($ReleaseDate.ToString(`"yyyy-MM-dd`"))'"
+			$kid3Commands += "-c", "set TDRL '$($ReleaseDate.ToUniversalTime())'"
+			$kid3Commands += "-c", "set TDOR '$($ReleaseDate.ToString(`"yyyy`"))'"
+			$kid3Commands += "-c", "set TRCK '$TrackNumber'"
+			$kid3Commands += "-c", "set TPUB '$(Format-kid3CommandString($Station))'"
+			$kid3Commands += "-c", "set TENC '$(Format-kid3CommandString((Get-Content $PSCommandpath -First 1).TrimStart('#').Trim()))'"
+			$kid3Commands += "-c", "set WOAR '$EpisodePage'"
+			$kid3Commands += "-c", "set WOAS '$SoundsPlayLink'"
+			$kid3Commands += "-c", "set COMM '$(Format-kid3CommandString($Comment))'"
+			If ($GetGenres -ne $null) {
+				$kid3Commands += "-c", "set TCON '$([System.Web.HttpUtility]::HTMLDecode($GetGenres -Join '''|'''))'"
+				}
+			$kid3Commands += "-c", "set TSSE '$ytdlpName $ytdlpVer'"
+			}
+	$kid3Commands += "-c", "set Picture:'$DumpDirectory\$ImageName' ''"
+	$kid3Commands += "-c", "set AlbumArt '$CoverResult'"
 
 	# Run kid3-cli to apply the tags
-	& $kid3Exe -c $tagtitle -c $tagtitlesort -c $tagartist -c $tagsortalbart -c $tagsortart -c $tagalbart -c $tagalbum -c $tagalbumsort -c $tagdate -c $tagorigdate -c $tagorigdatemp3 -c $tagyear -c $tagtrack -c $tagpub -c $tagencby -c $tagencset -c $setpicture -c $albumart -c $tagsource -c $tagsourcemp3 -c $tagurl -c $tagcomment $DumpFile$Ext
+	& $kid3Exe $kid3Commands $DumpFile$Ext
 
 	# Create the save directory if it doesn't exist
 	New-Item -ItemType Directory -Force -Path $SaveDir
