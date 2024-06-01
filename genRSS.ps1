@@ -258,7 +258,11 @@ try {$SkipTitles = $Config['SkipTitles'].Split(",")} catch {}
 
 	If ($($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'Release Date'}).value) {
 		[DateTime]$ReleaseDate = $($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'Release Date'}).value
-		}
+		} Else {
+			If ($($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'TOAL'}).value) {
+				[DateTime]$ReleaseDate = $($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'TOAL'}).value
+				}
+			}		
 	If (!$ReleaseDate) {
 		[DateTime]$ReleaseDate = $item.CreationTime.ToUniversalTime()
 		}
