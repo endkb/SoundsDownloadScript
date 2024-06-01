@@ -313,6 +313,9 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 
 	# Grab the release date
 	$ReleaseDate = [datetime]$($jsonData.modules.data[0].data.availability.from)
+	
+	# Grab the release date
+	$OriginalReleaseDate = [datetime]$($jsonData.modules.data[0].data.release.date)	
 
 	# Put all of the tracks in an array
 	$TrackTable = $($jsonData.tracklist.tracks)
@@ -409,7 +412,6 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 				Start-ytdlp
 				}
 
-
 			ForEach ($VPNPID in $VPNPIDArray) {
 				Stop-Process -Id $VPNPID -ErrorAction SilentlyContinue
 				}
@@ -417,7 +419,6 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 			# Search for the DumpFile to see if yt-dlp finished downloading
 			$FinishedFile = Get-ChildItem -Path $DumpDirectory\$NakedName.* -Exclude *.part, *.ytdl | Select-Object -Last 1
 			If ($FinishedFile) {Break VPNLoop}
-				
 			}
 
 		Write-Host "**Disconnecting from the VPN"
@@ -499,10 +500,8 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 	# Set the episode program page - more permanent than the Sounds page (also used by genRSS to set the guid)
 	$EpisodePage  = "https://www.bbc.co.uk/programmes/$ProgramID"
 
-	# Allows HTMLDecode to be used later to get rid of HTML entities
-	Add-Type -AssemblyName System.Web
 	# Pull the genre links from the program page and put into array
-	$GetGenres = ((Invoke-WebRequest –Uri $EpisodePage -UseBasicParsing).Links | Where-Object {$_.href -like "/programmes/genres/*"}).outerHTML | % {[regex]::matches( $_ , '(?<=>)(.*)*(?=<\/a>)')} | Select -ExpandProperty value
+	$GetGenres = @(((Invoke-WebRequest –Uri $EpisodePage -UseBasicParsing).Links | Where-Object {$_.href -like "/programmes/genres/*"}).outerHTML | % {[regex]::matches( $_ , '(?<=>)(.*)*(?=<\/a>)')} | Select -ExpandProperty value)
 
 	# Get the yt-dlp version info
 	$ytdlpName = (Get-Item -Path $ytdlpExe).VersionInfo.ProductName
@@ -514,8 +513,9 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 		}
 
 	$kid3Commands = @( )
+	# Build MP4 or ID3v2.4 metadata commands to pass to kid3 - See kid3 handbook
 	If ($Ext -eq ".m4a") {
-		# Build MP4 metadata commands to pass to kid3 - See kid3 handbook
+		# Note: ©nam is required for genRSS.ps1 - sets <title> and <itunes:title>
 		$kid3Commands += "-c", "set ©nam '$(Format-kid3CommandString($EpisodeTitle))'"
 		$kid3Commands += "-c", "set sonm '$(Format-kid3CommandString($EpisodeTitle -replace $SortArticles))'"
 		$kid3Commands += "-c", "set ©ART '$(Format-kid3CommandString($Station))'"
@@ -524,21 +524,25 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 		$kid3Commands += "-c", "set aART '$(Format-kid3CommandString($Station))'"
 		$kid3Commands += "-c", "set ©alb '$(Format-kid3CommandString($ShowTitle))'"
 		$kid3Commands += "-c", "set soal '$(Format-kid3CommandString($ShowTitle -replace $SortArticles))'"
-		$kid3Commands += "-c", "set ©day '$($ReleaseDate.ToString(`"yyyy-MM-dd`"))'"
+		$kid3Commands += "-c", "set ©day '$($OriginalReleaseDate.ToString(`"yyyy`"))'"
+		# Note: RELEASEDATE is required for genRSS.ps1 - sets <pubDate>
 		$kid3Commands += "-c", "set RELEASEDATE '$($ReleaseDate.ToUniversalTime())'"
-		$kid3Commands += "-c", "set ORIGINALDATE '$($ReleaseDate.ToString(`"yyyy`"))'"
+		$kid3Commands += "-c", "set ORIGINALDATE '$($OriginalReleaseDate.ToString(`"yyyy-MM-dd`"))'"
 		$kid3Commands += "-c", "set trkn '$TrackNumber'"
 		$kid3Commands += "-c", "set PUBLISHER '$(Format-kid3CommandString($Station))'"
 		$kid3Commands += "-c", "set ©enc '$(Format-kid3CommandString((Get-Content $PSCommandpath -First 1).TrimStart('#').Trim()))'"
+		# Note: WEBSITE is required for genRSS.ps1 - sets <guid> and <link>
 		$kid3Commands += "-c", "set WEBSITE '$EpisodePage'"
 		$kid3Commands += "-c", "set AudioSourceURL '$SoundsPlayLink'"
+		# Note: ©cmt is required for genRSS.ps1 - sets <description> and <itunes:summary>
 		$kid3Commands += "-c", "set ©cmt '$(Format-kid3CommandString($Comment))'"
 		If ($GetGenres -ne $null) {
+			Add-Type -AssemblyName System.Web
 			$kid3Commands += "-c", "set ©gen '$([System.Web.HttpUtility]::HTMLDecode($GetGenres[0]))'"
 			}
 		$kid3Commands += "-c", "set ©too '$ytdlpName $ytdlpVer'"
 		} Else {
-			# If not m4a build ID3v2.4 tags instead 
+			# Note: TIT2 is required for genRSS.ps1 - sets <title> and <itunes:title>
 			$kid3Commands += "-c", "set TIT2 '$(Format-kid3CommandString($EpisodeTitle))'"
 			$kid3Commands += "-c", "set TSOT '$(Format-kid3CommandString($EpisodeTitle -replace $SortArticles))'"
 			$kid3Commands += "-c", "set TPE1 '$(Format-kid3CommandString($Station))'"
@@ -547,24 +551,29 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 			$kid3Commands += "-c", "set TPE2 '$(Format-kid3CommandString($Station))'"
 			$kid3Commands += "-c", "set TALB '$(Format-kid3CommandString($ShowTitle))'"
 			$kid3Commands += "-c", "set TSOA '$(Format-kid3CommandString($ShowTitle -replace $SortArticles))'"
-			$kid3Commands += "-c", "set TDRC '$($ReleaseDate.ToString(`"yyyy-MM-dd`"))'"
+			$kid3Commands += "-c", "set TDRC '$($OriginalReleaseDate.ToString(`"yyyy`"))'"
+			# Note: TDRL is required for genRSS.ps1 - sets <pubDate>
 			$kid3Commands += "-c", "set TDRL '$($ReleaseDate.ToUniversalTime())'"
-			$kid3Commands += "-c", "set TDOR '$($ReleaseDate.ToString(`"yyyy`"))'"
+			$kid3Commands += "-c", "set TDOR '$($OriginalReleaseDate.ToString(`"yyyy-MM-dd`"))'"
 			$kid3Commands += "-c", "set TRCK '$TrackNumber'"
 			$kid3Commands += "-c", "set TPUB '$(Format-kid3CommandString($Station))'"
 			$kid3Commands += "-c", "set TENC '$(Format-kid3CommandString((Get-Content $PSCommandpath -First 1).TrimStart('#').Trim()))'"
+			# Note: WOAR is required for genRSS.ps1 - sets <guid> and <link>
 			$kid3Commands += "-c", "set WOAR '$EpisodePage'"
 			$kid3Commands += "-c", "set WOAS '$SoundsPlayLink'"
+			# Note: COMM is required for genRSS.ps1 - sets <description> and <itunes:summary>
 			$kid3Commands += "-c", "set COMM '$(Format-kid3CommandString($Comment))'"
 			If ($GetGenres -ne $null) {
+				Add-Type -AssemblyName System.Web
 				$kid3Commands += "-c", "set TCON '$([System.Web.HttpUtility]::HTMLDecode($GetGenres -Join '''|'''))'"
 				}
 			$kid3Commands += "-c", "set TSSE '$ytdlpName $ytdlpVer'"
 			}
 	$kid3Commands += "-c", "set Picture:'$DumpDirectory\$ImageName' ''"
+	# Note: AlbumArt is required for genRSS.ps1 - sets cover image as <media:content> and <itunes:image>
 	$kid3Commands += "-c", "set AlbumArt '$CoverResult'"
 
-	# Run kid3-cli to apply the tags
+	# Run kid3-cli to set the tags
 	& $kid3Exe $kid3Commands $DumpFile$Ext
 
 	# Create the save directory if it doesn't exist
