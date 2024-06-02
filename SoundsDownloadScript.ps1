@@ -28,9 +28,11 @@ param(
         │                  ▼    Begin script configuration options    ▼                  │
         └────────────────────────────────────────────────────────────────────────────────┘      #>
 
-$DefaultTrackNoFormat = 'c'                 # DateTime format string to set the track number if $TrackNoFormat is not set
-$DefaultTitleFormat = '{1}'                 # Format string to set episode title to if $TitleFormat is not set
-$DefaultBitrate = 96                        # Bitrate to download if $Bitrate is not set: 48, 96, 128, 320, 0 = Download highest available
+$DefaultTrackNoFormat = 'c'                 # DateTime format string to set the track number if -TrackNoFormat is not set
+$DefaultTitleFormat = '{1}'                 # Format string to set episode title to if -TitleFormat is not set
+$DefaultBitrate = 96                        # Bitrate to download if -Bitrate is not set: 48, 96, 128, 320, 0 = Download highest available
+
+$GenreTag = $true                           # Pull the genre(s) from the program page and set into the metadata
 
 $DumpDirectory = $env:TEMP                  # Directory to save the stream to while working on it - to use the win temp dir: $env:TEMP
 
@@ -60,10 +62,10 @@ $ytdlpExe = (Get-ChildItem -Path $PSScriptRoot -Filter "yt-dlp.exe" -Recurse |  
 $SortArticles =                             # String of definite articles to trim from fields for sorting tags - separate with a pipe, ^ is beginning of string
 "^a |^an |^el |^l'|^la |^las |^le |^les |^lo |^los |^the |^un |^una |^une "
 
-<#	SCRIPT BLOCKS: Configure script blocks below to run rclone commands depending on the remote backend. New ones can be included. Script blocks must be 
+<#	SCRIPT BLOCKS: Configure script blocks below to run rclone commands depending on the remote backend. New ones can be included. Script blocks must be
 	stored in vars that start with 'remote_'. Use the 'If' statement to match the remote type found in the rclone config file. See https://rclone.org/docs/	#>
 # Internet Archive
-$remote_ia = {If ($RemoteConfig.$Remote.type -eq "internetarchive") {	
+$remote_ia = {If ($RemoteConfig.$Remote.type -eq "internetarchive") {
 	# Build the headers to set the metadata - See https://archive.org/developers/metadata-schema/index.html and https://github.com/vmbrasseur/IAS3API/blob/master/metadata.md#setting-metadata-values-via-headers
 	$iaHeaders = @( )
 	$iaHeaders += "--header", "X-Archive-Meta-Collection: opensource_audio"
@@ -133,7 +135,7 @@ Function Get-IniContent ($FilePath) {
 		}
 	Return $ini
 	}
-	
+
 Function Start-ytdlp {
 	# Use the default bitrate if not speficied in CL
 	If (!$Bitrate) {
@@ -165,6 +167,9 @@ Function StartDebug {
 If ($Debug) {
 	StartDebug
 	}
+
+# Turn off PS progress bars for speed
+$ProgressPreference = 'SilentlyContinue'
 
 # This will override any of the config options above with whatever is specified in $DotSrcConfig file
 If ($DotSrcConfig) {
@@ -205,8 +210,10 @@ If ($ProgramURL -like "https://www.bbc.co.uk/sounds/play/*") {
 	}
 
 If (!$SoundsPlayLink) {
+	# Get the content of the program page
+	$ProgramPageHTML = (Invoke-WebRequest –Uri $ProgramURL -UseBasicParsing)
 	# Search the program page for the Sounds link to the latest episode
-	$SoundsPlayLink = ((Invoke-WebRequest –Uri $ProgramURL -UseBasicParsing).Links | Where-Object {$_.href -like "https://www.bbc.co.uk/sounds/play/*"} | Select-Object -First 1).href
+	$SoundsPlayLink = ($ProgramPageHTML.Links | Where-Object {$_.href -like "https://www.bbc.co.uk/sounds/play/*"} | Select-Object -First 1).href
 	}
 
 Write-Host "**Sounds URL: $SoundsPlayLink"
@@ -313,9 +320,9 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 
 	# Grab the release date
 	$ReleaseDate = [datetime]$($jsonData.modules.data[0].data.availability.from)
-	
+
 	# Grab the release date
-	$OriginalReleaseDate = [datetime]$($jsonData.modules.data[0].data.release.date)	
+	$OriginalReleaseDate = [datetime]$($jsonData.modules.data[0].data.release.date)
 
 	# Put all of the tracks in an array
 	$TrackTable = $($jsonData.tracklist.tracks)
@@ -407,7 +414,7 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 				}
 			If ($(Get-NetAdapter -Name $VPNAdapter).Status -eq "Up") {
 				Write-Host "**Connected to the VPN"
-				
+
 				# Call yt-dlp to download the file
 				Start-ytdlp
 				}
@@ -500,8 +507,13 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 	# Set the episode program page - more permanent than the Sounds page (also used by genRSS to set the guid)
 	$EpisodePage  = "https://www.bbc.co.uk/programmes/$ProgramID"
 
-	# Pull the genre links from the program page and put into array
-	$GetGenres = @(((Invoke-WebRequest –Uri $EpisodePage -UseBasicParsing).Links | Where-Object {$_.href -like "/programmes/genres/*"}).outerHTML | % {[regex]::matches( $_ , '(?<=>)(.*)*(?=<\/a>)')} | Select -ExpandProperty value)
+	If ($GenreTag -eq $true) {
+		# Still need to get the program page if a Sounds link was given as $ProgramURL
+		If (!$ProgramPageHTML) {$ProgramPageHTML = (Invoke-WebRequest –Uri $EpisodePage -UseBasicParsing)}
+		# Pull the genre links from the program page and put into array
+		$GetGenres = @(($ProgramPageHTML.Links | Where-Object {$_.href -like "/programmes/genres/*"}).outerHTML | % {[regex]::matches( $_ , '(?<=>)(.*)*(?=<\/a>)')} | Select -ExpandProperty value)
+		$GetGenres = $GetGenres | Select -Unique
+		}
 
 	# Get the yt-dlp version info
 	$ytdlpName = (Get-Item -Path $ytdlpExe).VersionInfo.ProductName
@@ -520,7 +532,7 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 		$kid3Commands += "-c", "set sonm '$(Format-kid3CommandString($EpisodeTitle -replace $SortArticles))'"
 		$kid3Commands += "-c", "set ©ART '$(Format-kid3CommandString($Station))'"
 		$kid3Commands += "-c", "set soaa '$(Format-kid3CommandString($Station -replace $SortArticles))'"
-		$kid3Commands += "-c", "set soar '$(Format-kid3CommandString($Station -replace $SortArticles))'"	
+		$kid3Commands += "-c", "set soar '$(Format-kid3CommandString($Station -replace $SortArticles))'"
 		$kid3Commands += "-c", "set aART '$(Format-kid3CommandString($Station))'"
 		$kid3Commands += "-c", "set ©alb '$(Format-kid3CommandString($ShowTitle))'"
 		$kid3Commands += "-c", "set soal '$(Format-kid3CommandString($ShowTitle -replace $SortArticles))'"
@@ -536,10 +548,6 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 		$kid3Commands += "-c", "set AudioSourceURL '$SoundsPlayLink'"
 		# Note: ©cmt is required for genRSS.ps1 - sets <description> and <itunes:summary>
 		$kid3Commands += "-c", "set ©cmt '$(Format-kid3CommandString($Comment))'"
-		If ($GetGenres -ne $null) {
-			Add-Type -AssemblyName System.Web
-			$kid3Commands += "-c", "set ©gen '$([System.Web.HttpUtility]::HTMLDecode($GetGenres[0]))'"
-			}
 		$kid3Commands += "-c", "set ©too '$ytdlpName $ytdlpVer'"
 		} Else {
 			# Note: TIT2 is required for genRSS.ps1 - sets <title> and <itunes:title>
@@ -563,11 +571,11 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 			$kid3Commands += "-c", "set WOAS '$SoundsPlayLink'"
 			# Note: COMM is required for genRSS.ps1 - sets <description> and <itunes:summary>
 			$kid3Commands += "-c", "set COMM '$(Format-kid3CommandString($Comment))'"
-			If ($GetGenres -ne $null) {
-				Add-Type -AssemblyName System.Web
-				$kid3Commands += "-c", "set TCON '$([System.Web.HttpUtility]::HTMLDecode($GetGenres -Join '''|'''))'"
-				}
 			$kid3Commands += "-c", "set TSSE '$ytdlpName $ytdlpVer'"
+			}
+	If ($GetGenres -ne $null) {
+			Add-Type -AssemblyName System.Web
+			$kid3Commands += "-c", "set genre '$([System.Web.HttpUtility]::HTMLDecode($GetGenres -Join '''|'''))'"
 			}
 	$kid3Commands += "-c", "set Picture:'$DumpDirectory\$ImageName' ''"
 	# Note: AlbumArt is required for genRSS.ps1 - sets cover image as <media:content> and <itunes:image>
@@ -641,7 +649,7 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 		Function Format-rcloneCommandString ($StringToFormat) {
 			Return $StringToFormat.replace("`"","\`"")
 			}
-		
+
 		# thumbs.db is not necessary - save an upload by deleting it first
 		If (Test-Path "$SaveDir\thumbs.db") {Remove-Item "$SaveDir\thumbs.db" -Force -Verbose}
 		# Check for rclone updates and download
@@ -664,7 +672,7 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 		}
 
 	} Else {
-		Write-Host "**Program ID $ProgramID already downloaded"
+		Write-Host "**Program ID $ProgramID already downloaded $($File.CreationTime)"
 		If ($ScriptInstanceControl) {ReleaseControl}
 		}
 
