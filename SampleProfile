@@ -1,5 +1,5 @@
 # Media Scanning
-MediaDirectory=E:\\AudioTemp\\The Unbelievable Truth
+MediaDirectory=E:\\AudioFiles\\The Unbelievable Truth
 Recursive=no
 MediaExtension=m4a,mp3
 
@@ -16,8 +16,8 @@ RemoteRSSFileName=TheUnbelievableTruth.rss
 PodcastTitle=The Unbelievable Truth
 PodcastDescription=Game show in which panellists compete to see how many nuggets of truth they are able to hide amongst their lies.
 PodcastAuthor=BBC Radio 4
-OwnerName=bbcsoundsrss.media
-OwnerEmail=bbcsoundsrss@gmail.com
+OwnerName=Your Name or Organization
+OwnerEmail=youremail@address.com
 PodcastURL=https://www.bbc.co.uk/programmes/b007mf4f
 PodcastLanguage=en-US
 PodcastCopyright=(C) BBC 2023
@@ -27,7 +27,7 @@ Explicit=no
 Block=no
 
 # Episode Options
-MediaRootURL=https://feeds.bbcsoundsrss.media/TheUnbelievableTruth/media
+MediaRootURL=https://yourwebsite.com/TheUnbelievableTruth/
 RerunLabel=Repeat:
 RerunFiles=m000k2td,m000k7jr,m000kntz,m000kmk3,m000kw52,m000l2bn,m001mc5p
 RerunTitles=Series 24
@@ -37,4 +37,4 @@ m001ts8t=Seasonal Trimmings
 
 # Debug Logging
 Debug=yes
-DebugDirectory=E:\\FilesTemp\\Debug
+DebugDirectory=C:\\Files\\Debug
