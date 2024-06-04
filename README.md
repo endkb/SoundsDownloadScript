@@ -4,8 +4,8 @@ SoundsDownloadScript.ps1 and genRSS.ps1 are Powershell scripts that can work tog
 ## GETTING STARTED
 __Package:__ ([Latest release](https://github.com/endkb/SoundsDownloadScript/releases/latest))
 * genRSS.ps1
+* ProfileTemplate (for use with genRSS.ps1)
 * README.htm (includes installation instructions and how to run)
-* SampleProfile (for use with genRSS.ps1)
 * SoundsDownloadScript.ps1
   
 __Prerequisites:__
