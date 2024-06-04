@@ -63,8 +63,8 @@
 		<h3>Package (<a href="https://github.com/endkb/SoundsDownloadScript/releases/latest">latest from github</a>)</h3>
 		<ul>
 			<li>genRSS.ps1</li>
+			<li>ProfileTemplate (for use with genRSS.ps1)</li>
 			<li>README.htm (this file)</li>
-			<li>SampleProfile (for use with genRSS.ps1)</li>
 			<li>SoundsDownloadScript.ps1</li>
 		</ul>
 		<h3>Prerequisites</h3>
@@ -188,8 +188,8 @@
 						to recursively search for the most recent executable in the directory.<em>File path</em>.</li>
 					<li><code>$rcloneExe</code>: Path or Get-ChildItem cmdlet to rclone.exe (you can comment this line out with <code>#</code> if not using). <em>File path</em>.</li>
 				</ul>
-			<li>Copy SampleProfile file to the directory that genRSS.ps1 is in.</li>
-			<li>Copy and edit the SampleProfile file:<br>
+			<li>Copy the ProfileTemplate file to the directory that genRSS.ps1 is in.</li>
+			<li>Copy and edit the ProfileTemplate file:<br>
 				Note: Paths with a backslash (\) need to be escaped by using double (\\)
 				<ul>
 					<li><code>MediaDirectory</code>: The directory with your downloaded SoundsDownloadScript files to scan. <em>Directory path</em>.</li>
