@@ -446,15 +446,21 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 	# No more downloading after this - release the control for other scripts
 	If ($ScriptInstanceControl) {ReleaseControl}
 
+	# Determine the extention of the DumpFile - Used later for kid3
+	$ext = [System.IO.Path]::GetExtension((Get-ChildItem -Path $DumpDirectory -Recurse -Filter "*$NakedName.*"))
+
+	# If it didn't download the file - you're done
+	If (!(Test-Path $DumpFile$ext)) {
+		Write-Host "**DumpFile was not downloaded or no longer exists"
+		ExitRoutine
+		}
+
 	# Test that the metadata is valid by making sure EpisodeTitle and Station have characters
 	If (($EpisodeTitle -notmatch '\S+') -AND ($Station -notmatch '\S+')) {
 		Write-Host "**Could not validate metadata"
 		# Exit script if metadata is not valid
 		ExitRoutine
 		}
-
-	# Determine the extention of the DumpFile - Used later for kid3
-	$ext = [System.IO.Path]::GetExtension((Get-ChildItem -Path $DumpDirectory -Recurse -Filter "*$NakedName.*"))
 
 	# Check if the audio file needs to transcoded to mp3
 	If (($mp3) -AND ($ext -ne ".mp3")) {
