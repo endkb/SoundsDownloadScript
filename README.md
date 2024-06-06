@@ -27,5 +27,5 @@ Step by step instructions and other notes are in the [README.htm](https://html-p
 To report an bug or request a feature in either SoundsDownloadService.ps1 or genRSS.ps1, [open an issue on github](https://github.com/endkb/SoundsDownloadScript/issues).
 
 ## LICENSE
-Copyright &copy; 2024 endkb (https://github.com/endkb)
+Copyright &copy; 2024 endkb (https://github.com/endkb)  
 MIT License (see [README.htm](https://html-preview.github.io/?url=https://github.com/endkb/SoundsDownloadScript/blob/main/README.htm#MITLicense) for details)
