@@ -24,7 +24,7 @@ I believe there are Linux versions for all of these packages, but I've only ever
 Step by step instructions and other notes are in the [README.htm](https://html-preview.github.io/?url=https://github.com/endkb/SoundsDownloadScript/blob/main/README.htm) file in the package. If anyone would like to translate the html instructons to markdown for this document, be my guest!
 
 ## SUPPORT
-To report an bug or request a feature in either SoundsDownloadService.ps1 or genRSS.ps1: [Open an issue on github](https://github.com/endkb/SoundsDownloadScript/issues)
+To report an bug or request a feature in either SoundsDownloadService.ps1 or genRSS.ps1, [open an issue on github](https://github.com/endkb/SoundsDownloadScript/issues).
 
 ## LICENSE
 Copyright &copy; 2024 endkb &lt;https://github.com/endkb&gt;  
