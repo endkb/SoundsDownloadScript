@@ -23,6 +23,11 @@ I believe there are Linux versions for all of these packages, but I've only ever
 ## INSTALLATION & HOW TO RUN
 Step by step instructions and other notes are in the [README.htm](https://html-preview.github.io/?url=https://github.com/endkb/SoundsDownloadScript/blob/main/README.htm) file in the package. If anyone would like to translate the html instructons to markdown for this document, be my guest!
 
+## SUPPORT
+For help with SoundsDownloadScript.ps1 or genRSS.ps1:
+* To report an bug or request a feature: [Open an issue on github](https://github.com/endkb/SoundsDownloadScript/issues)
+* To ask a question: Drop an e-mail to [&#x65;&#x6e;&#x64;&#x6b;&#x62;<!--- -->&#x40;<!--- -->&#x70;&#x72;&#x6f;&#x74;&#x6f;&#x6e;&#x2e;&#x6d;&#x65;](&#x6d;&#x61;&#x69;&#x6c;&#x74;&#x6f;&#x3a;&#x65;&#x6e;&#x64;&#x6b;&#x62;&#x40;&#x70;&#x72;&#x6f;&#x74;&#x6f;&#x6e;&#x2e;&#x6d;&#x65;)
+
 ## LICENSE
 Copyright &copy; 2024 endkb &lt;https://github.com/endkb&gt;  
 MIT License (see [README.htm](https://html-preview.github.io/?url=https://github.com/endkb/SoundsDownloadScript/blob/main/README.htm#MITLicense) for details)
