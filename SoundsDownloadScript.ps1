@@ -160,7 +160,7 @@ Function StartDebug {
 	# Start recording the console
 	Start-Transcript -Path "$DebugDirectory\$ShortTitle-$PID-$RandLogID-Console+Vars.log" -Append -IncludeInvocationHeader -Verbose
 	$Script:TranscriptStarted = $true
-	Write-Host "**Debugging: Saving log files to $DebugDirectory\$ShortTitle-$PID-$RandLogID-*.log"
+	Write-Output "**Debugging: Saving log files to $DebugDirectory\$ShortTitle-$PID-$RandLogID-*.log"
 	}
 
 # Start debug logging if enabled via cli parameters or inline config options
@@ -182,19 +182,19 @@ If ($DotSrcConfig) {
 				(Select-String -Path $DotSrcConfig -Pattern '^[ ]*(\$ffprobeExe)[ ]*=') -AND
 				(Select-String -Path $DotSrcConfig -Pattern '^[ ]*(\$kid3Exe)[ ]*=') -AND
 				(Select-String -Path $DotSrcConfig -Pattern '^[ ]*(\$ytdlpExe)[ ]*=')) {
-				Write-Host "**Importing external script configuration options: $DotSrcConfig"
+				Write-Output "**Importing external script configuration options: $DotSrcConfig"
 				# Import the script
 				. $DotSrcConfig
 				} Else {
-					Write-Host "**Var(s) missing from external script configuration options: $DotSrcConfig"
+					Write-Output "**Var(s) missing from external script configuration options: $DotSrcConfig"
 					ExitRoutine
 					}
 			} Else {
-				Write-Host "**External script configuration options file must be .ps1: $DotSrcConfig"
+				Write-Output "**External script configuration options file must be .ps1: $DotSrcConfig"
 				ExitRoutine
 				}
 		} Else {
-			Write-Host "**Couldn't access external script configuration options: $DotSrcConfig"
+			Write-Output "**Couldn't access external script configuration options: $DotSrcConfig"
 			ExitRoutine
 			}
 	}
@@ -216,7 +216,7 @@ If (!$SoundsPlayLink) {
 	$SoundsPlayLink = ($ProgramPageHTML.Links | Where-Object {$_.href -like "https://www.bbc.co.uk/sounds/play/*"} | Select-Object -First 1).href
 	}
 
-Write-Host "**Sounds URL: $SoundsPlayLink"
+Write-Output "**Sounds URL: $SoundsPlayLink"
 
 # Parse the program ID from the Sounds link
 $ProgramID = $($SoundsPlayLink -split "/")[-1]
@@ -225,7 +225,7 @@ If (($ScriptInstanceControl) -AND (!$NoDL)) {
 	# Function to delete the lock file to release control
 	Function ReleaseControl {
 		Remove-Item -Path $Script:LockFile -Force
-		If (!(Test-Path $Script:TestLockFile)) {Write-Host "**Released control at $(Get-Date)"}
+		If (!(Test-Path $Script:TestLockFile)) {Write-Output "**Released control at $(Get-Date)"}
 		}
 	# Non-VPN DLs can run simultaneously with other non-VPN DLs - VPN DLs can only run one at a time
 	If ($VPNConfig) {
@@ -239,7 +239,7 @@ If (($ScriptInstanceControl) -AND (!$NoDL)) {
 			}
 	# See if control is locked by looking for any lock files
 	If (Test-Path $Script:TestLockFile) {
-		Write-Host "**Waiting for control at $(Get-Date)"
+		Write-Output "**Waiting for control at $(Get-Date)"
 		# Generate random milliseconds up to 2 secs as the sleep interval - reduces chance of control collisions
 		$RandomInterval = Get-Random -Minimum 2000 -Maximum 5000
 		Do {
@@ -250,7 +250,7 @@ If (($ScriptInstanceControl) -AND (!$NoDL)) {
 				# Delete each one
 				ForEach ($OrphanedLockFile in $GetLockFiles) {
 					Remove-Item $OrphanedLockFile.FullName
-					Write-Host "**Released $OrphanedLockFile (possibly orphaned)"
+					Write-Output "**Released $OrphanedLockFile (possibly orphaned)"
 					}
 				# Only check every 4 instances to save resources
 				$NextCheck = $NextCheck+4
@@ -264,8 +264,8 @@ If (($ScriptInstanceControl) -AND (!$NoDL)) {
 	# Take control by creating a lock file
 	$null = New-Item $Script:LockFile
 	If (Test-Path $Script:LockFile) {
-		Write-Host "**Control received at $(Get-Date)"
-		Write-Host "**Lock file is $Script:LockFile"
+		Write-Output "**Control received at $(Get-Date)"
+		Write-Output "**Lock file is $Script:LockFile"
 		}
 	}
 
@@ -351,7 +351,7 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 	:TitleCheck ForEach ($var in $TitleCheckVarArray) {
 		$TitleCheck = $var -f $TitleFormatArray
 		If ($TitleCheck -eq '') {
-			Write-Host "**Correcting null title: $EpisodeTitle"
+			Write-Output "**Correcting null title: $EpisodeTitle"
 			# Set the title to the primary (usually the show name)
 			$EpisodeTitle = $TitleTable.'primary'
 			# Use the secondary title if it's available
@@ -366,15 +366,15 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 			}
 		}
 
-	Write-Host "**Episode Title: $EpisodeTitle"
-	Write-Host "  {0} $($TitleTable.'primary')"
-	Write-Host "  {1} $($TitleTable.'secondary')"
-	Write-Host "  {2} $($TitleTable.'tertiary')"
-	Write-Host "**Show: $ShowTitle"
-	Write-Host "**Description: $Comment"
-	Write-Host "**Station: $Station"
-	Write-Host "**Released On: $ReleaseDate"
-	Write-Host "**Released On: $($ReleaseDate.ToUniversalTime())"
+	Write-Output "**Episode Title: $EpisodeTitle"
+	Write-Output "  {0} $($TitleTable.'primary')"
+	Write-Output "  {1} $($TitleTable.'secondary')"
+	Write-Output "  {2} $($TitleTable.'tertiary')"
+	Write-Output "**Show: $ShowTitle"
+	Write-Output "**Description: $Comment"
+	Write-Output "**Station: $Station"
+	Write-Output "**Released On: $ReleaseDate"
+	Write-Output "**Released On: $($ReleaseDate.ToUniversalTime())"
 
 	If ($NoDL) {ExitRoutine}
 
@@ -391,7 +391,7 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 		:VPNLoop ForEach ($VPNServer in $VPNArray) {
 			# Check to see whether the VPN adapter is free
 			If ($(Get-NetAdapter -Name $VPNAdapter).Status -ne "Disconnected") {
-				Write-Host "**Waiting because $VPNAdapter is in use"
+				Write-Output "**Waiting because $VPNAdapter is in use"
 				# If VPN adapter is already connected wait until it's disconnected
 				Do { #Wait
 					} While ($(Get-NetAdapter -Name $VPNAdapter).Status -ne "Disconnected")
@@ -403,17 +403,17 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 			$VPNPIDArray += $VPNApp.Id
 			# Start a timer
 			$VPNConnectionTimer = [System.Diagnostics.Stopwatch]::StartNew()
-			Write-Host "**Connecting to the VPN using $VPNServer"
+			Write-Output "**Connecting to the VPN using $VPNServer"
 			# Wait until the VPN connects - Check link is up has IP and DNS
 			Do { #Wait
 				} Until ((($(Get-NetAdapter -Name $VPNAdapter).Status -eq "Up") -AND ($(Get-NetIPConfiguration -InterfaceAlias $VPNAdapter).IPv4Address) -AND ($(Get-NetIPConfiguration -InterfaceAlias $VPNAdapter).DNSServer)) -OR ($VPNConnectionTimer.Elapsed.TotalSeconds -gt $VPNTimeout))
 			If ($VPNConnectionTimer.Elapsed.TotalSeconds -gt $VPNTimeout) {
-				Write-Host "**Could not connect to the VPN"
+				Write-Output "**Could not connect to the VPN"
 				Stop-Process -Id $VPNApp.Id
 				Continue
 				}
 			If ($(Get-NetAdapter -Name $VPNAdapter).Status -eq "Up") {
-				Write-Host "**Connected to the VPN"
+				Write-Output "**Connected to the VPN"
 
 				# Call yt-dlp to download the file
 				Start-ytdlp
@@ -428,13 +428,13 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 			If ($FinishedFile) {Break VPNLoop}
 			}
 
-		Write-Host "**Disconnecting from the VPN"
+		Write-Output "**Disconnecting from the VPN"
 		# Close OpenVPN to disconnect once the download is done
 		ForEach ($VPNPID in $VPNPIDArray) {
 			Stop-Process -Id $VPNPID -ErrorAction SilentlyContinue
 			}
 		If ($(Get-NetAdapter -Name $VPNAdapter).Status -ne "Up") {
-			Write-Host "**Disconnected from the VPN"
+			Write-Output "**Disconnected from the VPN"
 			}
 		}
 
@@ -451,13 +451,13 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 
 	# If it didn't download the file - you're done
 	If (!(Test-Path $DumpFile$ext)) {
-		Write-Host "**DumpFile was not downloaded or no longer exists"
+		Write-Output "**DumpFile was not downloaded or no longer exists"
 		ExitRoutine
 		}
 
 	# Test that the metadata is valid by making sure EpisodeTitle and Station have characters
 	If (($EpisodeTitle -notmatch '\S+') -AND ($Station -notmatch '\S+')) {
-		Write-Host "**Could not validate metadata"
+		Write-Output "**Could not validate metadata"
 		# Exit script if metadata is not valid
 		ExitRoutine
 		}
@@ -619,7 +619,7 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 		# Move the file
 		Move-Item $DumpFile$ext -Destination $MoveLoc
 		} Else {
-			Write-Host "**Metadata not set correctly"
+			Write-Output "**Metadata not set correctly"
 			ExitRoutine
 			}
 
@@ -678,7 +678,7 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 		}
 
 	} Else {
-		Write-Host "**Program ID $ProgramID already downloaded $($File.CreationTime)"
+		Write-Output "**Program ID $ProgramID already downloaded $($File.CreationTime)"
 		If ($ScriptInstanceControl) {ReleaseControl}
 		}
 
