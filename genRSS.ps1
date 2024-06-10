@@ -72,7 +72,7 @@ If ((!$Force) -AND (Test-Path $_filename)) {
     $LatestMediaFile = Get-ChildItem -Path $MediaDirectory\* -Include $MediaFilter -Recurse:$Recurse | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1	
 	[xml]$RSSData = Get-Content $_filename
     If ($([datetime]$RSSData.rss.channel.lastBuildDate).ToUniversalTime() -gt $([datetime]$LatestMediaFile.LastWriteTimeUtc)) {
-		Write-Host "Last built: $(([datetime]$RSSData.rss.channel.lastBuildDate).ToUniversalTime()) & Latest file: $([datetime]$LatestMediaFile.LastWriteTimeUtc)"
+		Write-Output "Last built: $(([datetime]$RSSData.rss.channel.lastBuildDate).ToUniversalTime()) & Latest file: $([datetime]$LatestMediaFile.LastWriteTimeUtc)"
 		If ($Debug) {
 			Stop-Transcript
 			# Spit list of variables and values to file
@@ -310,7 +310,7 @@ $rss.Save($xmlWriter)
 $xmlWriter.Close()
 Write-Verbose ("Tabbify finish " + ("*" * 60))
 
-Write-Host "Output: $_filename"
+Write-Output "Output: $_filename"
 
 If (($Config['rcloneConfig']) -and ($Config['RemotePublishDirectory']) -and ($Config['RemoteRSSFileName']) -and (!$Test)) {
 	$RemotePublishFile = $Config['RemotePublishDirectory'] + "\" + $Config['RemoteRSSFileName']
