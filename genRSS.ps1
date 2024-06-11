@@ -256,6 +256,7 @@ try {$SkipTitles = $Config['SkipTitles'].Split(",")} catch {}
 		ForEach ($RerunItem in $RerunTitles) {
 			If ($Title -like "*$RerunItem*") {
 				$Title = "$RerunLabel$Title"
+    				$FlaggedRerun = $true
 				Break
 				}
 			}
