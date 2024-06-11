@@ -1,3 +1,4 @@
+
 # Copyright (c) 2024 endkb (https://github.com/endkb)
 # MIT License (see README.htm for details)
 
@@ -185,6 +186,7 @@ $itunesImage = createitunesRssElement -elementName 'itunes:image' -value '' -par
 $null = $itunesImage.SetAttribute('href', $Config['PodcastImage'])
 
 $RerunLabel = $Config['RerunLabel']
+$DetectReruns = $Config['DetectReruns']
 try {$RerunFiles = $Config['RerunFiles'].Split(",")} catch {}
 try {$RerunTitles = $Config['RerunTitles'].Split(",")} catch {}
 
@@ -218,12 +220,31 @@ try {$SkipTitles = $Config['SkipTitles'].Split(",")} catch {}
 
 	If ($($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'Website'}).value) {
 		$Link = $($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'WEBSITE'}).value
-		}
+		} Else {
+			If ($($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'WOAR'}).value) {
+				$Link = $($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'WOAR'}).value
+				}
+			}
+	
+	Write-Host $Link
+	
+	Write-Host $kid3data
 
 	$EpisodeCode = $Link.split('/')[-1]
 	try {$SpecialTitle = $Config[$EpisodeCode]} catch {}
 	If (($SpecialTitle) -AND ($Link -like "*$EpisodeCode*")) {
 		$Title = $SpecialTitle
+		}
+
+	If ($($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'Release Date'}).value) {
+		[DateTime]$ReleaseDate = $($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'Release Date'}).value
+		} Else {
+			If ($($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'TOAL'}).value) {
+				[DateTime]$ReleaseDate = $($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'TOAL'}).value
+				}
+			}		
+	If (!$ReleaseDate) {
+		[DateTime]$ReleaseDate = $item.CreationTime.ToUniversalTime()
 		}
 
 	If (($RerunLabel) -AND ($RerunFiles)) {
@@ -245,6 +266,19 @@ try {$SkipTitles = $Config['SkipTitles'].Split(",")} catch {}
 			}
 		}
 
+	If (($RerunLabel) -AND ($DetectReruns -eq "yes") -AND (!$FlaggedRerun)) {
+		If ($($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'Original Date'}).value) {
+		[DateTime]$OriginalDate = $($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'Original Date'}).value
+		} Else {
+			If ($($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'TDOR'}).value) {
+				[DateTime]$OriginalDate = $($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'TDOR'}).value
+				}
+			}
+		If (((New-TimeSpan -Start $OriginalDate -End $ReleaseDate).Days) -gt 90) {
+			$Title = "$RerunLabel$Title"
+			}
+		}
+
 	$Comment = $(($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'Comment'}).value).Replace("`n","<br>")
 
 	$FormatArray = $($kid3json.result.taggedFile.format).Split(" ")
@@ -258,17 +292,6 @@ try {$SkipTitles = $Config['SkipTitles'].Split(",")} catch {}
 		}
 
 	$ItemCover = $($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'AlbumArt'}).value
-
-	If ($($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'Release Date'}).value) {
-		[DateTime]$ReleaseDate = $($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'Release Date'}).value
-		} Else {
-			If ($($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'TOAL'}).value) {
-				[DateTime]$ReleaseDate = $($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'TOAL'}).value
-				}
-			}		
-	If (!$ReleaseDate) {
-		[DateTime]$ReleaseDate = $item.CreationTime.ToUniversalTime()
-		}
 
 	$url = $(($item -Replace [regex]::Escape($MediaDirectory.Trim('\')), $Config['MediaRootURL'].Trim('/')).Replace('\','/'))
 
