@@ -225,10 +225,6 @@ try {$SkipTitles = $Config['SkipTitles'].Split(",")} catch {}
 				$Link = $($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'WOAR'}).value
 				}
 			}
-	
-	Write-Host $Link
-	
-	Write-Host $kid3data
 
 	$EpisodeCode = $Link.split('/')[-1]
 	try {$SpecialTitle = $Config[$EpisodeCode]} catch {}
