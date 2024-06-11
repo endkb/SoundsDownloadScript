@@ -34,9 +34,11 @@ If ($Debug) {
 
 $Recurse = $false
 
-$ScriptDir = Split-Path $script:MyInvocation.MyCommand.Path
-
 $Config = Get-Content -Raw -Path $Profile | ConvertFrom-StringData
+
+ForEach ($key in $($Config.keys)) {
+    $Config[$key] = $Config[$key] -Replace "^[`"`']" -Replace "[`"`']$"
+	}
 
 If (($Config['Debug'] -eq 'yes') -AND (!$Debug) -AND (!$TranscriptStarted)) {
 	$Debug = $true
@@ -228,7 +230,7 @@ try {$SkipTitles = $Config['SkipTitles'].Split(",")} catch {}
 		$FlaggedRerun = $false
 		ForEach ($RerunItem in $RerunFiles) {
 			If ($item -like "*$RerunItem*") {
-				$Title = "$RerunLabel $Title"
+				$Title = "$RerunLabel$Title"
 				$FlaggedRerun = $true
 				Break
 				}
@@ -237,7 +239,7 @@ try {$SkipTitles = $Config['SkipTitles'].Split(",")} catch {}
 	If (($RerunLabel) -AND ($RerunTitles) -AND (!$FlaggedRerun)) {
 		ForEach ($RerunItem in $RerunTitles) {
 			If ($Title -like "*$RerunItem*") {
-				$Title = "$RerunLabel $Title"
+				$Title = "$RerunLabel$Title"
 				Break
 				}
 			}
