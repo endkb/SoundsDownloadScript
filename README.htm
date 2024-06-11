@@ -191,7 +191,7 @@
 				</ul>
 			<li>Copy the ProfileTemplate file to the directory that genRSS.ps1 is in.</li>
 			<li>Copy and edit the ProfileTemplate file:<br>
-				Note: Paths with a backslash (\) need to be escaped by using double (\\)
+				Note: Paths with a backslash (\) need to be escaped by using double (\\). Values may be surrounded by single or double quotes.
 				<ul>
 					<li><code>MediaDirectory</code>: The directory with your downloaded SoundsDownloadScript files to scan. <em>Directory path</em>.</li>
 					<li><code>Recursive</code>: Search subdirectories of <code>MediaDirectory</code>. <em>yes/no</em>.</li>
@@ -204,10 +204,12 @@
 					<li><code>RemotePublishDirectory</code>: This is the remote and directory that rclone should upload the RSS file to. It should be in the form of 'Remote:Directory'. Remote is the name of the appropriate config found in the config file specified in <code>-rcloneConfig</code>. For services that use the S3 API, use Remote:BucketName\Directory. <em>String</em>.</li>
 					<li><code>RemoteRSSFileName</code>: Name of the RSS file to publish remotely. <em>File name</em>.<br><br></li>
 
+					<li><code>PodcastDescription</code>: Populates the &lt;description&gt; and &lt;itunes:summary&gt; tags. Value will be marked as CDATA and can technically contain html tags, although many podcast apps will only support plain text in the description field.</li> 
 					<li><code>Block</code>: If this is set to <code>yes</code>, some podcast aggregators like Podcast Addict will not publish it in their directories, sort of like noindex. You might want to use this for testing when you first create a podcast feed. If this is absent, <code>no</code> is assumed. <em>yes/no</em>.<br><br></li>
 
 					<li><code>MediaRootURL</code>: This should be the publicly accessible URL path that podcast tools can download the episodes. <em>URL</em>.</li>
-					<li><code>RerunLabel</code>: A label to prepend to episode titles when the episode is a rerun according to the criteria in <code>RerunFiles</code> or <code>RerunTitles</code>. Include a delimiting character like a colon or dash if you'd like. A space is automatically inserted. A good default is <code>Repeat:</code> <em>String</em>.</li>
+					<li><code>RerunLabel</code>: A label to prepend to episode titles when the episode is a rerun according to the criteria in <code>RerunFiles</code> or <code>RerunTitles</code>. Include a delimiting character like a colon or dash if you'd like. A space is NOT automatically included. To include a space between the label and the title, surround the value in quotes or double quotes (<code>"Repeat: "</code>). <em>String</em>.</li>
+					<li><code>DetectReruns</code>: Try to determine whether the episode is a rerun by comparing the original date (Original Date or TDOR) to the release date (Release Date or TOAL). If it's over 60 days, the script marks it as a rerun. <em>yes/no</em>.</li>
 					<li><code>RerunFiles</code>: Searches the episode file names for this text to decide whether it's a rerun. Separate entries by a comma with no space. I recommend using the BBC program ID. <em>String</em>.</li>
 					<li><code>RerunTitles</code>: Searches the episode titles for this text to decide whether it's a rerun. Separate entries by a comma and without a space. I suggest putting the Series numbers in here (Ex: <code>Series 21,Series 22</code>). <em>String</em>.</li>
 					<li><code>SkipFiles</code>: Searches the episode file names for this text to decide whether to skip the file. Separate entries by a comma. I recommend using the BBC program ID. These episodes will not be included in the RSS. <em>String</em>.</li>
