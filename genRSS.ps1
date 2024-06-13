@@ -185,7 +185,7 @@ $itunesImage = createitunesRssElement -elementName 'itunes:image' -value '' -par
 $null = $itunesImage.SetAttribute('href', $Config['PodcastImage'])
 
 $RerunLabel = $Config['RerunLabel']
-$DetectReruns = $Config['DetectReruns']
+$AutoDetectReruns = $Config['AutoDetectReruns']
 try {$RerunFiles = $Config['RerunFiles'].Split(",")} catch {}
 try {$RerunTitles = $Config['RerunTitles'].Split(",")} catch {}
 
@@ -262,7 +262,7 @@ try {$SkipTitles = $Config['SkipTitles'].Split(",")} catch {}
 			}
 		}
 
-	If (($RerunLabel) -AND ($DetectReruns -eq "yes") -AND (!$FlaggedRerun)) {
+	If (($RerunLabel) -AND ($AutoDetectReruns -eq "yes") -AND (!$FlaggedRerun)) {
 		If ($($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'Original Date'}).value) {
 		[DateTime]$OriginalDate = $($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'Original Date'}).value
 		} Else {
