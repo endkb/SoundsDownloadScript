@@ -47,6 +47,7 @@ $ytdlpUpdate = $false                       # Download yt-dlp updates before run
 $rcloneUpdate = $false                      # Update rclone to the latest stable version
 
 $Debug = $true                              # Force global debugging - $true = Force logging on, $false = Force no logging, $Debug = Honor cmd line parameter
+$Printjson = $false                         # Print the episode metadata in json format to the console for troubleshooting
 $DebugDirectory = 'E:\FilesTemp\Debug'      # Directory to save/move logs to when Debug switch is present
 
 <#	Paths to ffmpeg, ffprobe kid3-cli, openvpn (optional), rclone (optional), and yt-dlp executables - or use the following:
@@ -375,6 +376,12 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 	Write-Output "**Station: $Station"
 	Write-Output "**Released On: $ReleaseDate"
 	Write-Output "**Released On: $($ReleaseDate.ToUniversalTime())"
+	
+	If ($Printjson) {
+		Write-Output "**Beginning of json output (line below):"
+		Write-Output $jsonResult
+		Write-Output "**End of json output (line above)"
+		}
 
 	If ($NoDL) {ExitRoutine}
 
