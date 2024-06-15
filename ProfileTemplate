@@ -29,6 +29,7 @@ Block=no
 # Episode Options
 MediaRootURL=https://yourwebsite.com/TheUnbelievableTruth/
 RerunLabel="Repeat: "
+AutoDetectReruns=yes
 RerunFiles=m000k2td,m000k7jr,m000kntz,m000kmk3,m000kw52,m000l2bn,m001mc5p
 RerunTitles=Series 24
 SkipFiles=
