@@ -34,7 +34,7 @@
 	</head>
 	<body>
 		<h1>SoundsDownloadScript.ps1 + genRSS.ps1</h1>
-		<p><em>*Updated: 14-Jun-2024 15:01 GMT</em></p>
+		<p><em>*Updated: 21-Jun-2024 01:25 GMT</em></p>
 		<p>These instructions are very crude and messy. Sorry for the windbag word vomit. I hope they help, though. If someone wants to convert this file into a markdown README.md for github, be my guest. The scripts are a little tedious to set up the first time, but once you get them working they're pretty reliable.</p>
 		<p>I recommend you check the <a href="https://github.com/endkb/SoundsDownloadScript">repo</a> on github for the <a href="https://html-preview.github.io/?url=https://github.com/endkb/SoundsDownloadScript/blob/main/README.htm">latest version of this README</a> before continuing.</p>
 		<p>If you find a bug in the scripts or something is incorrect or incomplete in the documentation, feel free to <a href="https://github.com/endkb/SoundsDownloadScript/issues">open an issue on github</a>.</p>
@@ -255,6 +255,7 @@
 				</ul>
 				An often useful format for serialized shows is <code>'{1} - {2}'</code> which will set the series and episode numbers: Series 15 - Episode 4. <em>String</em>.
 			</li>
+			<li><code>-UseOrigRelease</code>: Sets the release date of the episode to the original date the episode aired. Without this parameter, it uses the most recent availability date. When this parameter is set, the RELEASEDATE/TDRL and ORIGINALDATE/TDOR tags will have the same value. This will affect the file name and also the &lt;pubDate&gt; tag in genRSS. <em>Switch</em>.</li>
 			<li><code>-Bitrate</code>: Specify the bitrate stream that yt-dlp should download. Set to <code>0</code> to have yt-dlp download the highest bitrate available. It must be the number of kilobits per second (kbps), and only the number. The higher the bitrate, the higher the audio the quality and the bigger the file size. Available bitrates are generally <code>48</code>, <code>96</code>, <code>128</code>, and <code>320</code>. If the specified bitrate is not available, yt-dlp will fail to download the program and will throw an error that says <code>Requested format is not available</code>. You can view the bitrates that are available for a particular stream by running:
 				<code class="block">yt-dlp.exe --list-formats [URL]</code>
 				The BBC only makes its content available worldwide in <code>48</code> and <code>96</code> kbps. If you are outside the UK, and want to download a higher bitrate, you will need to combine this option with <code>-VPNConfig</code> and have a VPN provider with UK servers that can access those streams. <em>Number of kilobits</em>.
