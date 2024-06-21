@@ -10,6 +10,7 @@ param(
 [String]$ShortTitle,                        # Short reference for the filename
 [String]$TrackNoFormat,                     # Set track no as DateTime format string: c(r) = count up (recurs), o = one digit year, jjj = Julian date
 [String]$TitleFormat,                       # Format the title: {0} = primary, {1} = secondary, {2} = tertiary, {3} = UTC release date, {4} = UK rel
+[Switch]$UseOrigRelease,                    # Sets the release date of the episode to the original date the episode aired
 [Int32]$Bitrate,                            # Download a specific available bitrate: 48, 96, 128, or 320, 0 = Download highest available
 [Switch]$mp3,                               # Transcode the audio file to mp3 after downloading
 [Int32]$Archive,                            # The number of episodes to keep - omit or set to 0 to keep everything
@@ -320,9 +321,10 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 	$Station = $($jsonData.modules.data[0].data.network.short_title)
 
 	# Grab the release date
-	$ReleaseDate = [datetime]$($jsonData.modules.data[0].data.availability.from)
+	If (!$UseOrigRelease) {$ReleaseDate = [datetime]$($jsonData.modules.data[0].data.availability.from)}
+	If ($UseOrigRelease) {$ReleaseDate = [datetime]$($jsonData.modules.data[0].data.release.date)}
 
-	# Grab the release date
+	# Grab the original release date
 	$OriginalReleaseDate = [datetime]$($jsonData.modules.data[0].data.release.date)
 
 	# Put all of the tracks in an array
