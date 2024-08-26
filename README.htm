@@ -34,7 +34,7 @@
 	</head>
 	<body>
 		<h1>SoundsDownloadScript.ps1 + genRSS.ps1</h1>
-		<p><em>*Updated: 21-Jun-2024 01:25 GMT</em></p>
+		<p><em>*Updated: 26-Aug-2024 00:58 GMT</em></p>
 		<p>These instructions are very crude and messy. Sorry for the windbag word vomit. I hope they help, though. If someone wants to convert this file into a markdown README.md for github, be my guest. The scripts are a little tedious to set up the first time, but once you get them working they're pretty reliable.</p>
 		<p>I recommend you check the <a href="https://github.com/endkb/SoundsDownloadScript">repo</a> on github for the <a href="https://html-preview.github.io/?url=https://github.com/endkb/SoundsDownloadScript/blob/main/README.htm">latest version of this README</a> before continuing.</p>
 		<p>If you find a bug in the scripts or something is incorrect or incomplete in the documentation, feel free to <a href="https://github.com/endkb/SoundsDownloadScript/issues">open an issue on github</a>.</p>
@@ -85,7 +85,7 @@
 
 		<h3>Optional</h3>
 		<ul>
-			<li><a href="https://community.openvpn.net/openvpn/wiki/Downloads">OpenVPN Community</a> (If you want to download higher quality audio from outside the UK. You must have a VPN provider with UK servers.)</li>
+			<li><a href="https://community.openvpn.net/openvpn/wiki/Downloads">OpenVPN Community Edition</a> (If you want to download higher quality audio from outside the UK. You must have a VPN provider with UK servers.)</li>
 			<li><a href="https://rclone.org/downloads/">rclone</a> (If you want to upload files somewhere like S3 buckets, FTP, or archive.org.)</li>
 		</ul>
 		<p>I believe there are Linux versions for all of these packages, but I've only ever used this on Windows. The script may work on Powershell for Linux, but it will probably take a lot of tweaking. I'm sure another language that's more appropriate. If you're up for the challenge, feel free to use the script logic as a guide and go for it!</p>
@@ -104,7 +104,7 @@
 			<li>Unpack kid3 to a directory (recommend a subdirectory inside the directory  SoundsDownloadScript.ps1 is in).</li>
 			<li>Copy yt-dlp.exe to a directory (recommend inside the directory SoundsDownloadScript.ps1 is in).</li>
 			<li>If using rclone, unpack rclone to a directory (recommend a subdirectory inside the directory SoundsDownloadScript.ps1 is in).</li>
-			<li>If using OpenVPN, install it using the default options (should be everything except OpenSSL Utilities). Information and support can be found <a href="https://openvpn.net/community-resources/installing-openvpn/">here</a>. Note: This must be the Community edition, not OpenVPN Connect.</li>
+			<li>If using OpenVPN, install it using the default options (should be everything except OpenSSL Utilities). Information and support can be found <a href="https://openvpn.net/community-resources/installing-openvpn/">on OpenVPN's website</a>. Note: This must be the Community edition, not OpenVPN Connect.</li>
 			<li>Edit SoundsDownloadScript.ps1 before using and set the following variables:
 				<ul>
 					<li><code>$DefaultTrackNoFormat</code>: DateTime formatted string (<a href="https://www.sharepointdiary.com/2021/11/date-format-in-powershell.html">see this guide for DateTime formatting help</a>) to set the track number if the <code>-TrackNoFormat</code> parameter is not set. Setting this to <code>'c'</code> will count up the track number from the last episode, <code>'c(r)'</code> does the same but searches recursive directories. Note: The <code>'c'</code> option will call kid3 on each track in the directory to determine the next track number. This can be slow as the directory fills up with more and more audio files. If you're not using the <code>-Archive</code> parameter, consider using a DateTime format instead. Also, <code>o</code> can be included in a DateTime as a one digit year, and <code>jjj</code> can be included in a DateTime as a Julian date. <em>String</em>.</li>
@@ -166,7 +166,7 @@
 				</ul>
 				You'll need to know where the rclone configuration file is saved. You can run <code>rclone.exe config file</code> to get that location. On Windows, it's usually stored in the user's AppData folder. You'll probably want to move or copy it to the same directory that rclone is in, especially if you're going to run the script as a different user. When running the scripts, you'll need to specify the location by setting the <code>$rcloneConfig</code> even if it's in the default location. You can have multiple remotes in the same config file, or you can have a different config file for each remote. Either option works.
 				</li>
-			<li>If using OpenVPN, you'll need to download or create .ovpn config files. This will be different for each VPN provider. I use one called <a href="https://www.privateinternetaccess.com/">Private Internet Access</a> (PIA), which offers multiple UK servers and makes pre-made config files available for download. In the OpenVPN config directory, you'll also need to create a text file with your VPN username in the first line and your password in the second line. Then, in each .ovpn file you'll need to add:
+			<li>If using OpenVPN, you'll need to download or create .ovpn config files. This will be different for each VPN provider. I use one called <a href="https://www.privateinternetaccess.com/">Private Internet Access</a> (PIA), which offers multiple UK servers and makes pre-made config files available for download. Other providers are available. In the OpenVPN config directory, you'll also need to create a text file with your VPN username in the first line and your password in the second line. Then, in each .ovpn file you'll need to add:
 				<br>
 				<code class="block">auth-user-pass "C:\\Program Files\\OpenVPN\\config\\[YourPasswordFile].txt"</code>
 				This will let OpenVPN connect without having to enter the credentials every time. Note the double back-slashes (<code>\\</code>) in the path.</li>
@@ -189,6 +189,7 @@
 		</ol>
 
 		<h3 id="Installation_2">genRSS.ps1 (if using)</h3>
+		<p>Note: If it's present, the 'release name' in the first line of genRSS should match the release name in the first line of SoundsDownloadScript.</p>
 		<ol>
 			<li>Copy genRSS.ps1 to a directory (recommend inside the directory SoundsDownloadScript.ps1 is in).</li>
 			<li>Edit genRSS.ps1 before use by setting the following variables:
@@ -213,10 +214,10 @@
 					<li><code>RemotePublishDirectory</code>: This is the remote and directory that rclone should upload the RSS file to. It should be in the form of 'Remote:Directory'. Remote is the name of the appropriate config found in the config file specified in <code>-rcloneConfig</code>. For services that use the S3 API, use Remote:BucketName\Directory. <em>String</em>.</li>
 					<li><code>RemoteRSSFileName</code>: Name of the RSS file to publish remotely. <em>File name</em>.<br><br></li>
 
-					<li><code>PodcastDescription</code>: Populates the &lt;description&gt; and &lt;itunes:summary&gt; tags at the &lt;channel&gt; (podcast) level. Value will be marked as CDATA and can technically contain html tags, although many podcast apps will only support plain text in the description field.</li> 
+					<li><code>PodcastDescription</code>: Populates the &lt;description&gt; and &lt;itunes:summary&gt; tags at the &lt;channel&gt; (podcast) level. Value will be marked as CDATA and can technically contain html tags, but many podcast apps only support plain text in the description field. You can insert a new line with <code>\n</code>. See the <a href="https://learn.microsoft.com/en-us/dotnet/api/system.xml.xmlwritersettings.newlinehandling?view=net-8.0">XmlWriterSettings.NewLineHandling Property page</a> for more information on handling new lines with XmlWriter.</li> 
 					<li><code>Block</code>: If this is set to <code>yes</code>, some podcast aggregators like Podcast Addict will not publish it in their directories, sort of like noindex. You might want to use this for testing when you first create a podcast feed. If this is absent, <code>no</code> is assumed. <em>yes/no</em>.<br><br></li>
 
-					<li><code>MediaRootURL</code>: This should be the publicly accessible URL path that podcast tools can download the episodes. <em>URL</em>.</li>
+					<li><code>MediaRootURL</code>: This should be the publicly accessible URL path that podcast apps can download the episodes. It should normally be an HTTP directory and then the script will add the file name to the end. <em>URL</em>.</li>
 					<li><code>RerunLabel</code>: A label to prepend to episode titles when the episode is a rerun according to the criteria in <code>RerunFiles</code> or <code>RerunTitles</code>. Include a delimiting character like a colon or dash if you'd like. A space is NOT automatically included. To include a space between the label and the title, surround the value in quotes or double quotes (<code>"Repeat: "</code>). <em>String</em>.</li>
 					<li><code>AutoDetectReruns</code>: Try to determine whether the episode is a rerun by comparing the original date (Original Date or TDOR) to the release date (Release Date or TOAL). If it's over 90 days, the script marks it as a rerun. <em>yes/no</em>.</li>
 					<li><code>RerunFiles</code>: Searches the episode file names for this text to decide whether it's a rerun. Separate entries by a comma with no space. I recommend using the BBC program ID. <em>String</em>.</li>
@@ -352,7 +353,7 @@
 			<li>Title: The title of the episode &lt;title&gt;</li>
 			<li>Album: The name of the show </li>
 			<li>Artist: The station or service the episode aired on (e.g. Radio 1)</li>
-			<li>albumart: The URL to the .jpg covert art &lt;media:content&gt;</li>
+			<li>albumart: The URL to the .jpg cover art &lt;media:content&gt;</li>
 			<li>Comment: The episode description and track list &lt;description&gt;</li>
 			<li>RELEASEDATE/TDRL: The date the program was released on BBC Sounds &lt;pubDate&gt;</li>
 			<li>ORIGINALALBUM/TDOR: The date the program originally aired - used for AutoDetectReruns</li>
