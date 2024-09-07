@@ -219,7 +219,7 @@
 
 					<li><code>MediaRootURL</code>: This should be the publicly accessible URL path that podcast apps can download the episodes. It should normally be an HTTP directory and then the script will add the file name to the end. <em>URL</em>.</li>
 					<li><code>RerunLabel</code>: A label to prepend to episode titles when the episode is a rerun according to the criteria in <code>RerunFiles</code> or <code>RerunTitles</code>. Include a delimiting character like a colon or dash if you'd like. A space is NOT automatically included. To include a space between the label and the title, surround the value in quotes or double quotes (<code>"Repeat: "</code>). <em>String</em>.</li>
-					<li><code>AutoDetectReruns</code>: Try to determine whether the episode is a rerun by comparing the original date (Original Date or TDOR) to the release date (Release Date or TOAL). If it's over 90 days, the script marks it as a rerun. <em>yes/no</em>.</li>
+					<li><code>AutoDetectReruns</code>: Specify the number of days after the original air date that an episode should be considered a rerun. In other words, try to determine whether the episode is a rerun by comparing the original date (Original Date or TDOR) to the most recent release date (Release Date or TOAL) of the episode. If it's over the number of days specified, the script marks it as a rerun. If the value is <code>yes</code> then a default of 90 days is used. If the value is <code>no</code> or is not present, the feature is disabled. <em>yes/no or number of days greater than 0</em>.</li>
 					<li><code>RerunFiles</code>: Searches the episode file names for this text to decide whether it's a rerun. Separate entries by a comma with no space. I recommend using the BBC program ID. <em>String</em>.</li>
 					<li><code>RerunTitles</code>: Searches the episode titles for this text to decide whether it's a rerun. Separate entries by a comma and without a space. I suggest putting the Series numbers in here (Ex: <code>Series 21,Series 22</code>). <em>String</em>.</li>
 					<li><code>SkipFiles</code>: Searches the episode file names for this text to decide whether to skip the file. Separate entries by a comma. I recommend using the BBC program ID. These episodes will not be included in the RSS. <em>String</em>.</li>
@@ -343,10 +343,6 @@
 		<h3>genRSS.ps1</h3>
 		<p>I heavily modified <a href="https://gist.github.com/arebee/a7a77044c77443effaeddbe3730af4ad">this script</a> to create genRSS.ps1. I don't really understand the XML writer part of it, only that it just seems to work. The whole script is messy and very inefficient. Be sure to test THOROUGHLY before putting changes to genRSS into production because you can screw up your subscriber's feeds. Good luck!</p>
 
-		<em>AutoDetectReruns:</em>
-		<p>AutoDetectReruns works by comparing the original release date (Original Date or TDOR) to the current release date (Release Date or TOAL). I hard-coded (ok, not really) the number of days to 90 for no good reason. If that doesn't work for you, change the number in this line in genRSS.ps1:
-			<code class="block">If (((New-TimeSpan -Start $OriginalDate -End $ReleaseDate).Days) -gt 90)</code></p>
-			
 		<h3 id="ID3Tags">MP4/ID3 tags</h3>
 		<p>Having correct MP4/ID3 tags is crucial for both scripts to "work" together. SoundsDownloadScript.ps1 sets way more tags than this, but these are the important ones for genRSS.ps1 to work properly:</p>
 		<ul>
