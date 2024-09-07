@@ -3,6 +3,7 @@
 	<head>
 		<meta charset="utf-8">
 		<meta name="robots" content="noindex">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<style>
 			code {
 				display: inline;
@@ -34,9 +35,9 @@
 	</head>
 	<body>
 		<h1>SoundsDownloadScript.ps1 + genRSS.ps1</h1>
-		<p><em>*Updated: 26-Aug-2024 00:58 GMT</em></p>
+		<p><em>*Updated: 4-Sep-2024 01:40 GMT</em></p>
 		<p>These instructions are very crude and messy. Sorry for the windbag word vomit. I hope they help, though. If someone wants to convert this file into a markdown README.md for github, be my guest. The scripts are a little tedious to set up the first time, but once you get them working they're pretty reliable.</p>
-		<p>I recommend you check the <a href="https://github.com/endkb/SoundsDownloadScript">repo</a> on github for the <a href="https://html-preview.github.io/?url=https://github.com/endkb/SoundsDownloadScript/blob/main/README.htm">latest version of this README</a> before continuing.</p>
+		<p>I recommend you check the <a href="https://github.com/endkb/SoundsDownloadScript">repo on github</a> for the <a href="https://html-preview.github.io/?url=https://github.com/endkb/SoundsDownloadScript/blob/main/README.htm">latest version of this README</a> before continuing.</p>
 		<p>If you find a bug in the scripts or something is incorrect or incomplete in the documentation, feel free to <a href="https://github.com/endkb/SoundsDownloadScript/issues">open an issue on github</a>.</p>
 		<h3>Table of Contents</h3>
 		<ul class="bullets">
@@ -166,7 +167,7 @@
 				</ul>
 				You'll need to know where the rclone configuration file is saved. You can run <code>rclone.exe config file</code> to get that location. On Windows, it's usually stored in the user's AppData folder. You'll probably want to move or copy it to the same directory that rclone is in, especially if you're going to run the script as a different user. When running the scripts, you'll need to specify the location by setting the <code>$rcloneConfig</code> even if it's in the default location. You can have multiple remotes in the same config file, or you can have a different config file for each remote. Either option works.
 				</li>
-			<li>If using OpenVPN, you'll need to download or create .ovpn config files. This will be different for each VPN provider. I use one called <a href="https://www.privateinternetaccess.com/">Private Internet Access</a> (PIA), which offers multiple UK servers and makes pre-made config files available for download. Other providers are available. In the OpenVPN config directory, you'll also need to create a text file with your VPN username in the first line and your password in the second line. Then, in each .ovpn file you'll need to add:
+			<li>If using OpenVPN, you'll need to download or create .ovpn config files. This will be different for each VPN provider. I use one called <a href="https://www.privateinternetaccess.com/">Private Internet Access</a> (PIA), which offers multiple UK servers and makes pre-made .ovpn files available for download. Other providers are available. In the OpenVPN config directory, you'll also need to create a text file with your VPN username in the first line and your password in the second line. Then, in each .ovpn file you'll need to add:
 				<br>
 				<code class="block">auth-user-pass "C:\\Program Files\\OpenVPN\\config\\[YourPasswordFile].txt"</code>
 				This will let OpenVPN connect without having to enter the credentials every time. Note the double back-slashes (<code>\\</code>) in the path.</li>
@@ -199,7 +200,7 @@
 						to recursively search for the most recent executable in the directory.<em>File path</em>.</li>
 					<li><code>$rcloneExe</code>: Path or Get-ChildItem cmdlet to rclone.exe (you can comment this line out with <code>#</code> if not using). <em>File path</em>.</li>
 				</ul>
-			<li>Copy the ProfileTemplate file to the directory that genRSS.ps1 is in.</li>
+			<li>Copy the ProfileTemplate file to the directory that genRSS.ps1 is in. You should rename it to something descriptive.</li>
 			<li>Copy and edit the ProfileTemplate file:<br>
 				Note: Paths with a backslash (<code>\</code>) need to be escaped by using double (<code>\\</code>). Values may be surrounded by single, double, or no  quotes.
 				<ul>
@@ -217,7 +218,7 @@
 					<li><code>PodcastDescription</code>: Populates the &lt;description&gt; and &lt;itunes:summary&gt; tags at the &lt;channel&gt; (podcast) level. Value will be marked as CDATA and can technically contain html tags, but many podcast apps only support plain text in the description field. You can insert a new line with <code>\n</code>. See the <a href="https://learn.microsoft.com/en-us/dotnet/api/system.xml.xmlwritersettings.newlinehandling?view=net-8.0">XmlWriterSettings.NewLineHandling Property page</a> for more information on handling new lines with XmlWriter.</li> 
 					<li><code>Block</code>: If this is set to <code>yes</code>, some podcast aggregators like Podcast Addict will not publish it in their directories, sort of like noindex. You might want to use this for testing when you first create a podcast feed. If this is absent, <code>no</code> is assumed. <em>yes/no</em>.<br><br></li>
 
-					<li><code>MediaRootURL</code>: This should be the publicly accessible URL path that podcast apps can download the episodes. It should normally be an HTTP directory and then the script will add the file name to the end. <em>URL</em>.</li>
+					<li><code>MediaRootURL</code>: This should be the publicly accessible URL path that podcast apps can download the episodes. It should normally be an HTTP directory and then the script will add the file name to the end. I <em>think</em> it could also be a file hosted locally on a windows or smb share by using <code>file://</code> instead, but I haven't tested it. <em>URL</em>.</li>
 					<li><code>RerunLabel</code>: A label to prepend to episode titles when the episode is a rerun according to the criteria in <code>RerunFiles</code> or <code>RerunTitles</code>. Include a delimiting character like a colon or dash if you'd like. A space is NOT automatically included. To include a space between the label and the title, surround the value in quotes or double quotes (<code>"Repeat: "</code>). <em>String</em>.</li>
 					<li><code>AutoDetectReruns</code>: Specify the number of days after the original air date that an episode should be considered a rerun. In other words, try to determine whether the episode is a rerun by comparing the original date (Original Date or TDOR) to the most recent release date (Release Date or TOAL) of the episode. If it's over the number of days specified, the script marks it as a rerun. If the value is <code>yes</code> then a default of 90 days is used. If the value is <code>no</code> or is not present, the feature is disabled. <em>yes/no or number of days greater than 0</em>.</li>
 					<li><code>RerunFiles</code>: Searches the episode file names for this text to decide whether it's a rerun. Separate entries by a comma with no space. I recommend using the BBC program ID. <em>String</em>.</li>
@@ -261,7 +262,7 @@
 				<code class="block">yt-dlp.exe --list-formats [URL]</code>
 				The BBC only makes its content available worldwide in <code>48</code> and <code>96</code> kbps. If you are outside the UK, and want to download a higher bitrate, you will need to combine this option with <code>-VPNConfig</code> and have a VPN provider with UK servers that can access those streams. <em>Number of kilobits</em>.
 			</li>
-			<li><code>-mp3</code>: Transcode the audio file to mp3 using ffmpeg after downloading. The default is file type is m4a. Note: I don't do as much testing on the mp3 option (e.g., m4a and mp3 use different tags). If you find a bug with it, <a href="https://github.com/endkb/SoundsDownloadScript/issues">open an issue</a> in the repo. <em>Switch</em>.</li>
+			<li><code>-mp3</code>: Transcode the audio file to mp3 using ffmpeg after downloading. The default is file type is m4a. Uses libmp3lame codec and mirrors the bitrate of the m4a file. Note: I don't do as much testing on the mp3 option (e.g., m4a and mp3 use different tags). If you find a bug with it, <a href="https://github.com/endkb/SoundsDownloadScript/issues">open an issue</a> in the repo. <em>Switch</em>.</li>
 			<li><code>-Archive</code>: The number of episodes to keep. After the script downloads the latest one, it will delete excess ones. <em>Number</em>.</li>
 			<li><code>-Days</code>: Bases the <code>-Archive</code> parameter on the number of days to keep instead of the number of episodes. This option reads the date from each filename (which is set from the episode's GMT release date in the metadata). If Archive is <code>0</code> or is not set, this parameter has no effect. <em>Switch</em>.</li>
 			<li><code>-VPNConfig</code>: If using a VPN, this is the path to the OpenVPN .ovpn config file. It can also be an array of file locations separated by a comma. Since the BBC tries to block VPNs in a cat and mouse game, the script will run through each config in order until it finds one that can download the episode. I use PIA for VPN. Also be sure create and set an auth-user-pass file if using. See OpenVPN support for that. <em>String array</em>.</li>
@@ -342,7 +343,7 @@
 
 		<h3>genRSS.ps1</h3>
 		<p>I heavily modified <a href="https://gist.github.com/arebee/a7a77044c77443effaeddbe3730af4ad">this script</a> to create genRSS.ps1. I don't really understand the XML writer part of it, only that it just seems to work. The whole script is messy and very inefficient. Be sure to test THOROUGHLY before putting changes to genRSS into production because you can screw up your subscriber's feeds. Good luck!</p>
-
+  
 		<h3 id="ID3Tags">MP4/ID3 tags</h3>
 		<p>Having correct MP4/ID3 tags is crucial for both scripts to "work" together. SoundsDownloadScript.ps1 sets way more tags than this, but these are the important ones for genRSS.ps1 to work properly:</p>
 		<ul>
