@@ -262,7 +262,8 @@ try {$SkipTitles = $Config['SkipTitles'].Split(",")} catch {}
 			}
 		}
 
-	If (($RerunLabel) -AND ($AutoDetectReruns -eq "yes") -AND (!$FlaggedRerun)) {
+	If (($RerunLabel) -AND (($AutoDetectReruns -eq "yes") -OR (($AutoDetectReruns -match "^[\d\.]+$") -AND ($AutoDetectReruns -gt 0))) -AND (!$FlaggedRerun)) {
+		If ($AutoDetectReruns -eq "yes") {$AutoDetectReruns = 90}
 		If ($($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'Original Date'}).value) {
 		[DateTime]$OriginalDate = $($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'Original Date'}).value
 		} Else {
@@ -270,7 +271,7 @@ try {$SkipTitles = $Config['SkipTitles'].Split(",")} catch {}
 				[DateTime]$OriginalDate = $($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'TDOR'}).value
 				}
 			}
-		If (((New-TimeSpan -Start $OriginalDate -End $ReleaseDate).Days) -gt 90) {
+		If (((New-TimeSpan -Start $OriginalDate -End $ReleaseDate).Days) -gt [int]$AutoDetectReruns) {
 			$Title = "$RerunLabel$Title"
 			}
 		}
