@@ -473,8 +473,11 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 
 	# Check if the audio file needs to transcoded to mp3
 	If (($mp3) -AND ($ext -ne ".mp3")) {
+		# Run ffprobe to get the bitrate of the m4a file
+		$ffprobeData = & $ffprobeExe -v quiet -hide_banner -of default=noprint_wrappers=0 -print_format xml -select_streams v:0 -show_format $DumpFile$ext | Out-String
+		[xml]$ffprobeXMLData = $ffprobeData
 		# Transcode the audio file to mp3 format
-		& $ffmpegExe -i "$DumpFile$ext" -c:v copy -c:a libmp3lame -q:a 4 "$DumpFile.mp3"
+		& $ffmpegExe -i "$DumpFile$ext" -c:v copy -c:a libmp3lame -b:a $($ffprobeXMLData.ffprobe.format.bit_rate) "$DumpFile.mp3"
 		# Delete the original audio file with the old extention
 		Remove-Item $DumpFile$ext
 		# Change the extension to .mp3 so the rest of the script finds the correct file
@@ -619,11 +622,11 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 		}
 
 	# Run ffprobe to check that kid3 set the tags before moving the file
-	$ffprobeCheckTags = & $ffprobeExe -v quiet -hide_banner -of default=noprint_wrappers=0 -print_format xml -select_streams v:0 -show_format $DumpFile$ext | Out-String
-	[xml]$CheckMetaData = $ffprobeCheckTags
-	$CheckTitle = $($CheckMetaData.ffprobe.format.tag | Where {$_.key -eq 'title'}).value
-	$CheckArtist = $($CheckMetaData.ffprobe.format.tag | Where {$_.key -eq 'artist'}).value
-	$CheckAlbum = $($CheckMetaData.ffprobe.format.tag | Where {$_.key -eq 'album'}).value
+	$ffprobeData = & $ffprobeExe -v quiet -hide_banner -of default=noprint_wrappers=0 -print_format xml -select_streams v:0 -show_format $DumpFile$ext | Out-String
+	[xml]$ffprobeXMLData = $ffprobeData
+	$CheckTitle = $($ffprobeXMLData.ffprobe.format.tag | Where {$_.key -eq 'title'}).value
+	$CheckArtist = $($ffprobeXMLData.ffprobe.format.tag | Where {$_.key -eq 'artist'}).value
+	$CheckAlbum = $($ffprobeXMLData.ffprobe.format.tag | Where {$_.key -eq 'album'}).value
 	If (($CheckTitle) -AND ($CheckArtist) -AND ($CheckAlbum)) {
 		# Move the file
 		Move-Item $DumpFile$ext -Destination $MoveLoc
