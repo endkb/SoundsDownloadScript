@@ -166,7 +166,17 @@ If ($Config['Category']) {
 	$CategoryArray = $Config['Category'].Split(",")
 	ForEach ($cat in $CategoryArray) {
 		$category = createitunesRssElement -elementName 'itunes:category' -value '' -parent $rssChannel
-		$null = $category.SetAttribute('text', $cat)
+		If ($cat.Contains(">")) {
+			$SubCategoryArray = $cat.Split(">")
+			$counter = 0
+			:CategoryLoop ForEach ($subcat in $SubCategoryArray) {
+				If ($counter -eq 0) {$counter++; Continue CategoryLoop}
+				$subcategory = createitunesRssElement -elementName 'itunes:category' -value '' -parent $category
+				$null = $subcategory.SetAttribute('text', $subcat)
+				$counter++
+				}
+			}
+			$null = $category.SetAttribute('text', $cat.Split(">")[0])
 		}
 	}
 If ($Config['Explicit']) {
