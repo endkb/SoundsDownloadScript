@@ -35,7 +35,7 @@
 	</head>
 	<body>
 		<h1>SoundsDownloadScript.ps1 + genRSS.ps1</h1>
-		<p><em>*Updated: 4-Sep-2024 01:40 GMT</em></p>
+		<p><em>*Updated: 8-Sep-2024 23:52 GMT</em></p>
 		<p>These instructions are very crude and messy. Sorry for the windbag word vomit. I hope they help, though. If someone wants to convert this file into a markdown README.md for github, be my guest. The scripts are a little tedious to set up the first time, but once you get them working they're pretty reliable.</p>
 		<p>I recommend you check the <a href="https://github.com/endkb/SoundsDownloadScript">repo on github</a> for the <a href="https://html-preview.github.io/?url=https://github.com/endkb/SoundsDownloadScript/blob/main/README.htm">latest version of this README</a> before continuing.</p>
 		<p>If you find a bug in the scripts or something is incorrect or incomplete in the documentation, feel free to <a href="https://github.com/endkb/SoundsDownloadScript/issues">open an issue on github</a>.</p>
@@ -190,7 +190,7 @@
 		</ol>
 
 		<h3 id="Installation_2">genRSS.ps1 (if using)</h3>
-		<p>Note: If it's present, the 'release name' in the first line of genRSS should match the release name in the first line of SoundsDownloadScript.</p>
+		<p>Note 1: If it's present, the 'release name' in the first line of genRSS should match the release name in the first line of SoundsDownloadScript.</p>
 		<ol>
 			<li>Copy genRSS.ps1 to a directory (recommend inside the directory SoundsDownloadScript.ps1 is in).</li>
 			<li>Edit genRSS.ps1 before use by setting the following variables:
@@ -216,9 +216,10 @@
 					<li><code>RemoteRSSFileName</code>: Name of the RSS file to publish remotely. <em>File name</em>.<br><br></li>
 
 					<li><code>PodcastDescription</code>: Populates the &lt;description&gt; and &lt;itunes:summary&gt; tags at the &lt;channel&gt; (podcast) level. Value will be marked as CDATA and can technically contain html tags, but many podcast apps only support plain text in the description field. You can insert a new line with <code>\n</code>. See the <a href="https://learn.microsoft.com/en-us/dotnet/api/system.xml.xmlwritersettings.newlinehandling?view=net-8.0">XmlWriterSettings.NewLineHandling Property page</a> for more information on handling new lines with XmlWriter.</li> 
-					<li><code>Category</code>: Specify one or more catagories to define the podcast. Categories may be separated by a comma with no space in between. Subcategories can be specified with a <code>&gt;</code> angle bracket. The first value will be the category. An unlimited number of subcategories can be specified behind each category. Take the example:
+					<li><code>Category</code>: Specify one or more catagories to define the podcast. Categories may be separated by a comma with no space in between. Subcategories can be specified with a <code>&gt;</code> angle bracket. The first value will be the category. An unlimited number of subcategories can be specified. Take the example:
 						<code class="block">Category=News,Science&gt;Chemistry&gt;Physics</code>
 						News and Science will be categories, and Chemisty and Physics will be subcategories under Science. Recommend limiting them to <a href="https://podcasters.apple.com/support/1691-apple-podcasts-categories">Apple Podcasts categories</a>. <em>String array.</em></li>
+					<li><code>PodcastImage</code>: The &lt;channel&gt; (podcast) level cover art that will display in podcast apps. You could host the image wherever you want, but I just point it to the image on the BBC's site. To find the URL, open the program page and view the page source. Search for .jpg and you should find the cover image easily. The URL will look like this: <a href="https://ichef.bbci.co.uk/images/ic/128x128/p0c5ydny.jpg">https://ichef.bbci.co.uk/images/ic/128x128/p0c5ydny.jpg</a>. You should copy the link you find and plug in different size dimensions and choose the largest one. Sizes that seem to work are: 128x128, 512x512, 1048x1048, 1792x1792, 1920x1920, and 3000x3000. <em>URL</em>.</li>
 					<li><code>Block</code>: If this is set to <code>yes</code>, some podcast aggregators like Podcast Addict will not publish it in their directories, sort of like noindex. You might want to use this for testing when you first create a podcast feed. If this is absent, <code>no</code> is assumed. <em>yes/no</em>.<br><br></li>
 
 					<li><code>MediaRootURL</code>: This should be the publicly accessible URL path that podcast apps can download the episodes. It should normally be an HTTP directory and then the script will add the file name to the end. I <em>think</em> it could also be a file hosted locally on a windows or smb share by using <code>file://</code> instead, but I haven't tested it. <em>URL</em>.</li>
@@ -346,7 +347,7 @@
 
 		<h3>genRSS.ps1</h3>
 		<p>I heavily modified <a href="https://gist.github.com/arebee/a7a77044c77443effaeddbe3730af4ad">this script</a> to create genRSS.ps1. I don't really understand the XML writer part of it, only that it just seems to work. The whole script is messy and very inefficient. Be sure to test THOROUGHLY before putting changes to genRSS into production because you can screw up your subscriber's feeds. Good luck!</p>
-  
+		
 		<h3 id="ID3Tags">MP4/ID3 tags</h3>
 		<p>Having correct MP4/ID3 tags is crucial for both scripts to "work" together. SoundsDownloadScript.ps1 sets way more tags than this, but these are the important ones for genRSS.ps1 to work properly:</p>
 		<ul>
