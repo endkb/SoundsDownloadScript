@@ -35,7 +35,7 @@
 	</head>
 	<body>
 		<h1>SoundsDownloadScript.ps1 + genRSS.ps1</h1>
-		<p><em>*Updated: 8-Sep-2024 23:52 GMT</em></p>
+		<p><em>*Updated: 17-Sep-2024 21:21 GMT</em></p>
 		<p>These instructions are very crude and messy. Sorry for the windbag word vomit. I hope they help, though. If someone wants to convert this file into a markdown README.md for github, be my guest. The scripts are a little tedious to set up the first time, but once you get them working they're pretty reliable.</p>
 		<p>I recommend you check the <a href="https://github.com/endkb/SoundsDownloadScript">repo on github</a> for the <a href="https://html-preview.github.io/?url=https://github.com/endkb/SoundsDownloadScript/blob/main/README.htm">latest version of this README</a> before continuing.</p>
 		<p>If you find a bug in the scripts or something is incorrect or incomplete in the documentation, feel free to <a href="https://github.com/endkb/SoundsDownloadScript/issues">open an issue on github</a>.</p>
@@ -190,7 +190,7 @@
 		</ol>
 
 		<h3 id="Installation_2">genRSS.ps1 (if using)</h3>
-		<p>Note 1: If it's present, the 'release name' in the first line of genRSS should match the release name in the first line of SoundsDownloadScript.</p>
+		<p>Note: If if you're using the files from a <a href="https://github.com/endkb/SoundsDownloadScript/releases">release</a>, the animal name in the first line of genRSS should match the animal name in the first line of SoundsDownloadScript. This will ensure compatibility (the big issue is metatags in the media files). The main branch on github will not have animal name indicators. If you're updating from the main branch, you should update both files at the same time to avoid issues.</p>
 		<ol>
 			<li>Copy genRSS.ps1 to a directory (recommend inside the directory SoundsDownloadScript.ps1 is in).</li>
 			<li>Edit genRSS.ps1 before use by setting the following variables:
@@ -201,8 +201,7 @@
 					<li><code>$rcloneExe</code>: Path or Get-ChildItem cmdlet to rclone.exe (you can comment this line out with <code>#</code> if not using). <em>File path</em>.</li>
 				</ul>
 			<li>Copy the ProfileTemplate file to the directory that genRSS.ps1 is in. You should rename it to something descriptive.</li>
-			<li>Copy and edit the ProfileTemplate file:<br>
-				Note: Paths with a backslash (<code>\</code>) need to be escaped by using double (<code>\\</code>). Values may be surrounded by single, double, or no  quotes.
+			<li>Edit the options in the copied file. Paths with a backslash (<code>\</code>) need to be escaped by using two (<code>\\</code>). Values may be surrounded by single, double, or no quotes.
 				<ul>
 					<li><code>MediaDirectory</code>: The directory with your downloaded SoundsDownloadScript files to scan. <em>Directory path</em>.</li>
 					<li><code>Recursive</code>: Search subdirectories of <code>MediaDirectory</code>. <em>yes/no</em>.</li>
@@ -214,12 +213,19 @@
 					<li><code>rcloneConfig</code>: Path to the rclone ini config file. <em>File path</em>.</li>
 					<li><code>RemotePublishDirectory</code>: This is the remote and directory that rclone should upload the RSS file to. It should be in the form of 'Remote:Directory'. Remote is the name of the appropriate config found in the config file specified in <code>-rcloneConfig</code>. For services that use the S3 API, use Remote:BucketName\Directory. <em>String</em>.</li>
 					<li><code>RemoteRSSFileName</code>: Name of the RSS file to publish remotely. <em>File name</em>.<br><br></li>
-
-					<li><code>PodcastDescription</code>: Populates the &lt;description&gt; and &lt;itunes:summary&gt; tags at the &lt;channel&gt; (podcast) level. Value will be marked as CDATA and can technically contain html tags, but many podcast apps only support plain text in the description field. You can insert a new line with <code>\n</code>. See the <a href="https://learn.microsoft.com/en-us/dotnet/api/system.xml.xmlwritersettings.newlinehandling?view=net-8.0">XmlWriterSettings.NewLineHandling Property page</a> for more information on handling new lines with XmlWriter.</li> 
+					
+					<li><code>PodcastTitle</code>: The title of the podcast. Just use the program title. <em>String</em>.</li>
+					<li><code>PodcastDescription</code>: Populates the &lt;description&gt; and &lt;itunes:summary&gt; tags at the &lt;channel&gt; (podcast) level. Value will be marked as CDATA and can technically contain html tags, but many podcast apps only support plain text in the description field. You can insert a new line with <code>\n</code>. See the <a href="https://learn.microsoft.com/en-us/dotnet/api/system.xml.xmlwritersettings.newlinehandling?view=net-8.0">XmlWriterSettings.NewLineHandling Property page</a> for more information on handling new lines with XmlWriter. <em>String</em>.</li> 
+					<li><code>PodcastAuthor</code>: It makes sense to use the name of the BBC station here. <em>String</em>.</li>
+					<li><code>OwnerName</code>: You. I don't want my name out there, so I just put my domain here. <em>String</em>.</li>
+					<li><code>OwnerEmail</code>: An e-mail address. <em>E-mail address</em>.</li>
+					<li><code>PodcastURL</code>: Populates the &lt;link&gt; tag at the &lt;channel&gt; (podcast) level. I set this to the BBC program page of the show. <em>URL</em>.</li>
+					<li><code>PodcastLanguage</code>: This should be a <a href="https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes">two letter code</a>, optionally with a <a href="https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2">country code</a> (ex: <code>en-US</code>). <em>ISO 639 language code</em>.</li>
+					<li><code>PodcastCopyright</code>: I put the BBC's info here (ex: <code>(C) BBC 2024</code>) since I don't own the copyright for the media. <em>String</em>.</li>
 					<li><code>Category</code>: Specify one or more catagories to define the podcast. Categories may be separated by a comma with no space in between. Subcategories can be specified with a <code>&gt;</code> angle bracket. The first value will be the category. An unlimited number of subcategories can be specified. Take the example:
 						<code class="block">Category=News,Science&gt;Chemistry&gt;Physics</code>
-						News and Science will be categories, and Chemisty and Physics will be subcategories under Science. Recommend limiting them to <a href="https://podcasters.apple.com/support/1691-apple-podcasts-categories">Apple Podcasts categories</a>. <em>String array.</em></li>
-					<li><code>PodcastImage</code>: The &lt;channel&gt; (podcast) level cover art that will display in podcast apps. You could host the image wherever you want, but I just point it to the image on the BBC's site. To find the URL, open the program page and view the page source. Search for .jpg and you should find the cover image easily. The URL will look like this: <a href="https://ichef.bbci.co.uk/images/ic/128x128/p0c5ydny.jpg">https://ichef.bbci.co.uk/images/ic/128x128/p0c5ydny.jpg</a>. You should copy the link you find and plug in different size dimensions and choose the largest one. Sizes that seem to work are: 128x128, 512x512, 1048x1048, 1792x1792, 1920x1920, and 3000x3000. <em>URL</em>.</li>
+						News and Science will be categories, and Chemistry and Physics will be subcategories under Science. Recommend limiting them to <a href="https://podcasters.apple.com/support/1691-apple-podcasts-categories">Apple Podcasts categories</a>. <em>String array.</em></li>
+					<li><code>PodcastImage</code>: The &lt;channel&gt; (podcast) level cover art that will display in podcast apps. You could host the image wherever you want, but I just point it to the image on the BBC's site. To find the URL, open the program page and view the page source. Search for .jpg and you should find the cover image easily. The URL will look like this: <a href="https://ichef.bbci.co.uk/images/ic/128x128/p0c5ydny.jpg">https://ichef.bbci.co.uk/images/ic/128x128/p0c5ydny.jpg</a>. You should copy the link you find and plug in different size dimensions and choose the largest one. Sizes that seem to work are: 128x128, 512x512, 1048x1048, 1792x1792, 1920x1920, and 3000x3000. It should be a square of course. <em>URL</em>.</li>
 					<li><code>Block</code>: If this is set to <code>yes</code>, some podcast aggregators like Podcast Addict will not publish it in their directories, sort of like noindex. You might want to use this for testing when you first create a podcast feed. If this is absent, <code>no</code> is assumed. <em>yes/no</em>.<br><br></li>
 
 					<li><code>MediaRootURL</code>: This should be the publicly accessible URL path that podcast apps can download the episodes. It should normally be an HTTP directory and then the script will add the file name to the end. I <em>think</em> it could also be a file hosted locally on a windows or smb share by using <code>file://</code> instead, but I haven't tested it. <em>URL</em>.</li>
