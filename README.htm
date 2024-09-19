@@ -35,7 +35,7 @@
 	</head>
 	<body>
 		<h1>SoundsDownloadScript.ps1 + genRSS.ps1</h1>
-		<p><em>*Updated: 4-Sep-2024 01:40 GMT</em></p>
+		<p><i>*Updated: 19-Sep-2024 01:52 GMT</i></p>
 		<p>These instructions are very crude and messy. Sorry for the windbag word vomit. I hope they help, though. If someone wants to convert this file into a markdown README.md for github, be my guest. The scripts are a little tedious to set up the first time, but once you get them working they're pretty reliable.</p>
 		<p>I recommend you check the <a href="https://github.com/endkb/SoundsDownloadScript">repo on github</a> for the <a href="https://html-preview.github.io/?url=https://github.com/endkb/SoundsDownloadScript/blob/main/README.htm">latest version of this README</a> before continuing.</p>
 		<p>If you find a bug in the scripts or something is incorrect or incomplete in the documentation, feel free to <a href="https://github.com/endkb/SoundsDownloadScript/issues">open an issue on github</a>.</p>
@@ -108,7 +108,7 @@
 			<li>If using OpenVPN, install it using the default options (should be everything except OpenSSL Utilities). Information and support can be found <a href="https://openvpn.net/community-resources/installing-openvpn/">on OpenVPN's website</a>. Note: This must be the Community edition, not OpenVPN Connect.</li>
 			<li>Edit SoundsDownloadScript.ps1 before using and set the following variables:
 				<ul>
-					<li><code>$DefaultTrackNoFormat</code>: DateTime formatted string (<a href="https://www.sharepointdiary.com/2021/11/date-format-in-powershell.html">see this guide for DateTime formatting help</a>) to set the track number if the <code>-TrackNoFormat</code> parameter is not set. Setting this to <code>'c'</code> will count up the track number from the last episode, <code>'c(r)'</code> does the same but searches recursive directories. Note: The <code>'c'</code> option will call kid3 on each track in the directory to determine the next track number. This can be slow as the directory fills up with more and more audio files. If you're not using the <code>-Archive</code> parameter, consider using a DateTime format instead. Also, <code>o</code> can be included in a DateTime as a one digit year, and <code>jjj</code> can be included in a DateTime as a Julian date. <em>String</em>.</li>
+					<li><code>$DefaultTrackNoFormat</code>: [<i>String</i>] DateTime formatted string (<a href="https://www.sharepointdiary.com/2021/11/date-format-in-powershell.html">see this guide for DateTime formatting help</a>) to set the track number if the <code>-TrackNoFormat</code> parameter is not set. Setting this to <code>'c'</code> will count up the track number from the last episode, <code>'c(r)'</code> does the same but searches recursive directories. Note: The <code>'c'</code> option will call kid3 on each track in the directory to determine the next track number. This can be slow as the directory fills up with more and more audio files. If you're not using the <code>-Archive</code> parameter, consider using a DateTime format instead. Also, <code>o</code> can be included in a DateTime as a one digit year, and <code>jjj</code> can be included in a DateTime as a Julian date.</li>
 					<li><code>$DefaultTitleFormat</code>: Default format string to set episode title to if <code>-TitleFormat</code> is not set. The string may contain the following variables in curly brackets:
 						<ul>
 							<li><code>{0}</code> = The BBC's primary title. This is usually the show's title.</li>
@@ -118,47 +118,47 @@
 							<li><code>{4}</code> = The release date and/or time in UK time. See above.</li>
 						</ul>
 					</li>
-					<li><code>$DefaultBitrate</code>: Specify the bitrate stream that yt-dlp should download if <code>-Bitrate</code> is not set in the command line. Set to <code>0</code> to have yt-dlp download the highest bitrate available. It must be the number of kilobits per second (kbps), and only the number. The higher the bitrate, the higher the audio the quality and the bigger the file size. Available bitrates are generally <code>48</code>, <code>96</code>, <code>128</code>, and <code>320</code>. If the specified bitrate is not available, yt-dlp will fail to download the program and throw an error that says <code>Requested format is not available</code>. You can view the bitrates that are available for a particular stream by running:
+					<li><code>$DefaultBitrate</code>: [<i>Number of kilobits</i>] Specify the bitrate stream that yt-dlp should download if <code>-Bitrate</code> is not set in the command line. Set to <code>0</code> to have yt-dlp download the highest bitrate available. It must be the number of kilobits per second (kbps), and only the number. The higher the bitrate, the higher the audio the quality and the bigger the file size. Available bitrates are generally <code>48</code>, <code>96</code>, <code>128</code>, and <code>320</code>. If the specified bitrate is not available, yt-dlp will fail to download the program and throw an error that says <code>Requested format is not available</code>. You can view the bitrates that are available for a particular stream by running:
 						<code class="block">yt-dlp.exe --list-formats [URL...]</code>
-						The BBC only makes its content available worldwide in <code>48</code> and <code>96</code> kbps. If you are outside the UK, and want to download a higher bitrate, you will need to combine this option with <code>-VPNConfig</code> and have a VPN provider with UK servers that can access those streams. <em>Number of kilobits</em>.
+						The BBC only makes its content available worldwide in <code>48</code> and <code>96</code> kbps. If you are outside the UK, and want to download a higher bitrate, you will need to combine this option with <code>-VPNConfig</code> and have a VPN provider with UK servers that can access those streams.
 					</li>
 					<br>
-					<li><code>$GenreTag</code>: Will add the genre(s) to the metadata. If set to $true, the script will pull the genre from the 'Similar programmes' section at the bottom of the program page. The BBC's genres do not comply with the &lt;itunes:category&gt; tag in podcast feeds. It will not affect any genre information in genRSS.ps1. Some media tools are weird about displaying multiple values in m4a tags, but the values are there. <em>$true/$false</em>.</li>
+					<li><code>$GenreTag</code>: [<i>$true,$false</i>] Will add the genre(s) to the metadata. If set to $true, the script will pull the genre from the 'Similar programmes' section at the bottom of the program page. The BBC's genres do not comply with the &lt;itunes:category&gt; tag in podcast feeds. It will not affect any genre information in genRSS.ps1. Some media tools are weird about displaying multiple values in m4a tags, but the values are there.</li>
 					<br>
-					<li><code>$DumpDirectory</code>: Directory to save the stream files and artwork to while  working on it. To use the win temp dir, use <code>$env:TEMP</code>. <em>Directory path</em>.<br><br></li>
+					<li><code>$DumpDirectory</code>: [<i>Directory path</i>] Directory to save the stream files and artwork to while  working on it. To use the win temp dir, use <code>$env:TEMP</code>.<br><br></li>
 
-					<li><code>$VPNAdapter</code>: Name of the adapter used by OpenVPN. Run <code>Get-NetAdapter</code> in Powershell to get your list of adapter names. You'll want the Name, not the InterfaceDescription. Mine is 'OpenVPN TAP-Windows6'. The script will use this to determine when the VPN is connected and disconnected to continue on. Only needed if using VPN. <em>String</em>.</li>
-					<li><code>$VPNTimeout</code>: Number of seconds to wait before giving up on VPN if it doesn't connect. Remember that while it's waiting, the script will pause and could tie up other instances that are also waiting to run, so set it for a reasonable number of seconds. Only needed if using VPN.  <em>Number of seconds</em>.</li>
+					<li><code>$VPNAdapter</code>: [<i>String</i>] Name of the adapter used by OpenVPN. Run <code>Get-NetAdapter</code> in Powershell to get your list of adapter names. You'll want the Name, not the InterfaceDescription. Mine is 'OpenVPN TAP-Windows6'. The script will use this to determine when the VPN is connected and disconnected to continue on. Only needed if using VPN.</li>
+					<li><code>$VPNTimeout</code>: [<i>Number of seconds</i>] Number of seconds to wait before giving up on VPN if it doesn't connect. Remember that while it's waiting, the script will pause and could tie up other instances that are also waiting to run, so set it for a reasonable number of seconds. Only needed if using VPN.</li>
 					<br>
-					<li><code>$ScriptInstanceControl</code>: This controls the instances of the script that can download at a time. If ANY of your instances are using VPN, you should set this to <code>$true</code>. If it's enabled, it works like this: If an instance is not configured to use VPN, other instances that are also not using the VPN can download at the same time. If an instance that needs VPN wants to download, it must wait until all other instances are done instances are done. If another script is downloading, the  current one will wait. If multiple scripts are connecting and disconnecting the VPN it will screw up downloads. Only needed if using ScriptInstanceControl. <em>$true/$false</em>.</li>
-					<li><code>$LockFileDirectory</code>: Directory to save lock files for <code>$ScriptInstanceControl</code>. Specify a non-environment dir (like not the user's temp dir) if the script is running under different user accounts. The paths will need to be accessible by all accounts and have read and write permissions for it to work properly. Only needed if using <code>$ScriptInstanceControl</code>. <em>Directory path</em>.</li>
-					<li><code>$LockFileMaxDuration</code>: This is the maximum age in seconds before lock files are deleted. This keeps script from getting hung up by orphaned lock files. It's rare, but it can happen if the script is interrupted during a download. To disable (not recommended), set to <code>0</code>. Only needed if using <code>$ScriptInstanceControl</code>. <em>Number of seconds</em>.<br><br></li>
+					<li><code>$ScriptInstanceControl</code>: [<i>$true,$false</i>] This controls the instances of the script that can download at a time. If ANY of your instances are using VPN, you should set this to <code>$true</code>. If it's enabled, it works like this: If an instance is not configured to use VPN, other instances that are also not using the VPN can download at the same time. If an instance that needs VPN wants to download, it must wait until all other instances are done instances are done. If another script is downloading, the  current one will wait. If multiple scripts are connecting and disconnecting the VPN it will screw up downloads. Only needed if using ScriptInstanceControl.</li>
+					<li><code>$LockFileDirectory</code>: [<i>Directory path</i>] Directory to save lock files for <code>$ScriptInstanceControl</code>. Specify a non-environment dir (like not the user's temp dir) if the script is running under different user accounts. The paths will need to be accessible by all accounts and have read and write permissions for it to work properly. Only needed if using <code>$ScriptInstanceControl</code>.</li>
+					<li><code>$LockFileMaxDuration</code>: [<i>Number of seconds</i>] This is the maximum age in seconds before lock files are deleted. This keeps script from getting hung up by orphaned lock files. It's rare, but it can happen if the script is interrupted during a download. To disable (not recommended), set to <code>0</code>. Only needed if using <code>$ScriptInstanceControl</code>.<br><br></li>
 
-					<li><code>$ytdlpUpdate</code>: Set to <code>$true</code> to update yt-dlp before the script runs. <em>$true/$false</em>.</li>
-					<li><code>$rcloneUpdate</code>: Set to <code>$true</code> to update rclone to the latest stable version before uploading files. <em>$true/$false</em>.<br><br></li>
+					<li><code>$ytdlpUpdate</code>: [<i>$true,$false</i>] Set to <code>$true</code> to update yt-dlp before the script runs.</li>
+					<li><code>$rcloneUpdate</code>: [<i>$true,$false</i>] Set to <code>$true</code> to update rclone to the latest stable version before uploading files.<br><br></li>
 
-					<li><code>$Debug</code>: Can be used to force debug logs on or off for all instances. Console output and script variables are saved to a log file, and rclone and OpenVPN logs are saved to separate files. Logs will be saved in the <code>$DebugDirectory</code> specified below.
+					<li><code>$Debug</code>: [<i>$true,$false,$Debug</i>] Can be used to force debug logs on or off for all instances. Console output and script variables are saved to a log file, and rclone and OpenVPN logs are saved to separate files. Logs will be saved in the <code>$DebugDirectory</code> specified below.
 						<ul>
 							<li><code>$true</code> = Save debug logs for all downloads</li>
 							<li><code>$false</code> = Don't save debug logs for any downloads</li>
 							<li><code>$Debug</code> = Use whatever is set in the command line parameter (per instance).</li>
 						</ul>
 					</li>
-					<li><code>$Printjson</code>: Prints the raw json data from <code>$jsonResult</code> to the console. It will also be saved to the debug log if <code>$Debug</code> is enabled. The text can be copied and pasted into an <a href="https://codebeautify.org/jsonviewer">online json viewer</a> for better readability. Use this for troubleshooting things like parsing issues, special character issues, or finding a reference point to retrieve a json value (see <a href="#TitleFormat">TitleFormat</a> under the Documentation section). Debug log files will be significantly larger if this setting is left on. <em>$true/$false</em>.</li>
-					<li><code>$DebugDirectory</code>: This is the directory to move logs to when the <code>-Debug</code> switch is present or when <code>$Debug</code> is set to <code>$true</code>. You'll want to check this directory once in a while because the logs can get unwieldy. <em>Directory path</em>.<br><br></li>
+					<li><code>$Printjson</code>: [<i>$true,$false</i>] Prints the raw json data from <code>$jsonResult</code> to the console. It will also be saved to the debug log if <code>$Debug</code> is enabled. The text can be copied and pasted into an <a href="https://codebeautify.org/jsonviewer">online json viewer</a> for better readability. Use this for troubleshooting things like parsing issues, special character issues, or finding a reference point to retrieve a json value (see <a href="#TitleFormat">TitleFormat</a> under the Documentation section). Debug log files will be significantly larger if this setting is left on.</li>
+					<li><code>$DebugDirectory</code>: [<i>Directory path</i>] This is the directory to move logs to when the <code>-Debug</code> switch is present or when <code>$Debug</code> is set to <code>$true</code>. You'll want to check this directory once in a while because the logs can get unwieldy.<br><br></li>
 
-					<li><code>$ffmpegExe</code>: Path to ffmpeg.exe. You can also use the Get-ChildItem cmdlet:
+					<li><code>$ffmpegExe</code>: [<i>File path</i>] Path to ffmpeg.exe. You can also use the Get-ChildItem cmdlet:
 						<code class="block">(Get-ChildItem -Path $PSScriptRoot -Filter "ffmpeg.exe" -Recurse | Sort-Object -Descending -Property LastWriteTime | Select-Object -First 1 | % {$_.FullName })</code>
-						to recursively search for the most recent executable in the directory. <em>File path</em>.</li>
-					<li><code>$ffprobeExe</code>: Path or Get-ChildItem cmdlet to <code>ffprobe.exe</code>. <em>File path</em>.</li>
-					<li><code>$kid3Exe</code>: Path or Get-ChildItem cmdlet to <code>kid3-cli.exe</code>. <em>File path</em>.</li>
-					<li><code>$rcloneExe</code>: Path or Get-ChildItem cmdlet to <code>rclone.exe</code> (you can comment this line out with <code>#</code> if not using). <em>File path</em></li>
-					<li><code>$vpnExe</code>: Path to openvpn.exe. Since OpenVPN is usually installed into the Program Files directory, you can use the Get-ChildItem cmdlet to <code>openvpn.exe</code>.
+						to recursively search for the most recent executable in the directory.</li>
+					<li><code>$ffprobeExe</code>: [<i>File path</i>] Path or Get-ChildItem cmdlet to <code>ffprobe.exe</code>.</li>
+					<li><code>$kid3Exe</code>: [<i>File path</i>] Path or Get-ChildItem cmdlet to <code>kid3-cli.exe</code>.</li>
+					<li><code>$rcloneExe</code>: [<i>File path</i>] Path or Get-ChildItem cmdlet to <code>rclone.exe</code> (you can comment this line out with <code>#</code> if not using).</li>
+					<li><code>$vpnExe</code>: [<i>File path</i>] Path to openvpn.exe. Since OpenVPN is usually installed into the Program Files directory, you can use the Get-ChildItem cmdlet to <code>openvpn.exe</code>.
 						<code class="block">(Get-ChildItem -Path $env:Programfiles -Filter 'openvpn.exe' -Recurse -ErrorAction SilentlyContinue |  Sort-Object -Descending -Property LastWriteTime | Select-Object -First 1 | % { $_.FullName })</code>
-						This must be the command line executable, not the gui. You can comment this line out with <code>#</code> if not using a VPN. <em>File path</em>.</li>
-					<li><code>$ytdlpExe</code>: Path or Get-ChildItem cmdlet to <code>yt-dlp.exe</code>. <em>File path</em>.<br><br></li>
+						This must be the command line executable, not the gui. You can comment this line out with <code>#</code> if not using a VPN.</li>
+					<li><code>$ytdlpExe</code>: [<i>File path</i>] Path or Get-ChildItem cmdlet to <code>yt-dlp.exe</code>.<br><br></li>
 
-					<li><code>$SortArticles</code>: This isn't used much. This is a string of definite articles in various languages separated by a pipe (|). The script will strip these to fill tags specifically used for sorting. For example 'The Beatles' sort tags will become 'Beatles' and will get sorted in the Bs instead of the Ts. You can add your own for other languages, if needed. The caret (^)denotes the beginning of the string. Without it, it will also strip characters from the middle. Put a space after the definite article if it's its own word. For contractions like l', don't put a space. The defaults should be fine for most people, especially since this isn't music. <em>Delimited string</em>.<br></li>
+					<li><code>$SortArticles</code>: [<i>Delimited string</i>] This isn't used much. This is a string of definite articles in various languages separated by a pipe (|). The script will strip these to fill tags specifically used for sorting. For example 'The Beatles' sort tags will become 'Beatles' and will get sorted in the Bs instead of the Ts. You can add your own for other languages, if needed. The caret (^)denotes the beginning of the string. Without it, it will also strip characters from the middle. Put a space after the definite article if it's its own word. For contractions like l', don't put a space. The defaults should be fine for most people, especially since this isn't music.<br></li>
 				</ul>
 				<li>If using rclone, configure it by setting up remotes: <code>rclone.exe config</code><br>
 				<ul>
@@ -190,51 +190,58 @@
 		</ol>
 
 		<h3 id="Installation_2">genRSS.ps1 (if using)</h3>
-		<p>Note: If it's present, the 'release name' in the first line of genRSS should match the release name in the first line of SoundsDownloadScript.</p>
+		<p>Note: If if you're using the files from a <a href="https://github.com/endkb/SoundsDownloadScript/releases">release</a>, the animal name in the first line of genRSS should match the animal name in the first line of SoundsDownloadScript. This will ensure compatibility (the big issue is metatags in the media files). The main branch on github will not have animal name indicators. If you're updating from the main branch, you should update both files at the same time to avoid issues.</p>
 		<ol>
 			<li>Copy genRSS.ps1 to a directory (recommend inside the directory SoundsDownloadScript.ps1 is in).</li>
 			<li>Edit genRSS.ps1 before use by setting the following variables:
 				<ul>
-					<li><code>$kid3Exe</code>: Path to kid3-cli.exe. You can also use the Get-ChildItem cmdlet:
+					<li><code>$kid3Exe</code>: [<i>File path</i>] Path to kid3-cli.exe. You can also use the Get-ChildItem cmdlet:
 						<code class="block">(Get-ChildItem -Path $PSScriptRoot -Filter "kid3-cli.exe" -Recurse | Sort-Object -Descending -Property LastWriteTime | Select-Object -First 1 | % {$_.FullName })</code>
-						to recursively search for the most recent executable in the directory.<em>File path</em>.</li>
-					<li><code>$rcloneExe</code>: Path or Get-ChildItem cmdlet to rclone.exe (you can comment this line out with <code>#</code> if not using). <em>File path</em>.</li>
+						to recursively search for the most recent executable in the directory.</li>
+					<li><code>$rcloneExe</code>: [<i>File path</i>] Path or Get-ChildItem cmdlet to rclone.exe (you can comment this line out with <code>#</code> if not using).</li>
 				</ul>
 			<li>Copy the ProfileTemplate file to the directory that genRSS.ps1 is in. You should rename it to something descriptive.</li>
-			<li>Copy and edit the ProfileTemplate file:<br>
-				Note: Paths with a backslash (<code>\</code>) need to be escaped by using double (<code>\\</code>). Values may be surrounded by single, double, or no  quotes.
+			<li>Edit the options in the copied file. Paths with a backslash (<code>\</code>) need to be escaped by using two (<code>\\</code>). Values may be surrounded by single, double, or no quotes.
 				<ul>
-					<li><code>MediaDirectory</code>: The directory with your downloaded SoundsDownloadScript files to scan. <em>Directory path</em>.</li>
-					<li><code>Recursive</code>: Search subdirectories of <code>MediaDirectory</code>. <em>yes/no</em>.</li>
-					<li><code>MediaExtension</code>: File extensions to search for without the leading period, separated by a comma with no space. Default is <code>m4a,mp3</code>. <em>String</em>.<br><br></li>
+					<li><code>MediaDirectory</code>: [<i>Directory path</i>] The directory with your downloaded SoundsDownloadScript files to scan.</li>
+					<li><code>Recursive</code>: [<i>yes,no</i>] Search subdirectories of <code>MediaDirectory</code>.</li>
+					<li><code>MediaExtension</code>: [<i>String</i>] File extensions to search for without the leading period, separated by a comma with no space. Default is <code>m4a,mp3</code>.<br><br></li>
 
-					<li><code>Directory</code>: Local directory to save the RSS file. <em>Directory path</em>.</li>
-					<li><code>RSSFileName</code>: Name of the RSS file to save locally. This is the file that will get uploaded. <em>File name</em>.<br><br></li>
+					<li><code>Directory</code>: [<i>Directory path</i>] Local directory to save the RSS file.</li>
+					<li><code>RSSFileName</code>: [<i>File name</i>] Name of the RSS file to save locally. This is the file that will get uploaded.<br><br></li>
 
-					<li><code>rcloneConfig</code>: Path to the rclone ini config file. <em>File path</em>.</li>
-					<li><code>RemotePublishDirectory</code>: This is the remote and directory that rclone should upload the RSS file to. It should be in the form of 'Remote:Directory'. Remote is the name of the appropriate config found in the config file specified in <code>-rcloneConfig</code>. For services that use the S3 API, use Remote:BucketName\Directory. <em>String</em>.</li>
-					<li><code>RemoteRSSFileName</code>: Name of the RSS file to publish remotely. <em>File name</em>.<br><br></li>
-
-					<li><code>PodcastDescription</code>: Populates the &lt;description&gt; and &lt;itunes:summary&gt; tags at the &lt;channel&gt; (podcast) level. Value will be marked as CDATA and can technically contain html tags, but many podcast apps only support plain text in the description field. You can insert a new line with <code>\n</code>. See the <a href="https://learn.microsoft.com/en-us/dotnet/api/system.xml.xmlwritersettings.newlinehandling?view=net-8.0">XmlWriterSettings.NewLineHandling Property page</a> for more information on handling new lines with XmlWriter.</li> 
-					<li><code>Category</code>: Specify one or more catagories to define the podcast. Categories may be separated by a comma with no space in between. Subcategories can be specified with a <code>&gt;</code> angle bracket. The first value will be the category. An unlimited number of subcategories can be specified behind each category. Take the example:
+					<li><code>rcloneConfig</code>: [<i>File path</i>] Path to the rclone ini config file.</li>
+					<li><code>RemotePublishDirectory</code>: [<i>String</i>] This is the remote and directory that rclone should upload the RSS file to. It should be in the form of 'Remote:Directory'. Remote is the name of the appropriate config found in the config file specified in <code>-rcloneConfig</code>. For services that use the S3 API, use Remote:BucketName\Directory.</li>
+					<li><code>RemoteRSSFileName</code>: [<i>File name</i>] Name of the RSS file to publish remotely.<br><br></li>
+					
+					<li><code>PodcastTitle</code>: [<i>String</i>] The title of the podcast. Just use the program title.</li>
+					<li><code>PodcastDescription</code>: [<i>String</i>] Populates the &lt;description&gt; and &lt;itunes:summary&gt; tags at the &lt;channel&gt; (podcast) level. Value will be marked as CDATA and can technically contain html tags, but many podcast apps only support plain text in the description field. You can insert a new line with <code>\n</code>. See the <a href="https://learn.microsoft.com/en-us/dotnet/api/system.xml.xmlwritersettings.newlinehandling?view=net-8.0">XmlWriterSettings.NewLineHandling Property page</a> for more information on handling new lines with XmlWriter.</li> 
+					<li><code>PodcastAuthor</code>: [<i>String</i>] It makes sense to use the name of the BBC station here.</li>
+					<li><code>OwnerName</code>: [<i>String</i>] You. I don't want my name out there, so I just put my domain here.</li>
+					<li><code>OwnerEmail</code>: [<i>E-mail address</i>] An e-mail address.</li>
+					<li><code>PodcastURL</code>: [<i>URL</i>] Populates the &lt;link&gt; tag at the &lt;channel&gt; (podcast) level. I set this to the BBC program page of the show.</li>
+					<li><code>PodcastLanguage</code>: [<i>ISO 639 language code</i>] This should be a <a href="https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes">two letter code</a>, optionally with a <a href="https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2">country code</a> (ex: <code>en-US</code>).</li>
+					<li><code>PodcastCopyright</code>: [<i>String</i>] I put the BBC's info here (ex: <code>(C) BBC 2024</code>) since I don't own the copyright for the media.</li>
+					<li><code>Category</code>: [<i>String array</i>] Specify one or more catagories to define the podcast. Categories may be separated by a comma with no space in between. Subcategories can be specified with a <code>&gt;</code> angle bracket. The first value will be the category. An unlimited number of subcategories can be specified. Take the example:
 						<code class="block">Category=News,Science&gt;Chemistry&gt;Physics</code>
-						News and Science will be categories, and Chemisty and Physics will be subcategories under Science. Recommend limiting them to <a href="https://podcasters.apple.com/support/1691-apple-podcasts-categories">Apple Podcasts categories</a>. <em>String array.</em></li>
-					<li><code>Block</code>: If this is set to <code>yes</code>, some podcast aggregators like Podcast Addict will not publish it in their directories, sort of like noindex. You might want to use this for testing when you first create a podcast feed. If this is absent, <code>no</code> is assumed. <em>yes/no</em>.<br><br></li>
+						News and Science will be categories, and Chemistry and Physics will be subcategories under Science. Recommend limiting them to <a href="https://podcasters.apple.com/support/1691-apple-podcasts-categories">Apple Podcasts categories</a>.</li>
+					<li><code>PodcastImage</code>: [<i>URL</i>] The &lt;channel&gt; (podcast) level cover art that will display in podcast apps. You could host the image wherever you want, but I just point it to the image on the BBC's site. To find the URL, open the program page and view the page source. Search for .jpg and you should find the cover image easily. The URL will look like this: <a href="https://ichef.bbci.co.uk/images/ic/128x128/p0c5ydny.jpg">https://ichef.bbci.co.uk/images/ic/128x128/p0c5ydny.jpg</a>. You should copy the link you find and plug in different size dimensions and choose the largest one. Sizes that seem to work are: 128x128, 512x512, 1048x1048, 1792x1792, 1920x1920, and 3000x3000. It should be a square of course.</li>
+					<li><code>Block</code>: [<i>yes,no</i>] If this is set to <code>yes</code>, some podcast aggregators like Podcast Addict will not publish it in their directories, sort of like noindex. You might want to use this for testing when you first create a podcast feed. If this is absent, <code>no</code> is assumed.<br><br></li>
 
-					<li><code>MediaRootURL</code>: This should be the publicly accessible URL path that podcast apps can download the episodes. It should normally be an HTTP directory and then the script will add the file name to the end. I <em>think</em> it could also be a file hosted locally on a windows or smb share by using <code>file://</code> instead, but I haven't tested it. <em>URL</em>.</li>
-					<li><code>RerunLabel</code>: A label to prepend to episode titles when the episode is a rerun according to the criteria in <code>RerunFiles</code> or <code>RerunTitles</code>. Include a delimiting character like a colon or dash if you'd like. A space is NOT automatically included. To include a space between the label and the title, surround the value in quotes or double quotes (<code>"Repeat: "</code>). <em>String</em>.</li>
-					<li><code>AutoDetectReruns</code>: Specify the number of days after the original air date that an episode should be considered a rerun. In other words, try to determine whether the episode is a rerun by comparing the original date (Original Date or TDOR) to the most recent release date (Release Date or TOAL) of the episode. If it's over the number of days specified, the script marks it as a rerun. If the value is <code>yes</code> then a default of 90 days is used. If the value is <code>no</code> or is not present, the feature is disabled. <em>yes/no or number of days greater than 0</em>.</li>
-					<li><code>RerunFiles</code>: Searches the episode file names for this text to decide whether it's a rerun. Separate entries by a comma with no space. I recommend using the BBC program ID. <em>String</em>.</li>
-					<li><code>RerunTitles</code>: Searches the episode titles for this text to decide whether it's a rerun. Separate entries by a comma and without a space. I suggest putting the Series numbers in here (Ex: <code>Series 21,Series 22</code>). <em>String</em>.</li>
-					<li><code>SkipFiles</code>: Searches the episode file names for this text to decide whether to skip the file. Separate entries by a comma. I recommend using the BBC program ID. These episodes will not be included in the RSS. <em>String</em>.</li>
-					<li><code>SkipTitles</code>: Searches the episode titles for this text to decide whether to skip the file. Separate entries by a comma. These episodes will not be included in the RSS. <em>String</em>.</li>
+					<li><code>MediaRootURL</code>: [<i>URL</i>] This should be the publicly accessible URL path that podcast apps can download the episodes. It should normally be an HTTP directory and then the script will add the file name to the end. I <i>think</i> it could also be a file hosted locally on a windows or smb share by using <code>file://</code> instead, but I haven't tested it.</li>
+					<li><code>RerunLabel</code>: [<i>String</i>] A label to prepend to episode titles when the episode is a rerun according to the criteria in <code>RerunFiles</code> or <code>RerunTitles</code>. Include a delimiting character like a colon or dash if you'd like. A space is NOT automatically included. To include a space between the label and the title, surround the value in quotes or double quotes (<code>"Repeat: "</code>).</li>
+					<li><code>AutoDetectReruns</code>: [<i>yes,no,number of days greater than 0</i>] Specify the number of days after the original air date that an episode should be considered a rerun. In other words, try to determine whether the episode is a rerun by comparing the original date (Original Date or TDOR) to the most recent release date (Release Date or TOAL) of the episode. If it's over the number of days specified, the script marks it as a rerun. If the value is <code>yes</code> then a default of 90 days is used. If the value is <code>no</code> or is not present, the feature is disabled.</li>
+					<li><code>RerunFiles</code>: [<i>String</i>] Searches the episode file names for this text to decide whether it's a rerun. Separate entries by a comma with no space. I recommend using the BBC program ID.</li>
+					<li><code>RerunTitles</code>: [<i>String</i>] Searches the episode titles for this text to decide whether it's a rerun. Separate entries by a comma and without a space. I suggest putting the Series numbers in here (Ex: <code>Series 21,Series 22</code>).</li>
+					<li><code>SkipFiles</code>: [<i>String</i>] Searches the episode file names for this text to decide whether to skip the file. Separate entries by a comma. I recommend using the BBC program ID. These episodes will not be included in the RSS.</li>
+					<li><code>SkipTitles</code>: [<i>String</i>] Searches the episode titles for this text to decide whether to skip the file. Separate entries by a comma. These episodes will not be included in the RSS.</li>
 					<li><code>[Program ID]=Desired Title</code>: You can force it to use a custom title on specific episodes. One line for each episode. genRSS will use that title for the episode instead of pulling it from the metadata. Examples:
 						<code class="block">m001ts8t=Seasonal Trimmings</code>
 						<code class="block">m002tc9v=Year in Review</code>
 					<br></li>
 					
-					<li><code>Debug</code>: Output the console and variables to a text file in the <code>$DebugDirectory</code>. Log file name structure is 'genRSS_[Profile Name]-[Script PID]-[Inc No]-Console+Vars.log'. This can be set with a command line parameter, instead. <em>yes/no</em>.</li>
-					<li><code>DebugDirectory</code>: The directory to save log files if <code>-Debug</code> is enabled. This can be set with a command line parameter, instead. <em>Directory path</em>.</li>
+					<li><code>Debug</code>: [<i>yes,no</i>] Output the console and variables to a text file in the <code>$DebugDirectory</code>. Log file name structure is 'genRSS_[Profile Name]-[Script PID]-[Inc No]-Console+Vars.log'. This can be set with a command line parameter, instead.</li>
+					<li><code>DebugDirectory</code>: [<i>Directory path</i>] The directory to save log files if <code>-Debug</code> is enabled. This can be set with a command line parameter, instead.</li>
 				</ul>
 			<li>Profit! (actually, don't profit because I want this project to stay off the BBC's radar)</li>
 		</ol>
@@ -244,13 +251,13 @@
 		<p>The scripts can be called manually from a Powershell console, but I use the Windows Task Scheduler unless I'm doing testing or downloading a one-off episode. Each show has its own task. For most weekly shows, I have it check for new episodes twice a day. Sometimes shows will do out-of-cycle specials around the holidays and this will catch those. For daily shows, I have it check around the time the show is done airing on the BBC schedule and then keep checking every 20 to 30 minutes. Caution: if you set the frequency to run too often, I've noticed that it can get hung up if the same task is still running while it keeps trying. Basically, make sure you allow enough of an interval to let the script finish downloading and uploading an audio file before setting it to retry. I blame Task Scheduler, but that's the way it is.</p>
 
 		<h3 id="HowToRun_1">SoundsDownloadScript.ps1</h3>
-		<p><em>Command line parameters:</em></p>
+		<p><i>Command line parameters:</i></p>
 		<ul>
-			<li><code>-ProgramURL</code>: This is the bbc.co.uk/programmes URL of the show to download the latest ep. Sometimes https://www.bbc.co.uk/programmes/[Program ID]/episodes/player works better, especially if the program releases special features. You can get that link by clicking on the program page and selecting available episodes. You can also use the https://bbc.co.uk/sounds/play/[Program ID] link if you want to download only a specific episode. <em>URL</em>.</li>
-			<li><code>-SaveDir</code>: The local directory to move the finished audio file to. The directory will be created if it does not exist. <em>Directory path</em>.</li>
-			<li><code>-ShortTitle</code>: A short reference for the filename. <em>String</em>.</li>
-			<li><code>-TrackNoFormat</code>: Set track number format. It can be a DateTime string (<a href="https://www.sharepointdiary.com/2021/11/date-format-in-powershell.html">see this guide for help formatting DateTime</a>). Additionally, <code>o</code> can be included in a DateTime as a one digit year, <code>jjj</code> can be included in a DateTime as a Julian date. There are a few other options: <code>'c'</code> counts up from the track number of the most recent file in the save directory. <code>'c(r)'</code> does the same but searches recursive directories. Note: The <code>'c'</code> option will call kid3 on each track in the directory to determine the next track number. This can be slow as the directory fills up with more and more audio files. If you're not using the <code>-Archive</code> parameter, consider using a DateTime format instead. If this is omitted, it will use the <code>$DefaultTrackNoFormat</code>.</li>
-			<li><code>-TitleFormat</code>: Set the format of the Title tag. It should be a string. There are several variables that can be used, surrounded by curly brackets:
+			<li><code>-ProgramURL</code>: [<i>URL</i>] This is the bbc.co.uk/programmes URL of the show to download the latest ep. Sometimes https://www.bbc.co.uk/programmes/[Program ID]/episodes/player works better, especially if the program releases special features. You can get that link by clicking on the program page and selecting available episodes. You can also use the https://bbc.co.uk/sounds/play/[Program ID] link if you want to download only a specific episode.</li>
+			<li><code>-SaveDir</code>: [<i>Directory path</i>] The local directory to move the finished audio file to. The directory will be created if it does not exist.</li>
+			<li><code>-ShortTitle</code>: [<i>String</i>] A short reference for the filename.</li>
+			<li><code>-TrackNoFormat</code>: [<i>String</i>] Set track number format. It can be a DateTime string (<a href="https://www.sharepointdiary.com/2021/11/date-format-in-powershell.html">see this guide for help formatting DateTime</a>). Additionally, <code>o</code> can be included in a DateTime as a one digit year, <code>jjj</code> can be included in a DateTime as a Julian date. There are a few other options: <code>'c'</code> counts up from the track number of the most recent file in the save directory. <code>'c(r)'</code> does the same but searches recursive directories. Note: The <code>'c'</code> option will call kid3 on each track in the directory to determine the next track number. This can be slow as the directory fills up with more and more audio files. If you're not using the <code>-Archive</code> parameter, consider using a DateTime format instead. If this is omitted, it will use the <code>$DefaultTrackNoFormat</code>.</li>
+			<li><code>-TitleFormat</code>: [<i>String</i>] Set the format of the Title tag. It should be a string. There are several variables that can be used, surrounded by curly brackets:
 				<ul>
 					<li><code>{0}</code> = The BBC's primary title. This is usually the show's title.</li>
 					<li><code>{1}</code> = The BBC's secondary title. This is usually the title of the episode or the series number.</li>
@@ -258,28 +265,28 @@
 					<li><code>{3}</code> = The release date and/or time in UTC. A DateTime format should follow. An example would be (3:[DateTimeFormat]} ex: <code>{3:HH:mm}</code></li>
 					<li><code>{4}</code> = The release date and/or time in UK time. See above.</li>
 				</ul>
-				An often useful format for serialized shows is <code>'{1} - {2}'</code> which will set the series and episode numbers: Series 15 - Episode 4. <em>String</em>.
+				An often useful format for serialized shows is <code>'{1} - {2}'</code> which will set the series and episode numbers: Series 15 - Episode 4.
 			</li>
-			<li><code>-UseOrigRelease</code>: Sets the release date of the episode to the original date the episode aired. Without this parameter, it uses the most recent availability date. When this parameter is set, the RELEASEDATE/TDRL and ORIGINALDATE/TDOR tags will have the same value. This will affect the file name and also the &lt;pubDate&gt; tag in genRSS. <em>Switch</em>.</li>
-			<li><code>-Bitrate</code>: Specify the bitrate stream that yt-dlp should download. Set to <code>0</code> to have yt-dlp download the highest bitrate available. It must be the number of kilobits per second (kbps), and only the number. The higher the bitrate, the higher the audio the quality and the bigger the file size. Available bitrates are generally <code>48</code>, <code>96</code>, <code>128</code>, and <code>320</code>. If the specified bitrate is not available, yt-dlp will fail to download the program and will throw an error that says <code>Requested format is not available</code>. You can view the bitrates that are available for a particular stream by running:
+			<li><code>-UseOrigRelease</code>: [<i>Switch</i>] Sets the release date of the episode to the original date the episode aired. Without this parameter, it uses the most recent availability date. When this parameter is set, the RELEASEDATE/TDRL and ORIGINALDATE/TDOR tags will have the same value. This will affect the file name and also the &lt;pubDate&gt; tag in genRSS.</li>
+			<li><code>-Bitrate</code>: [<i>Number of kilobits</i>] Specify the bitrate stream that yt-dlp should download. Set to <code>0</code> to have yt-dlp download the highest bitrate available. It must be the number of kilobits per second (kbps), and only the number. The higher the bitrate, the higher the audio the quality and the bigger the file size. Available bitrates are generally <code>48</code>, <code>96</code>, <code>128</code>, and <code>320</code>. If the specified bitrate is not available, yt-dlp will fail to download the program and will throw an error that says <code>Requested format is not available</code>. You can view the bitrates that are available for a particular stream by running:
 				<code class="block">yt-dlp.exe --list-formats [URL]</code>
-				The BBC only makes its content available worldwide in <code>48</code> and <code>96</code> kbps. If you are outside the UK, and want to download a higher bitrate, you will need to combine this option with <code>-VPNConfig</code> and have a VPN provider with UK servers that can access those streams. <em>Number of kilobits</em>.
+				The BBC only makes its content available worldwide in <code>48</code> and <code>96</code> kbps. If you are outside the UK, and want to download a higher bitrate, you will need to combine this option with <code>-VPNConfig</code> and have a VPN provider with UK servers that can access those streams.
 			</li>
-			<li><code>-mp3</code>: Transcode the audio file to mp3 using ffmpeg after downloading. The default is file type is m4a. Uses libmp3lame codec and mirrors the bitrate of the m4a file. Note: I don't do as much testing on the mp3 option (e.g., m4a and mp3 use different tags). If you find a bug with it, <a href="https://github.com/endkb/SoundsDownloadScript/issues">open an issue</a> in the repo. <em>Switch</em>.</li>
-			<li><code>-Archive</code>: The number of episodes to keep. After the script downloads the latest one, it will delete excess ones. <em>Number</em>.</li>
-			<li><code>-Days</code>: Bases the <code>-Archive</code> parameter on the number of days to keep instead of the number of episodes. This option reads the date from each filename (which is set from the episode's GMT release date in the metadata). If Archive is <code>0</code> or is not set, this parameter has no effect. <em>Switch</em>.</li>
-			<li><code>-VPNConfig</code>: If using a VPN, this is the path to the OpenVPN .ovpn config file. It can also be an array of file locations separated by a comma. Since the BBC tries to block VPNs in a cat and mouse game, the script will run through each config in order until it finds one that can download the episode. I use PIA for VPN. Also be sure create and set an auth-user-pass file if using. See OpenVPN support for that. <em>String array</em>.</li>
-			<li><code>-rcloneConfig</code>: If using rclone to upload the episode somewhere, this is the path to the rclone config file. You'll need to use:
+			<li><code>-mp3</code>: [<i>Switch</i>] Transcode the audio file to mp3 using ffmpeg after downloading. The default is file type is m4a. Uses libmp3lame codec and mirrors the bitrate of the m4a file. Note: I don't do as much testing on the mp3 option (e.g., m4a and mp3 use different tags). If you find a bug with it, <a href="https://github.com/endkb/SoundsDownloadScript/issues">open an issue</a> in the repo.</li>
+			<li><code>-Archive</code>: [<i>Number</i>] The number of episodes to keep. After the script downloads the latest one, it will delete excess ones.</li>
+			<li><code>-Days</code>: [<i>Switch</i>] Bases the <code>-Archive</code> parameter on the number of days to keep instead of the number of episodes. This option reads the date from each filename (which is set from the episode's GMT release date in the metadata). If Archive is <code>0</code> or is not set, this parameter has no effect.</li>
+			<li><code>-VPNConfig</code>: [<i>String array of file paths</i>] If using a VPN, this is the path to the OpenVPN .ovpn config file. It can also be an array of file locations separated by a comma. Since the BBC tries to block VPNs in a cat and mouse game, the script will run through each config in order until it finds one that can download the episode. I use PIA for VPN. Also be sure create and set an auth-user-pass file if using. See OpenVPN support for that.</li>
+			<li><code>-rcloneConfig</code>: [<i>File path</i>] If using rclone to upload the episode somewhere, this is the path to the rclone config file. You'll need to use:
 				<code class="block">rclone.exe config create</code>
-				to create a config. You can copy the config text to another file and specify it here. <em>File path</em>.</li>
-			<li><code>-rcloneSyncDir</code>: This is the remote and directory that rclone should upload to. It should be in the form of 'Remote:Directory'. Remote is the name of the appropriate config found in the config file specified in rcloneConfig. The value can be an array separated by comma if you want to put it to multiple locations. For S3 API services, use <code>Remote:BucketName\Directory</code>. <em>String array</em>.</li>
-			<li><code>-DotSrcConfig</code>: The path to an external script file (.ps1) that contains configuration options can be specified here. At a minimum, the file must contain values for <code>$DumpDirectory</code>, <code>$ffmpegExe</code>, <code>$ffprobeExe</code>, <code>$kid3Exe</code>, and <code>$ytdlpExe</code>. The best thing to do would be to simply copy the entire 'inline' configuration options section from SoundsDownloadScript.ps1 and paste it into a new .ps1. The script will be called using dot sourcing. It will override any settings that are also set in the inline configuration options. This was implemented to make it easier to upgrade SoundsDownloadScript without having to transcribe the settings to a new file each time. The dot sourcing method was selected over 'real' config files (ini, xml, json, etc.) to account for the multi-line remote script blocks which would have been hard to reliably implement using the other ways. It's not a great option, but it's there and it works. More information on dot sourcing can be found at <a href="https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_scripts?view=powershell-7.4#script-scope-and-dot-sourcing">this Microsoft Learn page</a>. <em>File path</em>.</li>
-			<li><code>-Debug</code>: Output the console and variables to text files in the specified <code>-DebugDirectory</code>. If rclone and OpenVPN are used, it will create separate log files for those in the same directory with the same name structure. Log file name structure is '[ShortTitle]-[Script PID]-[Random Chars]-[Log Source].log'. <em>Switch</em>.</li>
-			<li><code>-DebugDirectory</code>: The directory to save log files if <code>-Debug</code> is enabled. <em>Directory path</em>.</li>
-			<li><code>-NoDL</code>: Use this option to skip downloading the episode. It's useful to see the metadata to set the TitleFormat and troubleshoot escape character and encoding problems. <em>Switch</em>.</li>
-			<li><code>-Force</code>: Download the episode even if it's already downloaded. It will append an underscore number to the end so as not to overwrite an existing file. This can be useful for testing. <em>Switch</em>.</li>
+				to create a config. You can copy the config text to another file and specify it here.</li>
+			<li><code>-rcloneSyncDir</code>: [<i>String array of file paths</i>] This is the remote and directory that rclone should upload to. It should be in the form of 'Remote:Directory'. Remote is the name of the appropriate config found in the config file specified in rcloneConfig. The value can be an array separated by comma if you want to put it to multiple locations. For S3 API services, use <code>Remote:BucketName\Directory</code>.</li>
+			<li><code>-DotSrcConfig</code>: [<i>File path</i>] The path to an external script file (.ps1) that contains configuration options can be specified here. At a minimum, the file must contain values for <code>$DumpDirectory</code>, <code>$ffmpegExe</code>, <code>$ffprobeExe</code>, <code>$kid3Exe</code>, and <code>$ytdlpExe</code>. The best thing to do would be to simply copy the entire 'inline' configuration options section from SoundsDownloadScript.ps1 and paste it into a new .ps1. The script will be called using dot sourcing. It will override any settings that are also set in the inline configuration options. This was implemented to make it easier to upgrade SoundsDownloadScript without having to transcribe the settings to a new file each time. The dot sourcing method was selected over 'real' config files (ini, xml, json, etc.) to account for the multi-line remote script blocks which would have been hard to reliably implement using the other ways. It's not a great option, but it's there and it works. More information on dot sourcing can be found at <a href="https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_scripts?view=powershell-7.4#script-scope-and-dot-sourcing">this Microsoft Learn page</a>.</li>
+			<li><code>-Debug</code>: [<i>Switch</i>] Output the console and variables to text files in the specified <code>-DebugDirectory</code>. If rclone and OpenVPN are used, it will create separate log files for those in the same directory with the same name structure. Log file name structure is '[ShortTitle]-[Script PID]-[Random Chars]-[Log Source].log'.</li>
+			<li><code>-DebugDirectory</code>: [<i>Directory path</i>] The directory to save log files if <code>-Debug</code> is enabled.</li>
+			<li><code>-NoDL</code>: [<i>Switch</i>] Use this option to skip downloading the episode. It's useful to see the metadata to set the TitleFormat and troubleshoot escape character and encoding problems.</li>
+			<li><code>-Force</code>: [<i>Switch</i>] Download the episode even if it's already downloaded. It will append an underscore number to the end so as not to overwrite an existing file. This can be useful for testing.</li>
 		</ul>
-		<p><em>TerminatingError(Invoke-WebRequest):</em></p>
+		<p><i>TerminatingError(Invoke-WebRequest):</i></p>
 		<p>Sometimes the BBC updates the program page before it releases the episode on Sounds. This will cause SoundsDownloadScript.ps1 to try to download the episode that isn't available yet. In the Console+Vars debug log, you'll see:</p>
 		<p><code class="block">PS>TerminatingError(Invoke-WebRequest):"<br>
 		<br>
@@ -288,30 +295,30 @@
 		<p>followed by a lot of html and the message <code>Sorry, the page you are looking for cannot be found!</code>. Don't freak out if this happens. Just wait and run the script again later after the episode has been fully released.</p>
 
 		<h3 id="HowToRun_2">genRSS.ps1 (if using)</h3>
-		<p><em>Command line parameters:</em></p>
+		<p><i>Command line parameters:</i></p>
 		<ul>
-			<li><code>-Profile</code>: The path to the profile config file to use. <em>File path</em>.</li>
-			<li><code>-Test</code>: A local file name to generate a test RSS file to. This option will not upload anything remotely. It is useful for testing without messing up a public RSS feed. <em>File path</em>.</li>
-			<li><code>-Force</code>: Force the script to update the RSS file, even if it doesn't need to be. This is useful for testing or pushing changes. <em>Switch</em>.</li>
-			<li><code>-Debug</code>: Output the console and variables to a text file in the <code>$DebugDirectory</code>. Log file name structure is 'genRSS_[Profile Name]-[Script PID]-[Inc No]-Console+Vars.log'. <em>Switch</em>.</li>
-			<li><code>-DebugDirectory</code>: The directory to save log files if <code>-Debug</code> is enabled. <em>Directory path</em>.</li>
+			<li><code>-Profile</code>: [<i>File path</i>] The path to the profile config file to use.</li>
+			<li><code>-Test</code>: [<i>File path</i>] A local file name to generate a test RSS file to. This option will not upload anything remotely. It is useful for testing without messing up a public RSS feed.</li>
+			<li><code>-Force</code>: [<i>Switch</i>] Force the script to update the RSS file, even if it doesn't need to be. This is useful for testing or pushing changes.</li>
+			<li><code>-Debug</code>: [<i>Switch</i>] Output the console and variables to a text file in the <code>$DebugDirectory</code>. Log file name structure is 'genRSS_[Profile Name]-[Script PID]-[Inc No]-Console+Vars.log'.</li>
+			<li><code>-DebugDirectory</code>: [<i>Directory path</i>] The directory to save log files if <code>-Debug</code> is enabled.</li>
 		</ul>
 
 		<h3 id="HowToRun_3">Windows Task Scheduler Examples</h3>
 		<p>If you're using Windows Task Scheduler, here are some examples of how to format the actions:</p>
 
-		<em>Basic download:</em>
+		<i>Basic download:</i>
 		<ul><li><b>Program:</b> <code>"C:\Program Files\PowerShell\7\pwsh.exe"</code> <b>Arguments:</b> <code>"-Command & 'C:\Program Files\VideoLAN\VLC\SoundsDownloadScript.ps1' -ProgramURL https://www.bbc.co.uk/programmes/b006r9yq -SaveDir 'F:\Audio\The News Quiz' -ShortTitle TheNewsQuiz -TitleFormat '{1} - {2}' -Archive 0 -Debug -DebugDirectory 'C:\DebugLogs'"</code></li></ul>
 		<br>
 
-		<em>Uploading to CloudFlare R2 and generate an RSS:</em>
+		<i>Uploading to CloudFlare R2 and generate an RSS:</i>
 		<ul>
 			<li><b>Program:</b> <code>"C:\Program Files\PowerShell\7\pwsh.exe"</code> <b>Arguments:</b> <code>"-Command & 'C:\Program Files\VideoLAN\VLC\SoundsDownloadScript.ps1' -ProgramURL https://www.bbc.co.uk/programmes/b006qfvv -SaveDir 'F:\Audio\Shipping Forecast' -ShortTitle ShippingForecast -TitleFormat '{1} {4:HH:mm}' -rcloneConfig 'C:\Program Files\VideoLAN\VLC\rclone\rclone.conf' -rcloneSyncDir 'bbcsoundsrss_r2:bbcsoundsrss\ShippingForecast\media' -Archive 7 -Days -Debug -DebugDirectory 'C:\DebugLogs'"</code></li>
 			<li><b>Program:</b> <code>"C:\Program Files\PowerShell\7\pwsh.exe"</code> <b>Arguments:</b> <code>"-Command & 'C:\Program Files\VideoLAN\VLC\genRSS.ps1' -Profile 'E:\FeedProfiles\ShippingForecast' -Debug -DebugDirectory 'C:\DebugLogs'"</code></li>
 		</ul>
 		<br>
 
-		<em>Using VPN and uploading to archive.org:</em>
+		<i>Using VPN and uploading to archive.org:</i>
 		<ul><li><b>Program:</b> <code>"C:\Program Files\PowerShell\7\pwsh.exe"</code> <b>Arguments:</b> <code>"-Command & 'C:\Program Files\VideoLAN\VLC\SoundsDownloadScript.ps1' -ProgramURL https://www.bbc.co.uk/programmes/b0100rp6 -SaveDir 'F:\Audio\Radcliffe and Maconie' -ShortTitle RadMac -VPNConfig 'C:\Program Files\OpenVPN\config\uk_streaming.ovpn,C:\Program Files\OpenVPN\config\uk_southampton.ovpn,C:\Program Files\OpenVPN\config\uk_manchester.ovpn,C:\Program Files\OpenVPN\config\uk_london.ovpn' -rcloneConfig 'C:\Program Files\VideoLAN\VLC\rclone\rclone.conf' -rcloneSyncDir 'internetarchive_config:' -Archive 0"</code></li></ul>	
 		<br>
 
@@ -321,10 +328,10 @@
 		<h3>SoundsDownloadService.ps1</h3>
 		<p>I tried to make SoundsDownloadScript.ps1 fairly modular and include comments to help, but there are a few things to keep in mind:</p>
 		
-		<em>Audio file name:</em>
+		<i>Audio file name:</i>
 		<p>The naming format for finished audio file is [ShortTitle]-[YYYYMMDD]-[Program ID]. If you decide to change that format, you could break some things unintentionally. For example, the script specifically looks for the 8-character Program ID in the file name to decide whether it's already been downloaded. genRSS.ps1 also relies on it for certain options. The script also uses a regex pattern to match files to delete if the <code>-Archive</code> parameter is set. Just be sure you update all of those things if you make changes to the file name format.</p>
 
-		<em>Tags with special characters:</em>
+		<i>Tags with special characters:</i>
 		<p>Certain special characters have to be escaped with a backslash (<code>\</code>) in kid3 or kid3 will choke. I don't think a complete list exists. SoundsDownloadService escapes single quotes, double quotes, and pipes in a function called Format-kid3CommandString. If you find another character that needs to be escaped, you can add it to the <code>Return</code> line using the <code>replace</code> method.
 			<code class="block">
 			Function Format-kid3CommandString ($StringToFormat) {<br>
@@ -333,7 +340,7 @@
 		Note: You may also need to escape the special characters in Powershell for it to pass them correctly, especially quotes. Use a backtick (<code>`</code>) for that.
 		</p>
 
-		<em id="TitleFormat">TitleFormat:</em>
+		<em id="TitleFormat">TitleFormat:</i>
 		<p>SoundsDownloadScript uses the format operator (<code>-f</code>) to let you build dynamic title formats. The available options are stored in an array called <code>$TitleFormatArray</code>. The first one starts at <code>{0}</code>.
 		<code class="block">$TitleFormatArray = $TitleTable.'primary', $TitleTable.'secondary', $TitleTable.'tertiary', $ReleaseDate.ToUniversalTime(), [System.TimeZoneInfo]::ConvertTimeBySystemTimeZoneId($ReleaseDate, 'GMT Standard Time')</code></p>
 		<p>You can add more variables to the array to suit your title needs, but you should append them to the end so that they become <code>{5}</code>, <code>{6}</code>, etc. Otherwise it will scoot the numbering down the line and potentially screw up your previous settings. You can use this to format the dates a different way, or add any other values from the json metadata. See <a href="https://ss64.com/ps/syntax-f-operator.html">this page</a> and/or <a href="https://arcanecode.com/2021/07/19/fun-with-powershell-string-formatting/">this page</a> for more information on the format operator.</p>
@@ -346,7 +353,7 @@
 
 		<h3>genRSS.ps1</h3>
 		<p>I heavily modified <a href="https://gist.github.com/arebee/a7a77044c77443effaeddbe3730af4ad">this script</a> to create genRSS.ps1. I don't really understand the XML writer part of it, only that it just seems to work. The whole script is messy and very inefficient. Be sure to test THOROUGHLY before putting changes to genRSS into production because you can screw up your subscriber's feeds. Good luck!</p>
-  
+		
 		<h3 id="ID3Tags">MP4/ID3 tags</h3>
 		<p>Having correct MP4/ID3 tags is crucial for both scripts to "work" together. SoundsDownloadScript.ps1 sets way more tags than this, but these are the important ones for genRSS.ps1 to work properly:</p>
 		<ul>
