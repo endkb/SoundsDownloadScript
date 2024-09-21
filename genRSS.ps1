@@ -85,13 +85,13 @@ If ((!$Force) -AND (Test-Path $_filename)) {
 		}
 	If ($CheckProfileHash -eq "yes") {
 		$ExitFlag++
-		If ($RSSData.rss.hash -eq $(Get-FileHash -Path $Profile).Hash) {
+		If ($($RSSData.rss.hash).InnerText -eq $(Get-FileHash -Path $Profile).Hash) {
 			$ExitFlag--
 			}
 		}
 	If ($ExitFlag -le 0) {
 		Write-Output "Last built: $(([datetime]$RSSData.rss.channel.lastBuildDate).ToUniversalTime()) & Latest file: $([datetime]$LatestMediaFile.LastWriteTimeUtc)"
-		If ($CheckProfileHash -eq "yes") {Write-Output "Hash match: $($RSSData.rss.hash)"}
+		If ($CheckProfileHash -eq "yes") {Write-Output "Hash match: $($($RSSData.rss.hash).InnerText)"}
 		If ($Debug) {
 			Stop-Transcript
 			# Spit list of variables and values to file
@@ -347,7 +347,18 @@ try {$SkipTitles = $Config['SkipTitles'].Split(",")} catch {}
 	}
 
 If ($CheckProfileHash -eq "yes") {
-	$null = createRssElement -elementName 'hash' -value $(Get-FileHash -Path $Profile).Hash -parent $rssTag
+	Function createHashElement {
+	param(
+		[string]$elementName,
+		[string]$value,
+		$parent
+		)
+	$thisNode = $rss.CreateElement($elementName, 'urn:genRSS:hash')
+	$thisNode.InnerText = $value
+	$null = $parent.AppendChild($thisNode)
+	return $thisNode
+	}
+	$null = createHashElement -elementName 'hash' -value $(Get-FileHash -Path $Profile).Hash -parent $rssTag
 	}
 
 $xmlWriterSettings =  New-Object System.Xml.XmlWriterSettings
