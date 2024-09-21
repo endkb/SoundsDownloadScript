@@ -109,7 +109,7 @@
 			<li>Edit SoundsDownloadScript.ps1 before using and set the following variables:
 				<ul>
 					<li><code>$DefaultTrackNoFormat</code>: [<i>String</i>] DateTime formatted string (<a href="https://www.sharepointdiary.com/2021/11/date-format-in-powershell.html">see this guide for DateTime formatting help</a>) to set the track number if the <code>-TrackNoFormat</code> parameter is not set. Setting this to <code>'c'</code> will count up the track number from the last episode, <code>'c(r)'</code> does the same but searches recursive directories. Note: The <code>'c'</code> option will call kid3 on each track in the directory to determine the next track number. This can be slow as the directory fills up with more and more audio files. If you're not using the <code>-Archive</code> parameter, consider using a DateTime format instead. Also, <code>o</code> can be included in a DateTime as a one digit year, and <code>jjj</code> can be included in a DateTime as a Julian date.</li>
-					<li><code>$DefaultTitleFormat</code>: Default format string to set episode title to if <code>-TitleFormat</code> is not set. The string may contain the following variables in curly brackets:
+					<li><code>$DefaultTitleFormat</code>: [<i>Format string</i>] Default format string to set episode title to if <code>-TitleFormat</code> is not set. The string may contain the following variables in curly brackets:
 						<ul>
 							<li><code>{0}</code> = The BBC's primary title. This is usually the show's title.</li>
 							<li><code>{1}</code> = The BBC's secondary title. This is usually the title of the episode or the series number.</li>
@@ -257,7 +257,7 @@
 			<li><code>-SaveDir</code>: [<i>Directory path</i>] The local directory to move the finished audio file to. The directory will be created if it does not exist.</li>
 			<li><code>-ShortTitle</code>: [<i>String</i>] A short reference for the filename.</li>
 			<li><code>-TrackNoFormat</code>: [<i>String</i>] Set track number format. It can be a DateTime string (<a href="https://www.sharepointdiary.com/2021/11/date-format-in-powershell.html">see this guide for help formatting DateTime</a>). Additionally, <code>o</code> can be included in a DateTime as a one digit year, <code>jjj</code> can be included in a DateTime as a Julian date. There are a few other options: <code>'c'</code> counts up from the track number of the most recent file in the save directory. <code>'c(r)'</code> does the same but searches recursive directories. Note: The <code>'c'</code> option will call kid3 on each track in the directory to determine the next track number. This can be slow as the directory fills up with more and more audio files. If you're not using the <code>-Archive</code> parameter, consider using a DateTime format instead. If this is omitted, it will use the <code>$DefaultTrackNoFormat</code>.</li>
-			<li><code>-TitleFormat</code>: [<i>String</i>] Set the format of the Title tag. It should be a string. There are several variables that can be used, surrounded by curly brackets:
+			<li><code>-TitleFormat</code>: [<i>Format string</i>] Set the format of the Title tag. It should be a string. There are several variables that can be used, surrounded by curly brackets:
 				<ul>
 					<li><code>{0}</code> = The BBC's primary title. This is usually the show's title.</li>
 					<li><code>{1}</code> = The BBC's secondary title. This is usually the title of the episode or the series number.</li>
@@ -340,7 +340,7 @@
 		Note: You may also need to escape the special characters in Powershell for it to pass them correctly, especially quotes. Use a backtick (<code>`</code>) for that.
 		</p>
 
-		<em id="TitleFormat">TitleFormat:</i>
+		<i id="TitleFormat">TitleFormat:</i>
 		<p>SoundsDownloadScript uses the format operator (<code>-f</code>) to let you build dynamic title formats. The available options are stored in an array called <code>$TitleFormatArray</code>. The first one starts at <code>{0}</code>.
 		<code class="block">$TitleFormatArray = $TitleTable.'primary', $TitleTable.'secondary', $TitleTable.'tertiary', $ReleaseDate.ToUniversalTime(), [System.TimeZoneInfo]::ConvertTimeBySystemTimeZoneId($ReleaseDate, 'GMT Standard Time')</code></p>
 		<p>You can add more variables to the array to suit your title needs, but you should append them to the end so that they become <code>{5}</code>, <code>{6}</code>, etc. Otherwise it will scoot the numbering down the line and potentially screw up your previous settings. You can use this to format the dates a different way, or add any other values from the json metadata. See <a href="https://ss64.com/ps/syntax-f-operator.html">this page</a> and/or <a href="https://arcanecode.com/2021/07/19/fun-with-powershell-string-formatting/">this page</a> for more information on the format operator.</p>
