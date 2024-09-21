@@ -39,3 +39,6 @@ m001ts8t=Seasonal Trimmings
 # Debug Logging
 Debug=yes
 DebugDirectory=C:\\Files\\Debug
+
+# RSS Updating
+UseProfileHash=yes
