@@ -64,7 +64,7 @@ If ($Recursive -eq 'no') {$Recurse = $false}
 $Directory = $Config['Directory']
 $RSSFileName = $Config['RSSFileName']
 
-$UseProfileHash = $Config['UseProfileHash']
+$CheckProfileHash = $Config['CheckProfileHash']
 
 $_filename = $Directory + "\" + $RSSFileName
 
@@ -72,7 +72,7 @@ If ($Test) {
 	$_filename = $Test
 	}
 
-If ($UseProfileHash -eq "yes") {
+If ($CheckProfileHash -eq "yes") {
 	$ProfileHash = Get-FileHash -Path $Profile
 	}
 
@@ -83,7 +83,7 @@ If ((!$Force) -AND (Test-Path $_filename)) {
     If ($([datetime]$RSSData.rss.channel.lastBuildDate).ToUniversalTime() -gt $([datetime]$LatestMediaFile.LastWriteTimeUtc)) {
 		$ExitFlag--
 		}
-	If ($UseProfileHash -eq "yes") {
+	If ($CheckProfileHash -eq "yes") {
 		$ExitFlag++
 		If ($RSSData.rss.hash -eq $(Get-FileHash -Path $Profile).Hash) {
 			$ExitFlag--
@@ -91,7 +91,7 @@ If ((!$Force) -AND (Test-Path $_filename)) {
 		}
 	If ($ExitFlag -le 0) {
 		Write-Output "Last built: $(([datetime]$RSSData.rss.channel.lastBuildDate).ToUniversalTime()) & Latest file: $([datetime]$LatestMediaFile.LastWriteTimeUtc)"
-		If ($UseProfileHash -eq "yes") {Write-Output "Hash match: $($RSSData.rss.hash)"}
+		If ($CheckProfileHash -eq "yes") {Write-Output "Hash match: $($RSSData.rss.hash)"}
 		If ($Debug) {
 			Stop-Transcript
 			# Spit list of variables and values to file
@@ -346,7 +346,7 @@ try {$SkipTitles = $Config['SkipTitles'].Split(",")} catch {}
 	$null = $itemimage.SetAttribute('medium', 'image')
 	}
 
-If ($UseProfileHash -eq "yes") {
+If ($CheckProfileHash -eq "yes") {
 	$null = createRssElement -elementName 'hash' -value $(Get-FileHash -Path $Profile).Hash -parent $rssTag
 	}
 
