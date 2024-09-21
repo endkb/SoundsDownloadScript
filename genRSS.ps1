@@ -64,17 +64,34 @@ If ($Recursive -eq 'no') {$Recurse = $false}
 $Directory = $Config['Directory']
 $RSSFileName = $Config['RSSFileName']
 
+$UseProfileHash = $Config['UseProfileHash']
+
 $_filename = $Directory + "\" + $RSSFileName
 
 If ($Test) {
 	$_filename = $Test
 	}
 
+If ($UseProfileHash -eq "yes") {
+	$ProfileHash = Get-FileHash -Path $Profile
+	}
+
 If ((!$Force) -AND (Test-Path $_filename)) {
     $LatestMediaFile = Get-ChildItem -Path $MediaDirectory\* -Include $MediaFilter -Recurse:$Recurse | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1	
 	[xml]$RSSData = Get-Content $_filename
+	$ExitFlag++
     If ($([datetime]$RSSData.rss.channel.lastBuildDate).ToUniversalTime() -gt $([datetime]$LatestMediaFile.LastWriteTimeUtc)) {
+		$ExitFlag--
+		}
+	If ($UseProfileHash -eq "yes") {
+		$ExitFlag++
+		If ($RSSData.rss.hash -eq $(Get-FileHash -Path $Profile).Hash) {
+			$ExitFlag--
+			}
+		}
+	If ($ExitFlag -le 0) {
 		Write-Output "Last built: $(([datetime]$RSSData.rss.channel.lastBuildDate).ToUniversalTime()) & Latest file: $([datetime]$LatestMediaFile.LastWriteTimeUtc)"
+		If ($UseProfileHash -eq "yes") {Write-Output "Hash match: $($RSSData.rss.hash)"}
 		If ($Debug) {
 			Stop-Transcript
 			# Spit list of variables and values to file
@@ -140,7 +157,7 @@ $root = $rss.CreateElement('rss')
 $null = $root.SetAttribute('version','2.0')
 $null = $root.SetAttribute('xmlns:media','http://search.yahoo.com/mrss/')
 $null = $root.SetAttribute('xmlns:itunes','http://www.itunes.com/dtds/podcast-1.0.dtd')
-$null = $rss.AppendChild($root)
+$rssTag = $rss.AppendChild($root)
 $rssChannel  = $rss.CreateElement('channel')
 $null = $root.AppendChild($rssChannel)
 
@@ -327,6 +344,10 @@ try {$SkipTitles = $Config['SkipTitles'].Split(",")} catch {}
 	$null = $itemimage.SetAttribute('url', $ItemCover)
 	$null = $itemimage.SetAttribute('type', 'image/jpg')
 	$null = $itemimage.SetAttribute('medium', 'image')
+	}
+
+If ($UseProfileHash -eq "yes") {
+	$null = createRssElement -elementName 'hash' -value $(Get-FileHash -Path $Profile).Hash -parent $rssTag
 	}
 
 $xmlWriterSettings =  New-Object System.Xml.XmlWriterSettings
