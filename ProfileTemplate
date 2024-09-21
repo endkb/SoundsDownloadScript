@@ -41,4 +41,4 @@ Debug=yes
 DebugDirectory=C:\\Files\\Debug
 
 # RSS Updating
-UseProfileHash=yes
+CheckProfileHash=yes
