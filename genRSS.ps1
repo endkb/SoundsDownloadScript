@@ -64,6 +64,7 @@ If ($Recursive -eq 'no') {$Recurse = $false}
 $Directory = $Config['Directory']
 $RSSFileName = $Config['RSSFileName']
 
+$CheckMediaDirectoryHash = $Config['CheckMediaDirectoryHash']															 
 $CheckProfileHash = $Config['CheckProfileHash']
 
 $_filename = $Directory + "\" + $RSSFileName
@@ -72,26 +73,44 @@ If ($Test) {
 	$_filename = $Test
 	}
 
+If ($CheckMediaDirectoryHash -eq "yes") {
+	$MediaFileList = Get-ChildItem -Path $MediaDirectory -Recurse | Sort-Object Name | Select-Object FullName
+	$md5hash = New-Object -TypeName System.Security.Cryptography.MD5CryptoServiceProvider
+	$utf = New-Object -TypeName System.Text.UTF8Encoding
+	$MediaDirectoryHash = [System.BitConverter]::ToString($md5hash.ComputeHash($utf.GetBytes($MediaFileList)))
+	$MediaDirectoryHash = $MediaDirectoryHash.Replace("-", "")
+	}
+
 If ($CheckProfileHash -eq "yes") {
-	$ProfileHash = Get-FileHash -Path $Profile
+	$ProfileHash = $(Get-FileHash -Algorithm MD5 -Path $Profile).Hash
 	}
 
 If ((!$Force) -AND (Test-Path $_filename)) {
-    $LatestMediaFile = Get-ChildItem -Path $MediaDirectory\* -Include $MediaFilter -Recurse:$Recurse | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1	
-	[xml]$RSSData = Get-Content $_filename
 	$ExitFlag++
-    If ($([datetime]$RSSData.rss.channel.lastBuildDate).ToUniversalTime() -gt $([datetime]$LatestMediaFile.LastWriteTimeUtc)) {
-		$ExitFlag--
-		}
+	[xml]$RSSData = Get-Content $_filename
+	If ($CheckMediaDirectoryHash -eq "yes") {
+		If ($($RSSData.rss.MediaDirectoryHash).InnerText -eq $MediaDirectoryHash) {
+			$ExitFlag--
+			$UpdateMessage = "MediaDirectoryHash: $MediaDirectoryHash matches"
+			}
+		} Else {
+			$LatestMediaFile = Get-ChildItem -Path $MediaDirectory\* -Include $MediaFilter -Recurse:$Recurse | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1
+			If ($([datetime]$RSSData.rss.channel.lastBuildDate).ToUniversalTime() -gt $([datetime]$LatestMediaFile.LastWriteTimeUtc)) {
+				$ExitFlag--
+				$UpdateMessage = "Last built: $(([datetime]$RSSData.rss.channel.lastBuildDate).ToUniversalTime()) & Latest file: $([datetime]$LatestMediaFile.LastWriteTimeUtc)"
+				}
+			}
 	If ($CheckProfileHash -eq "yes") {
 		$ExitFlag++
-		If ($($RSSData.rss.hash).InnerText -eq $(Get-FileHash -Path $Profile).Hash) {
+		If ($($RSSData.rss.ProfileHash).InnerText -eq $ProfileHash) {
 			$ExitFlag--
 			}
 		}
 	If ($ExitFlag -le 0) {
-		Write-Output "Last built: $(([datetime]$RSSData.rss.channel.lastBuildDate).ToUniversalTime()) & Latest file: $([datetime]$LatestMediaFile.LastWriteTimeUtc)"
-		If ($CheckProfileHash -eq "yes") {Write-Output "Hash match: $($($RSSData.rss.hash).InnerText)"}
+		Write-Output $UpdateMessage
+		If ($CheckProfileHash -eq "yes") {
+			Write-Output "ProfileHash: $ProfileHash matches"
+			}
 		If ($Debug) {
 			Stop-Transcript
 			# Spit list of variables and values to file
@@ -144,6 +163,18 @@ Function createCDATAElement {
 		$parent
 		)
 	$thisNode = $rss.CreateCDataSection($elementName)
+	$thisNode.InnerText = $value
+	$null = $parent.AppendChild($thisNode)
+	return $thisNode
+	}
+
+Function createHashElement {
+	param(
+		[string]$elementName,
+		[string]$value,
+		$parent
+		)
+	$thisNode = $rss.CreateElement($elementName, 'urn:genRSS:hash')
 	$thisNode.InnerText = $value
 	$null = $parent.AppendChild($thisNode)
 	return $thisNode
@@ -346,19 +377,12 @@ try {$SkipTitles = $Config['SkipTitles'].Split(",")} catch {}
 	$null = $itemimage.SetAttribute('medium', 'image')
 	}
 
-If ($CheckProfileHash -eq "yes") {
-	Function createHashElement {
-	param(
-		[string]$elementName,
-		[string]$value,
-		$parent
-		)
-	$thisNode = $rss.CreateElement($elementName, 'urn:genRSS:hash')
-	$thisNode.InnerText = $value
-	$null = $parent.AppendChild($thisNode)
-	return $thisNode
+If ($CheckMediaDirectoryHash -eq "yes") {
+	$null = createHashElement -elementName 'MediaDirectoryHash' -value $MediaDirectoryHash -parent $rssTag
 	}
-	$null = createHashElement -elementName 'hash' -value $(Get-FileHash -Path $Profile).Hash -parent $rssTag
+
+If ($CheckProfileHash -eq "yes") {
+	$null = createHashElement -elementName 'ProfileHash' -value $(Get-FileHash -Algorithm MD5 -Path $Profile).Hash -parent $rssTag
 	}
 
 $xmlWriterSettings =  New-Object System.Xml.XmlWriterSettings
