@@ -35,7 +35,7 @@
 	</head>
 	<body>
 		<h1>SoundsDownloadScript.ps1 + genRSS.ps1</h1>
-		<p><i>*Updated: 19-Sep-2024 01:52 GMT</i></p>
+		<p><i>*Updated: 21-Sep-2024 18:36 GMT</i></p>
 		<p>These instructions are very crude and messy. Sorry for the windbag word vomit. I hope they help, though. If someone wants to convert this file into a markdown README.md for github, be my guest. The scripts are a little tedious to set up the first time, but once you get them working they're pretty reliable.</p>
 		<p>I recommend you check the <a href="https://github.com/endkb/SoundsDownloadScript">repo on github</a> for the <a href="https://html-preview.github.io/?url=https://github.com/endkb/SoundsDownloadScript/blob/main/README.htm">latest version of this README</a> before continuing.</p>
 		<p>If you find a bug in the scripts or something is incorrect or incomplete in the documentation, feel free to <a href="https://github.com/endkb/SoundsDownloadScript/issues">open an issue on github</a>.</p>
@@ -109,7 +109,7 @@
 			<li>Edit SoundsDownloadScript.ps1 before using and set the following variables:
 				<ul>
 					<li><code>$DefaultTrackNoFormat</code>: [<i>String</i>] DateTime formatted string (<a href="https://www.sharepointdiary.com/2021/11/date-format-in-powershell.html">see this guide for DateTime formatting help</a>) to set the track number if the <code>-TrackNoFormat</code> parameter is not set. Setting this to <code>'c'</code> will count up the track number from the last episode, <code>'c(r)'</code> does the same but searches recursive directories. Note: The <code>'c'</code> option will call kid3 on each track in the directory to determine the next track number. This can be slow as the directory fills up with more and more audio files. If you're not using the <code>-Archive</code> parameter, consider using a DateTime format instead. Also, <code>o</code> can be included in a DateTime as a one digit year, and <code>jjj</code> can be included in a DateTime as a Julian date.</li>
-					<li><code>$DefaultTitleFormat</code>: Default format string to set episode title to if <code>-TitleFormat</code> is not set. The string may contain the following variables in curly brackets:
+					<li><code>$DefaultTitleFormat</code>: [<i>Format string</i>] Default format string to set episode title to if <code>-TitleFormat</code> is not set. The string may contain the following variables in curly brackets:
 						<ul>
 							<li><code>{0}</code> = The BBC's primary title. This is usually the show's title.</li>
 							<li><code>{1}</code> = The BBC's secondary title. This is usually the title of the episode or the series number.</li>
@@ -210,6 +210,9 @@
 					<li><code>Directory</code>: [<i>Directory path</i>] Local directory to save the RSS file.</li>
 					<li><code>RSSFileName</code>: [<i>File name</i>] Name of the RSS file to save locally. This is the file that will get uploaded.<br><br></li>
 
+					<li><code>CheckMediaDirectoryHash</code>: [<i>yes,no</i>] Uses a hash of the directory structure instead of LastWriteTime to determine whether the media files have changed and  the RSS needs to be updated and republished. If <code>CheckMediaDirectoryHash</code> is set to <code>yes</code> then the next time the script is called, it will compute the MD5 hash value of the MediaDirectory using MD5CryptoServiceProvider and put it into the RSS. When it is called again, it will pull the hash from the RSS and compare the values. The hash will be stored in the RSS in &lt;MediaDirectoryHash&gt; as a child of the &lt;rss&gt; element outside of the &lt;channel&gt; element. If <code>CheckMediaDirectoryHash</code> is set to <code>no</code> or is not set, genRSS compares the latest file date to the time the RSS was last generated (&lt;pubDate&gt;) by default.</li>
+					<li><code>CheckProfileHash</code>: [<i>yes,no</i>] Updates the RSS file if there are changes to the podcast profile. Normally, genRSS will only update the RSS file when there is a new episode. If <code>CheckProfileHash</code> is set to <code>yes</code> then the next time the script is called, it will put the MD5 hash value of the profile into the RSS using Get-FileHash. When it is called again, it will pull the hash from the RSS and compare the values. If they are different, then it knows that the profile was updated and the RSS needs to be regenerated and republished. The hash will be put into &lt;ProfileHash&gt; as a child of the &lt;rss&gt; element outside of the &lt;channel&gt; element in the RSS.<br><br></li>
+
 					<li><code>rcloneConfig</code>: [<i>File path</i>] Path to the rclone ini config file.</li>
 					<li><code>RemotePublishDirectory</code>: [<i>String</i>] This is the remote and directory that rclone should upload the RSS file to. It should be in the form of 'Remote:Directory'. Remote is the name of the appropriate config found in the config file specified in <code>-rcloneConfig</code>. For services that use the S3 API, use Remote:BucketName\Directory.</li>
 					<li><code>RemoteRSSFileName</code>: [<i>File name</i>] Name of the RSS file to publish remotely.<br><br></li>
@@ -240,9 +243,9 @@
 						<code class="block">m002tc9v=Year in Review</code>
 					<br></li>
 					
-					<li><code>Debug</code>: [<i>yes,no</i>] Output the console and variables to a text file in the <code>$DebugDirectory</code>. Log file name structure is 'genRSS_[Profile Name]-[Script PID]-[Inc No]-Console+Vars.log'. This can be set with a command line parameter, instead.</li>
-					<li><code>DebugDirectory</code>: [<i>Directory path</i>] The directory to save log files if <code>-Debug</code> is enabled. This can be set with a command line parameter, instead.</li>
-				</ul>
+					<li><code>Debug</code>: [<i>yes,no</i>] Outputs the console and variables to a text file in the <code>$DebugDirectory</code>. Log file name structure is 'genRSS_[Profile Name]-[Script PID]-[Inc No]-Console+Vars.log'. This can be set with a command line parameter, instead.</li>
+					<li><code>DebugDirectory</code>: [<i>Directory path</i>] The directory to save log files if <code>Debug</code> is enabled. This can be set with a command line parameter, instead.<br><br></li>
+					</ul>
 			<li>Profit! (actually, don't profit because I want this project to stay off the BBC's radar)</li>
 		</ol>
 		<br>
@@ -255,9 +258,9 @@
 		<ul>
 			<li><code>-ProgramURL</code>: [<i>URL</i>] This is the bbc.co.uk/programmes URL of the show to download the latest ep. Sometimes https://www.bbc.co.uk/programmes/[Program ID]/episodes/player works better, especially if the program releases special features. You can get that link by clicking on the program page and selecting available episodes. You can also use the https://bbc.co.uk/sounds/play/[Program ID] link if you want to download only a specific episode.</li>
 			<li><code>-SaveDir</code>: [<i>Directory path</i>] The local directory to move the finished audio file to. The directory will be created if it does not exist.</li>
-			<li><code>-ShortTitle</code>: [<i>String</i>] A short reference for the filename.</li>
+			<li><code>-ShortTitle</code>: [<i>String</i>] A short reference for the filename. It shouldn't have spaces (Ex: <code>TheNowShow</code>).</li>
 			<li><code>-TrackNoFormat</code>: [<i>String</i>] Set track number format. It can be a DateTime string (<a href="https://www.sharepointdiary.com/2021/11/date-format-in-powershell.html">see this guide for help formatting DateTime</a>). Additionally, <code>o</code> can be included in a DateTime as a one digit year, <code>jjj</code> can be included in a DateTime as a Julian date. There are a few other options: <code>'c'</code> counts up from the track number of the most recent file in the save directory. <code>'c(r)'</code> does the same but searches recursive directories. Note: The <code>'c'</code> option will call kid3 on each track in the directory to determine the next track number. This can be slow as the directory fills up with more and more audio files. If you're not using the <code>-Archive</code> parameter, consider using a DateTime format instead. If this is omitted, it will use the <code>$DefaultTrackNoFormat</code>.</li>
-			<li><code>-TitleFormat</code>: [<i>String</i>] Set the format of the Title tag. It should be a string. There are several variables that can be used, surrounded by curly brackets:
+			<li><code>-TitleFormat</code>: [<i>Format string</i>] Set the format of the Title tag. It should be a string. There are several variables that can be used, surrounded by curly brackets:
 				<ul>
 					<li><code>{0}</code> = The BBC's primary title. This is usually the show's title.</li>
 					<li><code>{1}</code> = The BBC's secondary title. This is usually the title of the episode or the series number.</li>
@@ -273,7 +276,7 @@
 				The BBC only makes its content available worldwide in <code>48</code> and <code>96</code> kbps. If you are outside the UK, and want to download a higher bitrate, you will need to combine this option with <code>-VPNConfig</code> and have a VPN provider with UK servers that can access those streams.
 			</li>
 			<li><code>-mp3</code>: [<i>Switch</i>] Transcode the audio file to mp3 using ffmpeg after downloading. The default is file type is m4a. Uses libmp3lame codec and mirrors the bitrate of the m4a file. Note: I don't do as much testing on the mp3 option (e.g., m4a and mp3 use different tags). If you find a bug with it, <a href="https://github.com/endkb/SoundsDownloadScript/issues">open an issue</a> in the repo.</li>
-			<li><code>-Archive</code>: [<i>Number</i>] The number of episodes to keep. After the script downloads the latest one, it will delete excess ones.</li>
+			<li><code>-Archive</code>: [<i>Number</i>] The number of episodes to keep. Set to <code>0</code> to disable and keep all episodes. After the script downloads the latest one, it will delete excess ones. It searches for episodes using the ShortTitle. If multiple shows are saved in the same folder for some reason, the other shows will not be deleted.</li>
 			<li><code>-Days</code>: [<i>Switch</i>] Bases the <code>-Archive</code> parameter on the number of days to keep instead of the number of episodes. This option reads the date from each filename (which is set from the episode's GMT release date in the metadata). If Archive is <code>0</code> or is not set, this parameter has no effect.</li>
 			<li><code>-VPNConfig</code>: [<i>String array of file paths</i>] If using a VPN, this is the path to the OpenVPN .ovpn config file. It can also be an array of file locations separated by a comma. Since the BBC tries to block VPNs in a cat and mouse game, the script will run through each config in order until it finds one that can download the episode. I use PIA for VPN. Also be sure create and set an auth-user-pass file if using. See OpenVPN support for that.</li>
 			<li><code>-rcloneConfig</code>: [<i>File path</i>] If using rclone to upload the episode somewhere, this is the path to the rclone config file. You'll need to use:
@@ -340,7 +343,7 @@
 		Note: You may also need to escape the special characters in Powershell for it to pass them correctly, especially quotes. Use a backtick (<code>`</code>) for that.
 		</p>
 
-		<em id="TitleFormat">TitleFormat:</i>
+		<i id="TitleFormat">TitleFormat:</i>
 		<p>SoundsDownloadScript uses the format operator (<code>-f</code>) to let you build dynamic title formats. The available options are stored in an array called <code>$TitleFormatArray</code>. The first one starts at <code>{0}</code>.
 		<code class="block">$TitleFormatArray = $TitleTable.'primary', $TitleTable.'secondary', $TitleTable.'tertiary', $ReleaseDate.ToUniversalTime(), [System.TimeZoneInfo]::ConvertTimeBySystemTimeZoneId($ReleaseDate, 'GMT Standard Time')</code></p>
 		<p>You can add more variables to the array to suit your title needs, but you should append them to the end so that they become <code>{5}</code>, <code>{6}</code>, etc. Otherwise it will scoot the numbering down the line and potentially screw up your previous settings. You can use this to format the dates a different way, or add any other values from the json metadata. See <a href="https://ss64.com/ps/syntax-f-operator.html">this page</a> and/or <a href="https://arcanecode.com/2021/07/19/fun-with-powershell-string-formatting/">this page</a> for more information on the format operator.</p>
