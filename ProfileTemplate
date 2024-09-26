@@ -7,6 +7,10 @@ MediaExtension=m4a,mp3
 Directory=E:\\bbcsoundsrss\\rss
 RSSFileName=TheUnbelievableTruth.rss
 
+# RSS Updating
+CheckMediaDirectoryHash=yes
+CheckProfileHash=yes
+
 # Remote Publish
 rcloneConfig=C:\\Program Files (x86)\\VideoLAN\\VLC\\rclone-v1.61.1-windows-amd64\\bbcsoundsrss.conf
 RemotePublishDirectory=bbcsoundsrss_r2:bbcsoundsrss\\
