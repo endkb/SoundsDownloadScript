@@ -560,7 +560,6 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 		$kid3Commands += "-c", "set ORIGINALDATE '$($OriginalReleaseDate.ToString(`"yyyy-MM-dd`"))'"
 		$kid3Commands += "-c", "set trkn '$TrackNumber'"
 		$kid3Commands += "-c", "set PUBLISHER '$(Format-kid3CommandString($Station))'"
-		$kid3Commands += "-c", "set ©enc '$(Format-kid3CommandString((Get-Content $PSCommandpath -First 1).TrimStart('#').Trim()))'"
 		# Note: WEBSITE is required for genRSS.ps1 - sets <guid> and <link>
 		$kid3Commands += "-c", "set WEBSITE '$EpisodePage'"
 		$kid3Commands += "-c", "set AudioSourceURL '$SoundsPlayLink'"
@@ -583,7 +582,6 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 			$kid3Commands += "-c", "set TDOR '$($OriginalReleaseDate.ToString(`"yyyy-MM-dd`"))'"
 			$kid3Commands += "-c", "set TRCK '$TrackNumber'"
 			$kid3Commands += "-c", "set TPUB '$(Format-kid3CommandString($Station))'"
-			$kid3Commands += "-c", "set TENC '$(Format-kid3CommandString((Get-Content $PSCommandpath -First 1).TrimStart('#').Trim()))'"
 			# Note: WOAR is required for genRSS.ps1 - sets <guid> and <link>
 			$kid3Commands += "-c", "set WOAR '$EpisodePage'"
 			$kid3Commands += "-c", "set WOAS '$SoundsPlayLink'"
