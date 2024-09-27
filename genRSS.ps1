@@ -74,7 +74,7 @@ If ($Test) {
 	}
 
 If ($CheckMediaDirectoryHash -eq "yes") {
-	$MediaFileList = Get-ChildItem -Path $MediaDirectory -Recurse | Sort-Object Name | Select-Object FullName
+	$MediaFileList = Get-ChildItem -Path $MediaDirectory -Recurse | Sort-Object Name | Select -Expand FullName
 	$md5hash = New-Object -TypeName System.Security.Cryptography.MD5CryptoServiceProvider
 	$utf = New-Object -TypeName System.Text.UTF8Encoding
 	$MediaDirectoryHash = [System.BitConverter]::ToString($md5hash.ComputeHash($utf.GetBytes($MediaFileList)))
