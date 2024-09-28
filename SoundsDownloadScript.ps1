@@ -225,7 +225,7 @@ $ProgramID = $($SoundsPlayLink -split "/")[-1]
 
 If (($ScriptInstanceControl) -AND (!$NoDL)) {
 	# Function to delete the lock file to release control
-	Function Invoke-ReleaseControl {
+	Function Unlock-Control {
 		Remove-Item -Path $Script:LockFile -Force
 		If (!(Test-Path $Script:TestLockFile)) {Write-Output "**Released control at $(Get-Date)"}
 		}
@@ -453,7 +453,7 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 		}
 
 	# No more downloading after this - release the control for other scripts
-	If ($ScriptInstanceControl) {Invoke-ReleaseControl}
+	If ($ScriptInstanceControl) {Unlock-Control}
 
 	# Determine the extention of the DumpFile - Used later for kid3
 	$ext = [System.IO.Path]::GetExtension((Get-ChildItem -Path $DumpDirectory -Recurse -Filter "*$NakedName.*"))
@@ -689,7 +689,7 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 
 	} Else {
 		Write-Output "**Program ID $ProgramID already downloaded $($File.CreationTime)"
-		If ($ScriptInstanceControl) {Invoke-ReleaseControl}
+		If ($ScriptInstanceControl) {Unlock-Control}
 		}
 
 Invoke-ExitRoutine
