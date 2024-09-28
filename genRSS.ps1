@@ -64,7 +64,7 @@ If ($Recursive -eq 'no') {$Recurse = $false}
 $Directory = $Config['Directory']
 $RSSFileName = $Config['RSSFileName']
 
-$CheckMediaDirectoryHash = $Config['CheckMediaDirectoryHash']															 
+$CheckMediaDirectoryHash = $Config['CheckMediaDirectoryHash']
 $CheckProfileHash = $Config['CheckProfileHash']
 
 $_filename = $Directory + "\" + $RSSFileName
@@ -143,6 +143,30 @@ Function createiTunesRssElement {
 	$null = $parent.AppendChild($thisNode)
 	return $thisNode
 	}
+	
+Function createAtomElement {
+	param(
+		[string]$elementName,
+		[string]$value,
+		$parent
+		)
+	$thisNode = $rss.CreateElement($elementName, 'http://www.w3.org/2005/Atom')
+	$thisNode.InnerText = $value
+	$null = $parent.AppendChild($thisNode)
+	return $thisNode
+	}
+	
+Function createPodcastElement {
+	param(
+		[string]$elementName,
+		[string]$value,
+		$parent
+		)
+	$thisNode = $rss.CreateElement($elementName, 'https://podcastindex.org/namespace/1.0')
+	$thisNode.InnerText = $value
+	$null = $parent.AppendChild($thisNode)
+	return $thisNode
+	}
 
 Function createMediaRssElement {
 	param(
@@ -186,13 +210,22 @@ $mp3s = gci $MediaDirectory\* -Include $MediaFilter -Recurse:$Recurse | Sort-Obj
 
 $root = $rss.CreateElement('rss')
 $null = $root.SetAttribute('version','2.0')
+$null = $root.SetAttribute('xmlns:podcast','https://podcastindex.org/namespace/1.0')
+$null = $root.SetAttribute('xmlns:atom','http://www.w3.org/2005/Atom')
+$null = $root.SetAttribute('xmlns:content','http://purl.org/rss/1.0/modules/content/')
 $null = $root.SetAttribute('xmlns:media','http://search.yahoo.com/mrss/')
 $null = $root.SetAttribute('xmlns:itunes','http://www.itunes.com/dtds/podcast-1.0.dtd')
 $rssTag = $rss.AppendChild($root)
 $rssChannel  = $rss.CreateElement('channel')
 $null = $root.AppendChild($rssChannel)
 
-# Channel metadata 
+# Channel metadata
+If ($Config['PodcastFeedURL']) {
+	$atomlink = createAtomElement -elementName 'atom:link' -value '' -parent $rssChannel
+	$null = $atomlink.SetAttribute('href', $Config['PodcastFeedURL'])
+	$null = $atomlink.SetAttribute('rel', "self")
+	$null = $atomlink.SetAttribute('type', "application/rss+xml")
+	}
 $null = createRssElement -elementName 'title' -value $Config['PodcastTitle'] -parent $rssChannel
 $null = createitunesRssElement -elementName 'itunes:title' -value $Config['PodcastTitle'] -parent $rssChannel
 $poddesc = createRssElement -elementName 'description' -value '' -parent $rssChannel
@@ -202,7 +235,9 @@ $null = createCDATAElement -elementName 'itunes:summary' -value $Config['Podcast
 $null = createitunesRssElement -elementName 'itunes:author' -value $Config['PodcastAuthor'] -parent $rssChannel
 $null = createRssElement -elementName 'link' -value $Config['PodcastURL'] -parent $rssChannel
 $null = createRssElement -elementName 'language' -value $Config['PodcastLanguage'] -parent $rssChannel
-$null = createRssElement -elementName 'copyright' -value $Config['PodcastCopyright'] -parent $rssChannel
+If ($Config['PodcastCopyright']) {
+	$null = createRssElement -elementName 'copyright' -value $Config['PodcastCopyright'] -parent $rssChannel
+	}
 $null = createRssElement -elementName 'lastBuildDate' -value $([datetime]::Now.ToUniversalTime().ToString('r')) -parent $rssChannel
 $null = createRssElement -elementName 'pubDate' -value $([datetime]::Now.ToUniversalTime().ToString('r')) -parent $rssChannel
 If (($Config['OwnerName']) -And ($Config['OwnerEmail'])) {
@@ -227,11 +262,21 @@ If ($Config['Category']) {
 			$null = $category.SetAttribute('text', $cat.Split(">")[0])
 		}
 	}
-If ($Config['Explicit']) {
-	$null = createitunesRssElement -elementName 'itunes:explicit' -value $Config['Explicit'] -parent $rssChannel
-	}
-If ($Config['Block'] -eq 'yes') {
-	$null = createitunesRssElement -elementName 'itunes:block' -value 'yes' -parent $rssChannel
+If (($Config['Explicit'] -eq "true") -OR ($Config['Explicit'] -eq "yes")) {
+	$null = createitunesRssElement -elementName 'itunes:explicit' -value 'true' -parent $rssChannel
+	} Else {$null = createitunesRssElement -elementName 'itunes:explicit' -value 'false' -parent $rssChannel}
+If ($Config['Block']) {
+	$BlockArray = $Config['Block'].Split(",")
+	ForEach ($id in $BlockArray) {
+		If (($id -eq "yes") -OR ($id -eq "no")) {
+				$blockelement = createPodcastElement -elementName 'podcast:block' -value $id -parent $rssChannel
+				}
+		If ($id.Contains(":")) {
+			$BlockArray = $id.Split(":")
+			$blockelement = createPodcastElement -elementName 'podcast:block' -value $BlockArray[1] -parent $rssChannel
+			$null = $blockelement.SetAttribute('id', $BlockArray[0])
+			}
+		}
 	}
 
 # Channel image
