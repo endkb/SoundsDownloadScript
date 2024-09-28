@@ -235,7 +235,9 @@ $null = createCDATAElement -elementName 'itunes:summary' -value $Config['Podcast
 $null = createitunesRssElement -elementName 'itunes:author' -value $Config['PodcastAuthor'] -parent $rssChannel
 $null = createRssElement -elementName 'link' -value $Config['PodcastURL'] -parent $rssChannel
 $null = createRssElement -elementName 'language' -value $Config['PodcastLanguage'] -parent $rssChannel
-$null = createRssElement -elementName 'copyright' -value $Config['PodcastCopyright'] -parent $rssChannel
+If ($Config['PodcastCopyright']) {
+	$null = createRssElement -elementName 'copyright' -value $Config['PodcastCopyright'] -parent $rssChannel
+	}
 $null = createRssElement -elementName 'lastBuildDate' -value $([datetime]::Now.ToUniversalTime().ToString('r')) -parent $rssChannel
 $null = createRssElement -elementName 'pubDate' -value $([datetime]::Now.ToUniversalTime().ToString('r')) -parent $rssChannel
 If (($Config['OwnerName']) -And ($Config['OwnerEmail'])) {
@@ -260,9 +262,9 @@ If ($Config['Category']) {
 			$null = $category.SetAttribute('text', $cat.Split(">")[0])
 		}
 	}
-If ($Config['Explicit']) {
-	$null = createitunesRssElement -elementName 'itunes:explicit' -value $Config['Explicit'] -parent $rssChannel
-	}
+If (($Config['Explicit'] -eq "true") -OR ($Config['Explicit'] -eq "yes")) {
+	$null = createitunesRssElement -elementName 'itunes:explicit' -value 'true' -parent $rssChannel
+	} Else {$null = createitunesRssElement -elementName 'itunes:explicit' -value 'false' -parent $rssChannel}
 If ($Config['Block']) {
 	$BlockArray = $Config['Block'].Split(",")
 	ForEach ($id in $BlockArray) {
