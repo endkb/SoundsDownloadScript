@@ -101,7 +101,7 @@ $remote_r2 = {If ($RemoteConfig.$Remote.provider -eq "Cloudflare") {
         │                   ▲    End script configuration options    ▲                   │
         └────────────────────────────────────────────────────────────────────────────────┘      #>
 
-Function ExitRoutine {
+Function Invoke-ExitRoutine {
 	# Clean up the cover art from the DumpDirectory
 	If ($ImageName) {Get-Childitem -Path $DumpDirectory -Filter $ImageName -Recurse | Remove-Item -Force}
 	If ($Debug) {
@@ -151,7 +151,7 @@ Function Start-ytdlp {
 	& $ytdlpExe --ffmpeg-location $ffmpegExe --audio-quality 0 -f ba[ext=m4a]$ytdlpBitrate -o "$DumpFile.%(ext)s" $SoundsPlayLink
 	}
 
-Function StartDebug {
+Function Invoke-DebugRoutine {
 	# Create the directory to save/move debug logs to
 	New-Item -ItemType Directory -Force -Path "$DebugDirectory" > $null
 	# Generate a random string
@@ -167,7 +167,7 @@ Function StartDebug {
 
 # Start debug logging if enabled via cli parameters or inline config options
 If ($Debug) {
-	StartDebug
+	Invoke-DebugRoutine
 	}
 
 # Turn off PS progress bars for speed
@@ -189,21 +189,21 @@ If ($DotSrcConfig) {
 				. $DotSrcConfig
 				} Else {
 					Write-Output "**Var(s) missing from external script configuration options: $DotSrcConfig"
-					ExitRoutine
+					Invoke-ExitRoutine
 					}
 			} Else {
 				Write-Output "**External script configuration options file must be .ps1: $DotSrcConfig"
-				ExitRoutine
+				Invoke-ExitRoutine
 				}
 		} Else {
 			Write-Output "**Couldn't access external script configuration options: $DotSrcConfig"
-			ExitRoutine
+			Invoke-ExitRoutine
 			}
 	}
 
 # Start debug logging if enabled in a $DotSrcConfig script and not enabled earlier
 If (($Debug) -AND ($TranscriptStarted -ne $true)) {
-	StartDebug
+	Invoke-DebugRoutine
 	}
 
 # Don't bother searching the page if ProgramURL is already a Sounds link
@@ -225,7 +225,7 @@ $ProgramID = $($SoundsPlayLink -split "/")[-1]
 
 If (($ScriptInstanceControl) -AND (!$NoDL)) {
 	# Function to delete the lock file to release control
-	Function ReleaseControl {
+	Function Invoke-ReleaseControl {
 		Remove-Item -Path $Script:LockFile -Force
 		If (!(Test-Path $Script:TestLockFile)) {Write-Output "**Released control at $(Get-Date)"}
 		}
@@ -385,7 +385,7 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 		Write-Output "**End of json output (line above)"
 		}
 
-	If ($NoDL) {ExitRoutine}
+	If ($NoDL) {Invoke-ExitRoutine}
 
 	# Build the DumpFile path
 	$NakedName = "$ProgramID-media"
@@ -453,7 +453,7 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 		}
 
 	# No more downloading after this - release the control for other scripts
-	If ($ScriptInstanceControl) {ReleaseControl}
+	If ($ScriptInstanceControl) {Invoke-ReleaseControl}
 
 	# Determine the extention of the DumpFile - Used later for kid3
 	$ext = [System.IO.Path]::GetExtension((Get-ChildItem -Path $DumpDirectory -Recurse -Filter "*$NakedName.*"))
@@ -461,14 +461,14 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 	# If it didn't download the file - you're done
 	If (!(Test-Path $DumpFile$ext)) {
 		Write-Output "**DumpFile was not downloaded or no longer exists"
-		ExitRoutine
+		Invoke-ExitRoutine
 		}
 
 	# Test that the metadata is valid by making sure EpisodeTitle and Station have characters
 	If (($EpisodeTitle -notmatch '\S+') -AND ($Station -notmatch '\S+')) {
 		Write-Output "**Could not validate metadata"
 		# Exit script if metadata is not valid
-		ExitRoutine
+		Invoke-ExitRoutine
 		}
 
 	# Check if the audio file needs to transcoded to mp3
@@ -493,7 +493,7 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 	# If TrackNoFormat is not set in the command line, then use the DefaultTrackNoFormat
 	If (!$TrackNoFormat) {$TrackNoFormat = $DefaultTrackNoFormat}
 
-	Function TrackNoCount([Switch]$Recurse) {
+	Function Get-TrackNumberCount([Switch]$Recurse) {
 		# Build the array to store the track numbers from kid3
 		$TrackNumbers = @(0)
 		# Search the save dir for files matching the short title - sort by creation time
@@ -512,9 +512,9 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 	# Store the track number format in a temporary variable to work with
 	$TrackNoFormatWk = $TrackNoFormat
 	# If format contains cr - then run the function to recursively figure out the track number and add 1
-	$TrackNoFormatWk = $TrackNoFormatWk -creplace "cr", ((TrackNoCount -Recurse)+1)
+	$TrackNoFormatWk = $TrackNoFormatWk -creplace "cr", ((Get-TrackNumberCount -Recurse)+1)
 	# If format contains c - then run the function to nonrecursively figure out the track number and add 1
-	$TrackNoFormatWk = $TrackNoFormatWk -creplace "c", ((TrackNoCount)+1)
+	$TrackNoFormatWk = $TrackNoFormatWk -creplace "c", ((Get-TrackNumberCount)+1)
 	# Determine the day of the year (Julian date)
 	$TrackNoFormatWk = $TrackNoFormatWk -creplace "jjj", ("{0:D3}" -f $ReleaseDate.DayofYear)
 	# Break down the two digit year to a single digit
@@ -630,7 +630,7 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 		Move-Item $DumpFile$ext -Destination $MoveLoc
 		} Else {
 			Write-Output "**Metadata not set correctly"
-			ExitRoutine
+			Invoke-ExitRoutine
 			}
 
 	# Don't clean up unless the file was sucessfully moved (for troubleshooting purposes)
@@ -689,7 +689,7 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 
 	} Else {
 		Write-Output "**Program ID $ProgramID already downloaded $($File.CreationTime)"
-		If ($ScriptInstanceControl) {ReleaseControl}
+		If ($ScriptInstanceControl) {Invoke-ReleaseControl}
 		}
 
-ExitRoutine
+Invoke-ExitRoutine
