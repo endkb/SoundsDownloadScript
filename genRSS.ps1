@@ -120,7 +120,7 @@ If ((!$Force) -AND (Test-Path $_filename)) {
 		}
     }
 
-Function createRssElement {
+Function Add-RssElement {
 	param(
 		[string]$elementName,
 		[string]$value,
@@ -132,7 +132,7 @@ Function createRssElement {
 	return $thisNode
 	}
 
-Function createiTunesRssElement {
+Function Add-ItunesRssElement {
 	param(
 		[string]$elementName,
 		[string]$value,
@@ -144,7 +144,7 @@ Function createiTunesRssElement {
 	return $thisNode
 	}
 	
-Function createAtomElement {
+Function Add-AtomRssElement {
 	param(
 		[string]$elementName,
 		[string]$value,
@@ -156,7 +156,7 @@ Function createAtomElement {
 	return $thisNode
 	}
 	
-Function createPodcastElement {
+Function Add-PodcastRssElement {
 	param(
 		[string]$elementName,
 		[string]$value,
@@ -168,7 +168,7 @@ Function createPodcastElement {
 	return $thisNode
 	}
 
-Function createMediaRssElement {
+Function Add-MediaRssElement {
 	param(
 		[string]$elementName,
 		[string]$value,
@@ -180,7 +180,7 @@ Function createMediaRssElement {
 	return $thisNode
 	}
 
-Function createCDATAElement {
+Function Add-CdataRssElement {
 	param(
 		[string]$elementName,
 		[string]$value,
@@ -192,7 +192,7 @@ Function createCDATAElement {
 	return $thisNode
 	}
 
-Function createHashElement {
+Function Add-HashRssElement {
 	param(
 		[string]$elementName,
 		[string]$value,
@@ -221,40 +221,40 @@ $null = $root.AppendChild($rssChannel)
 
 # Channel metadata
 If ($Config['PodcastFeedURL']) {
-	$atomlink = createAtomElement -elementName 'atom:link' -value '' -parent $rssChannel
+	$atomlink = Add-AtomRssElement -elementName 'atom:link' -value '' -parent $rssChannel
 	$null = $atomlink.SetAttribute('href', $Config['PodcastFeedURL'])
 	$null = $atomlink.SetAttribute('rel', "self")
 	$null = $atomlink.SetAttribute('type', "application/rss+xml")
 	}
-$null = createRssElement -elementName 'title' -value $Config['PodcastTitle'] -parent $rssChannel
-$null = createitunesRssElement -elementName 'itunes:title' -value $Config['PodcastTitle'] -parent $rssChannel
-$poddesc = createRssElement -elementName 'description' -value '' -parent $rssChannel
-$null = createCDATAElement -elementName 'description' -value $Config['PodcastDescription'] -parent $poddesc
-$poditunessum = createitunesRssElement -elementName 'itunes:summary' -value '' -parent $rssChannel
-$null = createCDATAElement -elementName 'itunes:summary' -value $Config['PodcastDescription'] -parent $poditunessum
-$null = createitunesRssElement -elementName 'itunes:author' -value $Config['PodcastAuthor'] -parent $rssChannel
-$null = createRssElement -elementName 'link' -value $Config['PodcastURL'] -parent $rssChannel
-$null = createRssElement -elementName 'language' -value $Config['PodcastLanguage'] -parent $rssChannel
+$null = Add-RssElement -elementName 'title' -value $Config['PodcastTitle'] -parent $rssChannel
+$null = Add-ItunesRssElement -elementName 'itunes:title' -value $Config['PodcastTitle'] -parent $rssChannel
+$poddesc = Add-RssElement -elementName 'description' -value '' -parent $rssChannel
+$null = Add-CdataRssElement -elementName 'description' -value $Config['PodcastDescription'] -parent $poddesc
+$poditunessum = Add-ItunesRssElement -elementName 'itunes:summary' -value '' -parent $rssChannel
+$null = Add-CdataRssElement -elementName 'itunes:summary' -value $Config['PodcastDescription'] -parent $poditunessum
+$null = Add-ItunesRssElement -elementName 'itunes:author' -value $Config['PodcastAuthor'] -parent $rssChannel
+$null = Add-RssElement -elementName 'link' -value $Config['PodcastURL'] -parent $rssChannel
+$null = Add-RssElement -elementName 'language' -value $Config['PodcastLanguage'] -parent $rssChannel
 If ($Config['PodcastCopyright']) {
-	$null = createRssElement -elementName 'copyright' -value $Config['PodcastCopyright'] -parent $rssChannel
+	$null = Add-RssElement -elementName 'copyright' -value $Config['PodcastCopyright'] -parent $rssChannel
 	}
-$null = createRssElement -elementName 'lastBuildDate' -value $([datetime]::Now.ToUniversalTime().ToString('r')) -parent $rssChannel
-$null = createRssElement -elementName 'pubDate' -value $([datetime]::Now.ToUniversalTime().ToString('r')) -parent $rssChannel
+$null = Add-RssElement -elementName 'lastBuildDate' -value $([datetime]::Now.ToUniversalTime().ToString('r')) -parent $rssChannel
+$null = Add-RssElement -elementName 'pubDate' -value $([datetime]::Now.ToUniversalTime().ToString('r')) -parent $rssChannel
 If (($Config['OwnerName']) -And ($Config['OwnerEmail'])) {
-	$owner = createitunesRssElement -elementName 'itunes:owner' -value '' -parent $rssChannel
-	$null = createitunesRssElement -elementName 'itunes:name' -value $Config['OwnerName'] -parent $owner
-	$null = createitunesRssElement -elementName 'itunes:email' -value $Config['OwnerEmail'] -parent $owner
+	$owner = Add-ItunesRssElement -elementName 'itunes:owner' -value '' -parent $rssChannel
+	$null = Add-ItunesRssElement -elementName 'itunes:name' -value $Config['OwnerName'] -parent $owner
+	$null = Add-ItunesRssElement -elementName 'itunes:email' -value $Config['OwnerEmail'] -parent $owner
 	}
 If ($Config['Category']) {
 	$CategoryArray = $Config['Category'].Split(",")
 	ForEach ($cat in $CategoryArray) {
-		$category = createitunesRssElement -elementName 'itunes:category' -value '' -parent $rssChannel
+		$category = Add-ItunesRssElement -elementName 'itunes:category' -value '' -parent $rssChannel
 		If ($cat.Contains(">")) {
 			$SubCategoryArray = $cat.Split(">")
 			$counter = 0
 			:CategoryLoop ForEach ($subcat in $SubCategoryArray) {
 				If ($counter -eq 0) {$counter++; Continue CategoryLoop}
-				$subcategory = createitunesRssElement -elementName 'itunes:category' -value '' -parent $category
+				$subcategory = Add-ItunesRssElement -elementName 'itunes:category' -value '' -parent $category
 				$null = $subcategory.SetAttribute('text', $subcat)
 				$counter++
 				}
@@ -263,28 +263,28 @@ If ($Config['Category']) {
 		}
 	}
 If (($Config['Explicit'] -eq "true") -OR ($Config['Explicit'] -eq "yes")) {
-	$null = createitunesRssElement -elementName 'itunes:explicit' -value 'true' -parent $rssChannel
-	} Else {$null = createitunesRssElement -elementName 'itunes:explicit' -value 'false' -parent $rssChannel}
+	$null = Add-ItunesRssElement -elementName 'itunes:explicit' -value 'true' -parent $rssChannel
+	} Else {$null = Add-ItunesRssElement -elementName 'itunes:explicit' -value 'false' -parent $rssChannel}
 If ($Config['Block']) {
 	$BlockArray = $Config['Block'].Split(",")
 	ForEach ($id in $BlockArray) {
 		If (($id -eq "yes") -OR ($id -eq "no")) {
-				$blockelement = createPodcastElement -elementName 'podcast:block' -value $id -parent $rssChannel
+				$blockelement = Add-PodcastRssElement -elementName 'podcast:block' -value $id -parent $rssChannel
 				}
 		If ($id.Contains(":")) {
 			$BlockArray = $id.Split(":")
-			$blockelement = createPodcastElement -elementName 'podcast:block' -value $BlockArray[1] -parent $rssChannel
+			$blockelement = Add-PodcastRssElement -elementName 'podcast:block' -value $BlockArray[1] -parent $rssChannel
 			$null = $blockelement.SetAttribute('id', $BlockArray[0])
 			}
 		}
 	}
 
 # Channel image
-$rssImage = createRssElement -elementName 'image' -value '' -parent $rssChannel
-$null = createRssElement -elementName 'url' -value $Config['PodcastImage'] -parent $rssImage
-$null = createRssElement -elementName 'link' -value $Config['PodcastURL'] -parent $rssImage
-$null = createRssElement -elementName 'title' -value $Config['PodcastTitle'] -parent $rssImage
-$itunesImage = createitunesRssElement -elementName 'itunes:image' -value '' -parent $rssChannel
+$rssImage = Add-RssElement -elementName 'image' -value '' -parent $rssChannel
+$null = Add-RssElement -elementName 'url' -value $Config['PodcastImage'] -parent $rssImage
+$null = Add-RssElement -elementName 'link' -value $Config['PodcastURL'] -parent $rssImage
+$null = Add-RssElement -elementName 'title' -value $Config['PodcastTitle'] -parent $rssImage
+$itunesImage = Add-ItunesRssElement -elementName 'itunes:image' -value '' -parent $rssChannel
 $null = $itunesImage.SetAttribute('href', $Config['PodcastImage'])
 
 $RerunLabel = $Config['RerunLabel']
@@ -395,39 +395,39 @@ try {$SkipTitles = $Config['SkipTitles'].Split(",")} catch {}
 
 	$url = $(($item -Replace [regex]::Escape($MediaDirectory.Trim('\')), $Config['MediaRootURL'].Trim('/')).Replace('\','/'))
 
-	$thisItem = createRssElement -elementName 'item' -value '' -parent $rssChannel
-	$null = createRssElement -elementName 'title' -value $Title -parent $thisItem
-	$null = createitunesRssElement -elementName 'itunes:title' -value $Title -parent $thisItem
-	$null = createRssElement -elementName 'link' -value $Link -parent $thisItem
-	$itemDesc = createRssElement -elementName 'description' -value '' -parent $thisItem
-	$null = createCDATAElement -elementName 'description' -value $Comment.Replace("`r`n","<br>") -parent $itemDesc
-	$itunesDesc = createitunesRssElement -elementName 'itunes:summary' -value '' -parent $thisItem
-	$null = createCDATAElement -elementName 'itunes:summary' -value $Comment.Replace("`r`n","<br>") -parent $itunesDesc
-	$null = createitunesRssElement -elementName 'itunes:duration' -value $Duration -parent $thisItem
-	$null = createRssElement -elementName 'guid' -value $Link -parent $thisItem
-	$enclosure = createRssElement -elementName 'enclosure' -value '' -parent $thisItem
-	$null = createRssElement -elementName 'category' -value "Podcasts" -parent $thisItem
+	$thisItem = Add-RssElement -elementName 'item' -value '' -parent $rssChannel
+	$null = Add-RssElement -elementName 'title' -value $Title -parent $thisItem
+	$null = Add-ItunesRssElement -elementName 'itunes:title' -value $Title -parent $thisItem
+	$null = Add-RssElement -elementName 'link' -value $Link -parent $thisItem
+	$itemDesc = Add-RssElement -elementName 'description' -value '' -parent $thisItem
+	$null = Add-CdataRssElement -elementName 'description' -value $Comment.Replace("`r`n","<br>") -parent $itemDesc
+	$itunesDesc = Add-ItunesRssElement -elementName 'itunes:summary' -value '' -parent $thisItem
+	$null = Add-CdataRssElement -elementName 'itunes:summary' -value $Comment.Replace("`r`n","<br>") -parent $itunesDesc
+	$null = Add-ItunesRssElement -elementName 'itunes:duration' -value $Duration -parent $thisItem
+	$null = Add-RssElement -elementName 'guid' -value $Link -parent $thisItem
+	$enclosure = Add-RssElement -elementName 'enclosure' -value '' -parent $thisItem
+	$null = Add-RssElement -elementName 'category' -value "Podcasts" -parent $thisItem
 
-	$null = createRssElement -elementName 'pubDate' -value $ReleaseDate.ToString('r') -parent $thisItem
-	$null = createitunesRssElement -elementName 'itunes:author' -value $Config['PodcastAuthor'] -parent $thisItem
+	$null = Add-RssElement -elementName 'pubDate' -value $ReleaseDate.ToString('r') -parent $thisItem
+	$null = Add-ItunesRssElement -elementName 'itunes:author' -value $Config['PodcastAuthor'] -parent $thisItem
 	# The URL is by default the file path.
 	# You may want something like:
 	$null = $enclosure.SetAttribute('url', "$url")
 	#$null = $enclosure.SetAttribute('url',"file://$($item.FullName)")
 	$null = $enclosure.SetAttribute('length',"$($item.Length)")
 	$null = $enclosure.SetAttribute('type','audio/mpeg')
-	$itemimage = createMediaRssElement -elementName 'media:content' -value '' -parent $thisItem
+	$itemimage = Add-MediaRssElement -elementName 'media:content' -value '' -parent $thisItem
 	$null = $itemimage.SetAttribute('url', $ItemCover)
 	$null = $itemimage.SetAttribute('type', 'image/jpg')
 	$null = $itemimage.SetAttribute('medium', 'image')
 	}
 
 If ($CheckMediaDirectoryHash -eq "yes") {
-	$null = createHashElement -elementName 'MediaDirectoryHash' -value $MediaDirectoryHash -parent $rssTag
+	$null = Add-HashRssElement -elementName 'MediaDirectoryHash' -value $MediaDirectoryHash -parent $rssTag
 	}
 
 If ($CheckProfileHash -eq "yes") {
-	$null = createHashElement -elementName 'ProfileHash' -value $(Get-FileHash -Algorithm MD5 -Path $Profile).Hash -parent $rssTag
+	$null = Add-HashRssElement -elementName 'ProfileHash' -value $(Get-FileHash -Algorithm MD5 -Path $Profile).Hash -parent $rssTag
 	}
 
 $xmlWriterSettings =  New-Object System.Xml.XmlWriterSettings
