@@ -17,6 +17,7 @@ RemotePublishDirectory=bbcsoundsrss_r2:bbcsoundsrss\\
 RemoteRSSFileName=TheUnbelievableTruth.rss
 
 # Podcast Metadata
+PodcastFeedURL=https://yourwebsite.com/TheNewsQuiz.rss
 PodcastTitle=The Unbelievable Truth
 PodcastDescription=Game show in which panellists compete to see how many nuggets of truth they are able to hide amongst their lies.\n\nEpisodes from the latest series are available.
 PodcastAuthor=BBC Radio 4
