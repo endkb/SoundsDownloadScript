@@ -226,7 +226,9 @@ If ($Config['Block']) {
 			$null = $blockelement.SetAttribute('id', $BlockArray[0])
 			}
 		}
-	}
+	} Else {
+		$blockelement = Add-RssElement -elementName 'podcast:block' -ns 'podcast' -value 'no' -parent $rssChannel
+		}
 
 # Channel image
 $rssImage = Add-RssElement -elementName 'image' -value '' -parent $rssChannel
