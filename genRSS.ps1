@@ -120,61 +120,22 @@ If ((!$Force) -AND (Test-Path $_filename)) {
 		}
     }
 
+$nsHash = @{
+	'atom' = 'http://www.w3.org/2005/Atom'
+	'genRSS' = 'urn:genRSS:internal-data'
+	'itunes' = 'http://www.itunes.com/dtds/podcast-1.0.dtd'
+	'media' = 'http://search.yahoo.com/mrss/'
+	'podcast' = 'https://podcastindex.org/namespace/1.0'
+	}
+
 Function Add-RssElement {
 	param(
 		[string]$elementName,
+		[string]$ns,
 		[string]$value,
 		$parent
-		)
-	$thisNode = $rss.CreateElement($elementName)
-	$thisNode.InnerText = $value
-	$null = $parent.AppendChild($thisNode)
-	return $thisNode
-	}
-
-Function Add-ItunesRssElement {
-	param(
-		[string]$elementName,
-		[string]$value,
-		$parent
-		)
-	$thisNode = $rss.CreateElement($elementName, 'http://www.itunes.com/dtds/podcast-1.0.dtd')
-	$thisNode.InnerText = $value
-	$null = $parent.AppendChild($thisNode)
-	return $thisNode
-	}
-	
-Function Add-AtomRssElement {
-	param(
-		[string]$elementName,
-		[string]$value,
-		$parent
-		)
-	$thisNode = $rss.CreateElement($elementName, 'http://www.w3.org/2005/Atom')
-	$thisNode.InnerText = $value
-	$null = $parent.AppendChild($thisNode)
-	return $thisNode
-	}
-	
-Function Add-PodcastRssElement {
-	param(
-		[string]$elementName,
-		[string]$value,
-		$parent
-		)
-	$thisNode = $rss.CreateElement($elementName, 'https://podcastindex.org/namespace/1.0')
-	$thisNode.InnerText = $value
-	$null = $parent.AppendChild($thisNode)
-	return $thisNode
-	}
-
-Function Add-MediaRssElement {
-	param(
-		[string]$elementName,
-		[string]$value,
-		$parent
-		)
-	$thisNode = $rss.CreateElement($elementName, 'http://search.yahoo.com/mrss/')
+		)	
+	$thisNode = $rss.CreateElement($elementName, $nsHash[$ns])
 	$thisNode.InnerText = $value
 	$null = $parent.AppendChild($thisNode)
 	return $thisNode
@@ -187,18 +148,6 @@ Function Add-CdataRssElement {
 		$parent
 		)
 	$thisNode = $rss.CreateCDataSection($elementName)
-	$thisNode.InnerText = $value
-	$null = $parent.AppendChild($thisNode)
-	return $thisNode
-	}
-
-Function Add-HashRssElement {
-	param(
-		[string]$elementName,
-		[string]$value,
-		$parent
-		)
-	$thisNode = $rss.CreateElement($elementName, 'urn:genRSS:hash')
 	$thisNode.InnerText = $value
 	$null = $parent.AppendChild($thisNode)
 	return $thisNode
@@ -221,18 +170,18 @@ $null = $root.AppendChild($rssChannel)
 
 # Channel metadata
 If ($Config['PodcastFeedURL']) {
-	$atomlink = Add-AtomRssElement -elementName 'atom:link' -value '' -parent $rssChannel
+	$atomlink = Add-RssElement -elementName 'atom:link' -ns 'atom' -value '' -parent $rssChannel
 	$null = $atomlink.SetAttribute('href', $Config['PodcastFeedURL'])
 	$null = $atomlink.SetAttribute('rel', "self")
 	$null = $atomlink.SetAttribute('type', "application/rss+xml")
 	}
 $null = Add-RssElement -elementName 'title' -value $Config['PodcastTitle'] -parent $rssChannel
-$null = Add-ItunesRssElement -elementName 'itunes:title' -value $Config['PodcastTitle'] -parent $rssChannel
+$null = Add-RssElement -elementName 'itunes:title' -ns 'itunes' -value $Config['PodcastTitle'] -parent $rssChannel
 $poddesc = Add-RssElement -elementName 'description' -value '' -parent $rssChannel
 $null = Add-CdataRssElement -elementName 'description' -value $Config['PodcastDescription'] -parent $poddesc
-$poditunessum = Add-ItunesRssElement -elementName 'itunes:summary' -value '' -parent $rssChannel
+$poditunessum = Add-RssElement -elementName 'itunes:summary' -ns 'itunes' -value '' -parent $rssChannel
 $null = Add-CdataRssElement -elementName 'itunes:summary' -value $Config['PodcastDescription'] -parent $poditunessum
-$null = Add-ItunesRssElement -elementName 'itunes:author' -value $Config['PodcastAuthor'] -parent $rssChannel
+$null = Add-RssElement -elementName 'itunes:author' -ns 'itunes' -value $Config['PodcastAuthor'] -parent $rssChannel
 $null = Add-RssElement -elementName 'link' -value $Config['PodcastURL'] -parent $rssChannel
 $null = Add-RssElement -elementName 'language' -value $Config['PodcastLanguage'] -parent $rssChannel
 If ($Config['PodcastCopyright']) {
@@ -241,20 +190,20 @@ If ($Config['PodcastCopyright']) {
 $null = Add-RssElement -elementName 'lastBuildDate' -value $([datetime]::Now.ToUniversalTime().ToString('r')) -parent $rssChannel
 $null = Add-RssElement -elementName 'pubDate' -value $([datetime]::Now.ToUniversalTime().ToString('r')) -parent $rssChannel
 If (($Config['OwnerName']) -And ($Config['OwnerEmail'])) {
-	$owner = Add-ItunesRssElement -elementName 'itunes:owner' -value '' -parent $rssChannel
-	$null = Add-ItunesRssElement -elementName 'itunes:name' -value $Config['OwnerName'] -parent $owner
-	$null = Add-ItunesRssElement -elementName 'itunes:email' -value $Config['OwnerEmail'] -parent $owner
+	$owner = Add-RssElement -elementName 'itunes:owner' -ns 'itunes' -value '' -parent $rssChannel
+	$null = Add-RssElement -elementName 'itunes:name' -ns 'itunes' -value $Config['OwnerName'] -parent $owner
+	$null = Add-RssElement -elementName 'itunes:email' -ns 'itunes' -value $Config['OwnerEmail'] -parent $owner
 	}
 If ($Config['Category']) {
 	$CategoryArray = $Config['Category'].Split(",")
 	ForEach ($cat in $CategoryArray) {
-		$category = Add-ItunesRssElement -elementName 'itunes:category' -value '' -parent $rssChannel
+		$category = Add-RssElement -elementName 'itunes:category' -ns 'itunes' -value '' -parent $rssChannel
 		If ($cat.Contains(">")) {
 			$SubCategoryArray = $cat.Split(">")
 			$counter = 0
 			:CategoryLoop ForEach ($subcat in $SubCategoryArray) {
 				If ($counter -eq 0) {$counter++; Continue CategoryLoop}
-				$subcategory = Add-ItunesRssElement -elementName 'itunes:category' -value '' -parent $category
+				$subcategory = Add-RssElement -elementName 'itunes:category' -ns 'itunes' -value '' -parent $category
 				$null = $subcategory.SetAttribute('text', $subcat)
 				$counter++
 				}
@@ -263,17 +212,17 @@ If ($Config['Category']) {
 		}
 	}
 If (($Config['Explicit'] -eq "true") -OR ($Config['Explicit'] -eq "yes")) {
-	$null = Add-ItunesRssElement -elementName 'itunes:explicit' -value 'true' -parent $rssChannel
-	} Else {$null = Add-ItunesRssElement -elementName 'itunes:explicit' -value 'false' -parent $rssChannel}
+	$null = Add-RssElement -elementName 'itunes:explicit' -ns 'itunes' -value 'true' -parent $rssChannel
+	} Else {$null = Add-RssElement -elementName 'itunes:explicit' -ns 'itunes' -value 'false' -parent $rssChannel}
 If ($Config['Block']) {
 	$BlockArray = $Config['Block'].Split(",")
 	ForEach ($id in $BlockArray) {
 		If (($id -eq "yes") -OR ($id -eq "no")) {
-				$blockelement = Add-PodcastRssElement -elementName 'podcast:block' -value $id -parent $rssChannel
+				$blockelement = Add-RssElement -elementName 'podcast:block' -ns 'podcast' -value $id -parent $rssChannel
 				}
 		If ($id.Contains(":")) {
 			$BlockArray = $id.Split(":")
-			$blockelement = Add-PodcastRssElement -elementName 'podcast:block' -value $BlockArray[1] -parent $rssChannel
+			$blockelement = Add-RssElement -elementName 'podcast:block' -ns 'podcast' -value $BlockArray[1] -parent $rssChannel
 			$null = $blockelement.SetAttribute('id', $BlockArray[0])
 			}
 		}
@@ -284,7 +233,7 @@ $rssImage = Add-RssElement -elementName 'image' -value '' -parent $rssChannel
 $null = Add-RssElement -elementName 'url' -value $Config['PodcastImage'] -parent $rssImage
 $null = Add-RssElement -elementName 'link' -value $Config['PodcastURL'] -parent $rssImage
 $null = Add-RssElement -elementName 'title' -value $Config['PodcastTitle'] -parent $rssImage
-$itunesImage = Add-ItunesRssElement -elementName 'itunes:image' -value '' -parent $rssChannel
+$itunesImage = Add-RssElement -elementName 'itunes:image' -ns 'itunes' -value '' -parent $rssChannel
 $null = $itunesImage.SetAttribute('href', $Config['PodcastImage'])
 
 $RerunLabel = $Config['RerunLabel']
@@ -397,37 +346,37 @@ try {$SkipTitles = $Config['SkipTitles'].Split(",")} catch {}
 
 	$thisItem = Add-RssElement -elementName 'item' -value '' -parent $rssChannel
 	$null = Add-RssElement -elementName 'title' -value $Title -parent $thisItem
-	$null = Add-ItunesRssElement -elementName 'itunes:title' -value $Title -parent $thisItem
+	$null = Add-RssElement -elementName 'itunes:title' -ns 'itunes' -value $Title -parent $thisItem
 	$null = Add-RssElement -elementName 'link' -value $Link -parent $thisItem
 	$itemDesc = Add-RssElement -elementName 'description' -value '' -parent $thisItem
 	$null = Add-CdataRssElement -elementName 'description' -value $Comment.Replace("`r`n","<br>") -parent $itemDesc
-	$itunesDesc = Add-ItunesRssElement -elementName 'itunes:summary' -value '' -parent $thisItem
+	$itunesDesc = Add-RssElement -elementName 'itunes:summary' -ns 'itunes' -value '' -parent $thisItem
 	$null = Add-CdataRssElement -elementName 'itunes:summary' -value $Comment.Replace("`r`n","<br>") -parent $itunesDesc
-	$null = Add-ItunesRssElement -elementName 'itunes:duration' -value $Duration -parent $thisItem
+	$null = Add-RssElement -elementName 'itunes:duration' -ns 'itunes' -value $Duration -parent $thisItem
 	$null = Add-RssElement -elementName 'guid' -value $Link -parent $thisItem
 	$enclosure = Add-RssElement -elementName 'enclosure' -value '' -parent $thisItem
 	$null = Add-RssElement -elementName 'category' -value "Podcasts" -parent $thisItem
 
 	$null = Add-RssElement -elementName 'pubDate' -value $ReleaseDate.ToString('r') -parent $thisItem
-	$null = Add-ItunesRssElement -elementName 'itunes:author' -value $Config['PodcastAuthor'] -parent $thisItem
+	$null = Add-RssElement -elementName 'itunes:author' -ns 'itunes' -value $Config['PodcastAuthor'] -parent $thisItem
 	# The URL is by default the file path.
 	# You may want something like:
 	$null = $enclosure.SetAttribute('url', "$url")
 	#$null = $enclosure.SetAttribute('url',"file://$($item.FullName)")
 	$null = $enclosure.SetAttribute('length',"$($item.Length)")
 	$null = $enclosure.SetAttribute('type','audio/mpeg')
-	$itemimage = Add-MediaRssElement -elementName 'media:content' -value '' -parent $thisItem
+	$itemimage = Add-RssElement -elementName 'media:content' -ns 'media' -value '' -parent $thisItem
 	$null = $itemimage.SetAttribute('url', $ItemCover)
 	$null = $itemimage.SetAttribute('type', 'image/jpg')
 	$null = $itemimage.SetAttribute('medium', 'image')
 	}
 
 If ($CheckMediaDirectoryHash -eq "yes") {
-	$null = Add-HashRssElement -elementName 'MediaDirectoryHash' -value $MediaDirectoryHash -parent $rssTag
+	$null = Add-RssElement -elementName 'MediaDirectoryHash' -ns 'genRSS' -value $MediaDirectoryHash -parent $rssTag
 	}
 
 If ($CheckProfileHash -eq "yes") {
-	$null = Add-HashRssElement -elementName 'ProfileHash' -value $(Get-FileHash -Algorithm MD5 -Path $Profile).Hash -parent $rssTag
+	$null = Add-RssElement -elementName 'ProfileHash' -ns 'genRSS' -value $(Get-FileHash -Algorithm MD5 -Path $Profile).Hash -parent $rssTag
 	}
 
 $xmlWriterSettings =  New-Object System.Xml.XmlWriterSettings
