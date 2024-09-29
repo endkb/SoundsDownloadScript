@@ -101,7 +101,7 @@ $remote_r2 = {If ($RemoteConfig.$Remote.provider -eq "Cloudflare") {
         │                   ▲    End script configuration options    ▲                   │
         └────────────────────────────────────────────────────────────────────────────────┘      #>
 
-Function Invoke-ExitRoutine {
+Function Exit-Script {
 	# Clean up the cover art from the DumpDirectory
 	If ($ImageName) {Get-Childitem -Path $DumpDirectory -Filter $ImageName -Recurse | Remove-Item -Force}
 	If ($Debug) {
@@ -138,19 +138,6 @@ Function Get-IniContent ($FilePath) {
 	Return $ini
 	}
 
-Function Start-ytdlp {
-	# Use the default bitrate if not speficied in CL
-	If (!$Bitrate) {
-		$Bitrate = $DefaultBitrate
-		}
-	If ($Bitrate -ge 1) {
- 		# Build the yt-dlp argument to specify the bitrate
-		$ytdlpBitrate = "[abr=$Bitrate]"
-		}
-  	# Start yt-dlp
-	& $ytdlpExe --ffmpeg-location $ffmpegExe --audio-quality 0 -f ba[ext=m4a]$ytdlpBitrate -o "$DumpFile.%(ext)s" $SoundsPlayLink
-	}
-
 Function Invoke-DebugRoutine {
 	# Create the directory to save/move debug logs to
 	New-Item -ItemType Directory -Force -Path "$DebugDirectory" > $null
@@ -163,6 +150,19 @@ Function Invoke-DebugRoutine {
 	Start-Transcript -Path "$DebugDirectory\$ShortTitle-$PID-$RandLogID-Console+Vars.log" -Append -IncludeInvocationHeader -Verbose
 	$Script:TranscriptStarted = $true
 	Write-Output "**Debugging: Saving log files to $DebugDirectory\$ShortTitle-$PID-$RandLogID-*.log"
+	}
+
+Function Start-ytdlp {
+	# Use the default bitrate if not speficied in CL
+	If (!$Bitrate) {
+		$Bitrate = $DefaultBitrate
+		}
+	If ($Bitrate -ge 1) {
+ 		# Build the yt-dlp argument to specify the bitrate
+		$ytdlpBitrate = "[abr=$Bitrate]"
+		}
+  	# Start yt-dlp
+	& $ytdlpExe --ffmpeg-location $ffmpegExe --audio-quality 0 -f ba[ext=m4a]$ytdlpBitrate -o "$DumpFile.%(ext)s" $SoundsPlayLink
 	}
 
 # Start debug logging if enabled via cli parameters or inline config options
@@ -189,15 +189,15 @@ If ($DotSrcConfig) {
 				. $DotSrcConfig
 				} Else {
 					Write-Output "**Var(s) missing from external script configuration options: $DotSrcConfig"
-					Invoke-ExitRoutine
+					Exit-Script
 					}
 			} Else {
 				Write-Output "**External script configuration options file must be .ps1: $DotSrcConfig"
-				Invoke-ExitRoutine
+				Exit-Script
 				}
 		} Else {
 			Write-Output "**Couldn't access external script configuration options: $DotSrcConfig"
-			Invoke-ExitRoutine
+			Exit-Script
 			}
 	}
 
@@ -385,7 +385,7 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 		Write-Output "**End of json output (line above)"
 		}
 
-	If ($NoDL) {Invoke-ExitRoutine}
+	If ($NoDL) {Exit-Script}
 
 	# Build the DumpFile path
 	$NakedName = "$ProgramID-media"
@@ -461,14 +461,14 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 	# If it didn't download the file - you're done
 	If (!(Test-Path $DumpFile$ext)) {
 		Write-Output "**DumpFile was not downloaded or no longer exists"
-		Invoke-ExitRoutine
+		Exit-Script
 		}
 
 	# Test that the metadata is valid by making sure EpisodeTitle and Station have characters
 	If (($EpisodeTitle -notmatch '\S+') -AND ($Station -notmatch '\S+')) {
 		Write-Output "**Could not validate metadata"
 		# Exit script if metadata is not valid
-		Invoke-ExitRoutine
+		Exit-Script
 		}
 
 	# Check if the audio file needs to transcoded to mp3
@@ -630,7 +630,7 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 		Move-Item $DumpFile$ext -Destination $MoveLoc
 		} Else {
 			Write-Output "**Metadata not set correctly"
-			Invoke-ExitRoutine
+			Exit-Script
 			}
 
 	# Don't clean up unless the file was sucessfully moved (for troubleshooting purposes)
@@ -692,4 +692,4 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 		If ($ScriptInstanceControl) {Unlock-Control}
 		}
 
-Invoke-ExitRoutine
+Exit-Script
