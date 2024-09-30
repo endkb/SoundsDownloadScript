@@ -218,6 +218,7 @@ If ($Config['Block']) {
 	$BlockArray = $Config['Block'].Split(",")
 	ForEach ($id in $BlockArray) {
 		If (($id -eq "yes") -OR ($id -eq "no")) {
+  				$blockelement = Add-RssElement -elementName 'itunes:block' -ns 'itunes' -value $id -parent $rssChannel
 				$blockelement = Add-RssElement -elementName 'podcast:block' -ns 'podcast' -value $id -parent $rssChannel
 				}
 		If ($id.Contains(":")) {
@@ -227,6 +228,7 @@ If ($Config['Block']) {
 			}
 		}
 	} Else {
+ 		$blockelement = Add-RssElement -elementName 'itunes:block' -ns 'itunes' -value 'no' -parent $rssChannel
 		$blockelement = Add-RssElement -elementName 'podcast:block' -ns 'podcast' -value 'no' -parent $rssChannel
 		}
 
