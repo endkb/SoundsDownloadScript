@@ -330,6 +330,10 @@ try {$SkipTitles = $Config['SkipTitles'].Split(",")} catch {}
 			}
 		}
 
+	If ($ReleaseDate -gt $pubDate) {
+		$pubDate = $ReleaseDate
+		}
+
 	$Comment = $(($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'Comment'}).value).Replace("`n","<br>")
 
 	$FormatArray = $($kid3json.result.taggedFile.format).Split(" ")
@@ -390,6 +394,7 @@ $xmlWriterSettings.Indent = $true
 # $xmlWriterSettings.ConformanceLevel = 2
 Write-Verbose  $('xml formatting - writing to ' + $_filename)
 $xmlWriter = [System.Xml.XmlWriter]::Create($_filename, $xmlWriterSettings)
+$rss.rss.channel.pubDate = $pubDate.ToString('r')
 $rss.Save($xmlWriter)
 $xmlWriter.Close()
 Write-Verbose ("Tabbify finish " + ("*" * 60))
