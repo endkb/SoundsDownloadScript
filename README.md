@@ -21,11 +21,11 @@ __Optional:__
 I believe there are Linux versions for all of these packages, but I've only ever used this on Windows. The script may work on Powershell for Linux, but it will likely take a lot of tweaking. There's probably another language that's more appropriate. If you're up for the challenge, feel free to use the logic as a guide and go for it!
 
 ## INSTALLATION & HOW TO RUN
-Step by step instructions and other notes are in the [README.htm](https://html-preview.github.io/?url=https://github.com/endkb/SoundsDownloadScript/blob/main/README.htm) file in the package. If anyone would like to translate the html instructons to markdown for this document, be my guest!
+Step by step instructions and other notes are in the [README.htm](https://rawcdn.githack.com/endkb/SoundsDownloadScript/b4773fd46fef20a6d3b4293796d98688d702d79c/README.htm) file in the package. If anyone would like to translate the html instructons to markdown for this document, be my guest!
 
 ## SUPPORT
 To report an bug or request a feature in either SoundsDownloadService.ps1 or genRSS.ps1, [open an issue on github](https://github.com/endkb/SoundsDownloadScript/issues).
 
 ## LICENSE
 Copyright &copy; 2024 endkb (https://github.com/endkb)  
-MIT License (see [README.htm](https://html-preview.github.io/?url=https://github.com/endkb/SoundsDownloadScript/blob/main/README.htm#MITLicense) for details)
+MIT License (see [README.htm](https://rawcdn.githack.com/endkb/SoundsDownloadScript/b4773fd46fef20a6d3b4293796d98688d702d79c/README.htm#MITLicense) for details)
