@@ -35,9 +35,9 @@
 	</head>
 	<body>
 		<h1>SoundsDownloadScript.ps1 + genRSS.ps1</h1>
-		<p><i>*Updated: 30-Sep-2024 19:49 GMT</i></p>
+		<p><i>*Updated: 3-Oct-2024 01:28 GMT</i></p>
 		<p>These instructions are very crude and messy. Sorry for the windbag word vomit. I hope they help, though. If someone wants to convert this file into a markdown README.md for github, be my guest. The scripts are a little tedious to set up the first time, but once you get them working they're pretty reliable.</p>
-		<p>I recommend you check the <a href="https://github.com/endkb/SoundsDownloadScript">repo on github</a> for the <a href="https://html-preview.github.io/?url=https://github.com/endkb/SoundsDownloadScript/blob/main/README.htm">latest version of this README</a> before continuing.</p>
+		<p>I recommend you check the <a href="https://github.com/endkb/SoundsDownloadScript">repo on github</a> for the <a href="https://rawcdn.githack.com/endkb/SoundsDownloadScript/b4773fd46fef20a6d3b4293796d98688d702d79c/README.htm">latest version of this README</a> before continuing.</p>
 		<p>If you find a bug in the scripts or something is incorrect or incomplete in the documentation, feel free to <a href="https://github.com/endkb/SoundsDownloadScript/issues">open an issue on github</a>.</p>
 		<h3>Table of Contents</h3>
 		<ul class="bullets">
@@ -247,7 +247,7 @@
 						<code class="block">m002tc9v=Year in Review</code>
 					<br></li>
 					
-					<li><code>Debug</code>: [<i>yes,no</i>] Outputs the console and variables to a text file in the <code>$DebugDirectory</code>. Log file name structure is 'genRSS_[Profile Name]-[Script PID]-[Inc No]-Console+Vars.log'. This can be set with a command line parameter, instead.</li>
+					<li><code>Debug</code>: [<i>yes,no</i>] Outputs the console and variables to a text file in the <code>$DebugDirectory</code>. Log file name structure is 'genRSS_[Profile Name]-[Script PID]-[Log ID]-Console+Vars.log'. This can be set with a command line parameter, instead.</li>
 					<li><code>DebugDirectory</code>: [<i>Directory path</i>] The directory to save log files if <code>Debug</code> is enabled. This can be set with a command line parameter, instead.<br><br></li>
 					</ul>
 			<li>Profit! (actually, don't profit because I want this project to stay off the BBC's radar)</li>
@@ -288,7 +288,7 @@
 				to create a config. You can copy the config text to another file and specify it here.</li>
 			<li><code>-rcloneSyncDir</code>: [<i>String array of file paths</i>] This is the remote and directory that rclone should upload to. It should be in the form of 'Remote:Directory'. Remote is the name of the appropriate config found in the config file specified in rcloneConfig. The value can be an array separated by comma if you want to put it to multiple locations. For S3 API services, use <code>Remote:BucketName\Directory</code>.</li>
 			<li><code>-DotSrcConfig</code>: [<i>File path</i>] The path to an external script file (.ps1) that contains configuration options can be specified here. At a minimum, the file must contain values for <code>$DumpDirectory</code>, <code>$ffmpegExe</code>, <code>$ffprobeExe</code>, <code>$kid3Exe</code>, and <code>$ytdlpExe</code>. The best thing to do would be to simply copy the entire 'inline' configuration options section from SoundsDownloadScript.ps1 and paste it into a new .ps1. The script will be called using dot sourcing. It will override any settings that are also set in the inline configuration options. This was implemented to make it easier to upgrade SoundsDownloadScript without having to transcribe the settings to a new file each time. The dot sourcing method was selected over 'real' config files (ini, xml, json, etc.) to account for the multi-line remote script blocks which would have been hard to reliably implement using the other ways. It's not a great option, but it's there and it works. More information on dot sourcing can be found at <a href="https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_scripts?view=powershell-7.4#script-scope-and-dot-sourcing">this Microsoft Learn page</a>.</li>
-			<li><code>-Debug</code>: [<i>Switch</i>] Output the console and variables to text files in the specified <code>-DebugDirectory</code>. If rclone and OpenVPN are used, it will create separate log files for those in the same directory with the same name structure. Log file name structure is '[ShortTitle]-[Script PID]-[Random Chars]-[Log Source].log'.</li>
+			<li><code>-Debug</code>: [<i>Switch</i>] Output the console and variables to text files in the specified <code>-DebugDirectory</code>. If rclone and OpenVPN are used, it will create separate log files for those in the same directory with the same name structure. Log file name structure is '[ShortTitle]-[Script PID]-[Log ID]-[Log Source].log' where [Log ID] is a 4-character hash string generated from the task instance ID. This means that if a task calls SoundsDownloadScript and genRSS, the related log files will contain the same [Log ID]. This should make it a little easier to find and troubleshoot related logs.</li>
 			<li><code>-DebugDirectory</code>: [<i>Directory path</i>] The directory to save log files if <code>-Debug</code> is enabled.</li>
 			<li><code>-NoDL</code>: [<i>Switch</i>] Use this option to skip downloading the episode. It's useful to see the metadata to set the TitleFormat and troubleshoot escape character and encoding problems.</li>
 			<li><code>-Force</code>: [<i>Switch</i>] Download the episode even if it's already downloaded. It will append an underscore number to the end so as not to overwrite an existing file. This can be useful for testing.</li>
@@ -307,7 +307,7 @@
 			<li><code>-Profile</code>: [<i>File path</i>] The path to the profile config file to use.</li>
 			<li><code>-Test</code>: [<i>File path</i>] A local file name to generate a test RSS file to. This option will not upload anything remotely. It is useful for testing without messing up a public RSS feed.</li>
 			<li><code>-Force</code>: [<i>Switch</i>] Force the script to update the RSS file, even if it doesn't need to be. This is useful for testing or pushing changes.</li>
-			<li><code>-Debug</code>: [<i>Switch</i>] Output the console and variables to a text file in the <code>$DebugDirectory</code>. Log file name structure is 'genRSS_[Profile Name]-[Script PID]-[Inc No]-Console+Vars.log'.</li>
+			<li><code>-Debug</code>: [<i>Switch</i>] Output the console and variables to a text file in the <code>$DebugDirectory</code>. Log file name structure is 'genRSS_[Profile Name]-[Script PID]-[Log ID]-Console+Vars.log'.</li>
 			<li><code>-DebugDirectory</code>: [<i>Directory path</i>] The directory to save log files if <code>-Debug</code> is enabled.</li>
 		</ul>
 
