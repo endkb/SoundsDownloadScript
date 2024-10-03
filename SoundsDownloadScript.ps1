@@ -108,7 +108,7 @@ Function Exit-Script {
 		# Stop recording the console
 		Stop-Transcript
 		# Spit list of variables and values to file
-		Get-Variable | Out-File "$DebugDirectory\$ShortTitle-$PID-$RandLogID-Console+Vars.log" -Append -Encoding utf8 -Width 500
+		Get-Variable | Out-File "$DebugDirectory\$ShortTitle-$PID-$LogID-Console+Vars.log" -Append -Encoding utf8 -Width 500
 		}
 	Exit
 	}
@@ -141,15 +141,35 @@ Function Get-IniContent ($FilePath) {
 Function Invoke-DebugRoutine {
 	# Create the directory to save/move debug logs to
 	New-Item -ItemType Directory -Force -Path "$DebugDirectory" > $null
-	# Generate a random string
-	$Script:RandLogID = -join ((97..122) | Get-Random -Count 3 | ForEach-Object {[char]$_})
+	# Routine to check if running from Task Scheduler
+	If ($GetLogIDFromTask -ne $false) {
+		# Initiate a COM object and connect
+		$TaskService = New-Object -ComObject('Schedule.Service')
+		$TaskService.Connect()
+		$runningTasks = $TaskService.GetRunningTasks(0)
+		# Get the task associated with the PID of the script
+		$Script:TaskGUID = $runningTasks | Where-Object{$_.EnginePID -eq $PID} | Select-Object -ExpandProperty InstanceGuid
+		}
+	If ($TaskGUID -ne $null) {
+		# Compute the SHA-256 hash of the input string
+		$sha256 = [System.Security.Cryptography.SHA256]::Create()
+		$hashBytes = $sha256.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($TaskGUID))
+		# Convert the hash to a Base64 string
+		$base64Hash = [Convert]::ToBase64String($hashBytes)
+		# Convert to lowercase and remove non-alphanumeric characters
+		$alphanumericHash = ($base64Hash.ToLower() -replace '[^a-z]', '')
+		$Script:LogID = $alphanumericHash.Substring(0, [Math]::Min(4, $alphanumericHash.Length))
+		} Else {
+			# If $TaskGUID is empty then it's not running in a task - make something up
+			$Script:LogID = -join ((97..122) | Get-Random -Count 4 | ForEach-Object {[char]$_})
+			}									 
 	# Build a command line arguments for openvpn and rclone to output logs
-	$Script:vpnDebugArgs = "--log-append `"$DebugDirectory\$ShortTitle-$PID-$RandLogID-vpn.log`""
-	$Script:rcloneDebugArgs = "--log-file", "$DebugDirectory\$ShortTitle-$PID-$RandLogID-rclone.log"
+	$Script:vpnDebugArgs = "--log-append `"$DebugDirectory\$ShortTitle-$PID-$LogID-vpn.log`""
+	$Script:rcloneDebugArgs = "--log-file", "$DebugDirectory\$ShortTitle-$PID-$LogID-rclone.log"
 	# Start recording the console
-	Start-Transcript -Path "$DebugDirectory\$ShortTitle-$PID-$RandLogID-Console+Vars.log" -Append -IncludeInvocationHeader -Verbose
+	Start-Transcript -Path "$DebugDirectory\$ShortTitle-$PID-$LogID-Console+Vars.log" -Append -IncludeInvocationHeader -Verbose
 	$Script:TranscriptStarted = $true
-	Write-Output "**Debugging: Saving log files to $DebugDirectory\$ShortTitle-$PID-$RandLogID-*.log"
+	Write-Output "**Debugging: Saving log files to $DebugDirectory\$ShortTitle-$PID-$LogID-*.log"
 	}
 
 Function Start-ytdlp {
