@@ -19,14 +19,28 @@ $rcloneExe = (Get-ChildItem -Path $PSScriptRoot -Filter "rclone.exe" -Recurse | 
 
 ####################################################################################################
 
-Function Get-DebugPath {Return "$DebugDirectory\genRSS_$([io.path]::GetFileNameWithoutExtension($Profile))-$PID-$i-Console+Vars.log"}
+Function Get-DebugPath {
+	If ($GetLogIDFromTask -ne $false) {
+		$TaskService = New-Object -ComObject('Schedule.Service')
+		$TaskService.Connect()
+		$runningTasks = $TaskService.GetRunningTasks(0)
+		$Script:TaskGUID = $runningTasks | Where-Object{$_.EnginePID -eq $PID} | Select-Object -ExpandProperty InstanceGuid
+		}
+	If ($TaskGUID -ne $null) {
+		$sha256 = [System.Security.Cryptography.SHA256]::Create()
+		$hashBytes = $sha256.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($TaskGUID))
+		$base64Hash = [Convert]::ToBase64String($hashBytes)
+		$alphanumericHash = ($base64Hash.ToLower() -replace '[^a-z]', '')
+		$Script:LogID = $alphanumericHash.Substring(0, [Math]::Min(4, $alphanumericHash.Length))
+		} Else {
+			$Script:LogID = -join ((97..122) | Get-Random -Count 4 | ForEach-Object {[char]$_})
+			}
+	$Script:DebugFile = "$DebugDirectory\genRSS_$([io.path]::GetFileNameWithoutExtension($Profile))-$PID-$LogID-Console+Vars.log"
+	}
 
 If ($Debug) {
-	$i=0
-	While (Test-Path $(Get-DebugPath)) {
-		$i += 1
-		}
-	Start-Transcript -Path $(Get-DebugPath) -Append -IncludeInvocationHeader -Verbose
+	Get-DebugPath
+	Start-Transcript -Path $DebugFile -Append -IncludeInvocationHeader -Verbose
 	$TranscriptStarted = $true
 	}
 
@@ -46,11 +60,8 @@ If (($Config['Debug'] -eq 'yes') -AND (!$Debug) -AND (!$TranscriptStarted)) {
 	}
 
 If (($Debug) -AND (!$TranscriptStarted)) {
-	$i=0
-	While (Test-Path $(Get-DebugPath)) {
-		$i += 1
-		}
-	Start-Transcript -Path $(Get-DebugPath) -Append -IncludeInvocationHeader -Verbose
+	Get-DebugPath
+	Start-Transcript -Path $DebugFile -Append -IncludeInvocationHeader -Verbose
 	}
 
 $MediaFilter = $("*." + $($Config['MediaExtension'].Split(",") -Join ",*.")).Split(",")
@@ -114,7 +125,7 @@ If ((!$Force) -AND (Test-Path $_filename)) {
 		If ($Debug) {
 			Stop-Transcript
 			# Spit list of variables and values to file
-			Get-Variable | Out-File $(Get-DebugPath) -Append -Encoding utf8 -Width 500
+			Get-Variable | Out-File $DebugFile -Append -Encoding utf8 -Width 500
 			}
 		Exit
 		}
@@ -412,7 +423,7 @@ If (($Config['rcloneConfig']) -and ($Config['RemotePublishDirectory']) -and ($Co
 If ($Debug) {
 	Stop-Transcript
 	# Spit list of variables and values to file
-	Get-Variable | Out-File $(Get-DebugPath) -Append -Encoding utf8 -Width 500
+	Get-Variable | Out-File $DebugFile -Append -Encoding utf8 -Width 500
 	}
 
 Exit
