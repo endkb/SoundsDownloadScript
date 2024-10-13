@@ -19,8 +19,9 @@ param(
 [String]$rcloneConfig,                      # Path to the rclone config file - rclone.exe config create
 [String]$rcloneSyncDir,                     # Remote and directory rclone should upload to separated by comma if multiple - for AWS S3 use config:bucket\directory
 [String]$DotSrcConfig,                      # Path to external .ps1 script file containing script configuration options
-[Switch]$Debug,                             # Output the console to a text file in the DebugDirectory
-[String]$DebugDirectory,                    # Directory path to save the debug log files if enabled
+[Switch]$Logging,                           # Output the console to a text file in the LogDirectory
+[String]$LogDirectory,                      # Directory path to save the log files if enabled
+[String]$LogFileNameFormat,                 # Format log file names: {0} = shorttitle, {1} = task guid hash, {2} = PID, {3} = log type, {4} = date/time
 [Switch]$NoDL,                              # Grab the metadata only - Don't download the episode
 [Switch]$Force                              # Download the episode even if it's already downloaded - Will not overwrite existing
 )
@@ -47,9 +48,10 @@ $LockFileMaxDuration = 10800                # Max age in seconds before lock fil
 $ytdlpUpdate = $false                       # Download yt-dlp updates before running script
 $rcloneUpdate = $false                      # Update rclone to the latest stable version
 
-$Debug = $true                              # Force global debugging - $true = Force logging on, $false = Force no logging, $Debug = Honor cmd line parameter
+$Logging = $true                            # Force logging: $true = logging on, $false = no logging, $Logging > $null = read cmd line & don't force
 $Printjson = $false                         # Print the episode metadata in json format to the console for troubleshooting
-$DebugDirectory = 'E:\FilesTemp\Debug'      # Directory to save/move logs to when Debug switch is present
+$LogDirectory = 'E:\FilesTemp\Debug'        # Directory to save/move logs to when -Logging switch is present
+$LogFileNameFormat = "{0}-{1}-{2}-{3}.log"	# Format the log file name: {0} = ShortTitle, {1} = log id, {2} = PID, {3} = log type, {4} = date/time
 
 <#	Paths to ffmpeg, ffprobe kid3-cli, openvpn (optional), rclone (optional), and yt-dlp executables - or use the following:
 		(Get-ChildItem -Path $PSScriptRoot -Filter "<name-of.exe>" -Recurse | Sort-Object -Descending -Property LastWriteTime | Select-Object -First 1 | % { $_.FullName })
@@ -86,15 +88,15 @@ $remote_ia = {If ($RemoteConfig.$Remote.type -eq "internetarchive") {
 	$iaHeaders += "--header", "X-Archive-Meta-Year: $($ReleaseDate.ToString("yyyy"))"
 
 	# Create a page with the metadata and upload the cover art
-	& $rcloneExe copyto "$DumpDirectory\$ImageName" "$rcloneSyncDir\$(([system.io.fileinfo]$MoveLoc).BaseName)\$(([system.io.fileinfo]$MoveLoc).BaseName)_itemimage.jpg" $iaHeaders --metadata --config $rcloneConfig --progress -v --dump headers $rcloneDebugArgs
+	& $rcloneExe copyto "$DumpDirectory\$ImageName" "$rcloneSyncDir\$(([system.io.fileinfo]$MoveLoc).BaseName)\$(([system.io.fileinfo]$MoveLoc).BaseName)_itemimage.jpg" $iaHeaders --metadata --config $rcloneConfig --progress -v --dump headers $rcloneLoggingArgs
 	# Upload the audio file to the page
-	& $rcloneExe copyto $MoveLoc "$rcloneSyncDir$(([system.io.fileinfo]$MoveLoc).BaseName)\$(Split-Path $MoveLoc -leaf)" --metadata --config $rcloneConfig --progress -v --dump headers $rcloneDebugArgs
+	& $rcloneExe copyto $MoveLoc "$rcloneSyncDir$(([system.io.fileinfo]$MoveLoc).BaseName)\$(Split-Path $MoveLoc -leaf)" --metadata --config $rcloneConfig --progress -v --dump headers $rcloneLoggingArgs
 	}}
 
 # Cloudflare Storage
 $remote_r2 = {If ($RemoteConfig.$Remote.provider -eq "Cloudflare") {
 	# Sync the SaveDir with the remote dir
-	& $rcloneExe sync $SaveDir $rcloneSyncDir --create-empty-src-dirs --progress --config $rcloneConfig -v $rcloneDebugArgs
+	& $rcloneExe sync $SaveDir $rcloneSyncDir --create-empty-src-dirs --progress --config $rcloneConfig -v $rcloneLoggingArgs
 	}}
 
 <#      ┌────────────────────────────────────────────────────────────────────────────────┐
@@ -104,11 +106,11 @@ $remote_r2 = {If ($RemoteConfig.$Remote.provider -eq "Cloudflare") {
 Function Exit-Script {
 	# Clean up the cover art from the DumpDirectory
 	If ($ImageName) {Get-Childitem -Path $DumpDirectory -Filter $ImageName -Recurse | Remove-Item -Force}
-	If ($Debug) {
+	If ($Logging) {
 		# Stop recording the console
 		Stop-Transcript
 		# Spit list of variables and values to file
-		Get-Variable | Out-File "$DebugDirectory\$ShortTitle-$PID-$RandLogID-Console+Vars.log" -Append -Encoding utf8 -Width 500
+		Get-Variable | Out-File "$LogDirectory\$(Set-LogFileName -LogType 'Console+Vars')" -Append -Encoding utf8 -Width 500
 		}
 	Exit
 	}
@@ -138,18 +140,47 @@ Function Get-IniContent ($FilePath) {
 	Return $ini
 	}
 
-Function Invoke-DebugRoutine {
-	# Create the directory to save/move debug logs to
-	New-Item -ItemType Directory -Force -Path "$DebugDirectory" > $null
-	# Generate a random string
-	$Script:RandLogID = -join ((97..122) | Get-Random -Count 3 | ForEach-Object {[char]$_})
+Function Invoke-LoggingRoutine {
+	# Create the directory to save/move logs to
+	New-Item -ItemType Directory -Force -Path "$LogDirectory" > $null
+	$Script:LogFileDate = Get-Date
+	# Routine to check if running from Task Scheduler
+	If ($GetLogIDFromTask -ne $false) {
+		# Initiate a COM object and connect
+		$TaskService = New-Object -ComObject('Schedule.Service')
+		$TaskService.Connect()
+		$runningTasks = $TaskService.GetRunningTasks(0)
+		# Get the task associated with the PID of the script
+		$Script:TaskGUID = $runningTasks | Where-Object{$_.EnginePID -eq $PID} | Select-Object -ExpandProperty InstanceGuid
+		}
+	If ($TaskGUID -ne $null) {
+		# Compute the SHA-256 hash of the input string
+		$sha256 = [System.Security.Cryptography.SHA256]::Create()
+		$hashBytes = $sha256.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($TaskGUID))
+		# Convert the hash to a Base64 string
+		$base64Hash = [Convert]::ToBase64String($hashBytes)
+		# Convert to lowercase and remove non-alphanumeric characters
+		$alphanumericHash = ($base64Hash.ToLower() -replace '[^a-z]', '')
+		$Script:LogID = $alphanumericHash.Substring(0, [Math]::Min(4, $alphanumericHash.Length))
+		} Else {
+			# If $TaskGUID is empty then it's not running in a task - make something up
+			$Script:LogID = -join ((97..122) | Get-Random -Count 4 | ForEach-Object {[char]$_})
+			}
 	# Build a command line arguments for openvpn and rclone to output logs
-	$Script:vpnDebugArgs = "--log-append `"$DebugDirectory\$ShortTitle-$PID-$RandLogID-vpn.log`""
-	$Script:rcloneDebugArgs = "--log-file", "$DebugDirectory\$ShortTitle-$PID-$RandLogID-rclone.log"
+	$Script:vpnLoggingArgs = "--log-append `"$LogDirectory\$(Set-LogFileName -LogType 'vpn')`""
+	$Script:rcloneLoggingArgs = "--log-file", "$LogDirectory\$(Set-LogFileName -LogType 'rclone')"
+
 	# Start recording the console
-	Start-Transcript -Path "$DebugDirectory\$ShortTitle-$PID-$RandLogID-Console+Vars.log" -Append -IncludeInvocationHeader -Verbose
+	Start-Transcript -Path "$LogDirectory\$(Set-LogFileName -LogType 'Console+Vars')" -Append -IncludeInvocationHeader -Verbose
 	$Script:TranscriptStarted = $true
-	Write-Output "**Debugging: Saving log files to $DebugDirectory\$ShortTitle-$PID-$RandLogID-*.log"
+	Write-Output "**Logging: Saving log files to $LogDirectory\$(Set-LogFileName -LogType '*')"	
+	}
+
+Function Set-LogFileName {
+	Param ([String]$LogType)
+	$LogFileNameFormatArray = $ShortTitle, $LogID, $PID, $LogType, $LogFileDate
+	$LogFileName = $LogFileNameFormat -f $LogFileNameFormatArray
+	Return $LogFileName
 	}
 
 Function Start-ytdlp {
@@ -165,10 +196,15 @@ Function Start-ytdlp {
 	& $ytdlpExe --ffmpeg-location $ffmpegExe --audio-quality 0 -f ba[ext=m4a]$ytdlpBitrate -o "$DumpFile.%(ext)s" $SoundsPlayLink
 	}
 
-# Start debug logging if enabled via cli parameters or inline config options
-If ($Debug) {
-	Invoke-DebugRoutine
-	}
+# Use LogDirectory from the CL if it's there
+If ($PSBoundParameters.ContainsKey('LogDirectory')) {
+    $LogDirectory = $PSBoundParameters['LogDirectory']
+    }
+
+# Use LogFileNameFormat from the CL if it's there
+If ($PSBoundParameters.ContainsKey('LogFileNameFormat')) {
+    $LogFileNameFormat = $PSBoundParameters['LogFileNameFormat']
+    }
 
 # Turn off PS progress bars for speed
 $ProgressPreference = 'SilentlyContinue'
@@ -179,11 +215,11 @@ If ($DotSrcConfig) {
 		$DotSrcConfig = Get-Item -Path $DotSrcConfig -ErrorAction SilentlyContinue
 		If ([System.IO.Path]::GetExtension($DotSrcConfig) -eq '.ps1') {
 			# Check for necessary variables before importing the script
-			If ((Select-String -Path $DotSrcConfig -Pattern '^[ ]*(\$DumpDirectory)[ ]*=') -AND
-				(Select-String -Path $DotSrcConfig -Pattern '^[ ]*(\$ffmpegExe)[ ]*=') -AND
-				(Select-String -Path $DotSrcConfig -Pattern '^[ ]*(\$ffprobeExe)[ ]*=') -AND
-				(Select-String -Path $DotSrcConfig -Pattern '^[ ]*(\$kid3Exe)[ ]*=') -AND
-				(Select-String -Path $DotSrcConfig -Pattern '^[ ]*(\$ytdlpExe)[ ]*=')) {
+			If ((Select-String -Path $DotSrcConfig -Pattern '^[\s]*(\$DumpDirectory)[\s]*=') -AND
+				(Select-String -Path $DotSrcConfig -Pattern '^[\s]*(\$ffmpegExe)[\s]*=') -AND
+				(Select-String -Path $DotSrcConfig -Pattern '^[\s]*(\$ffprobeExe)[\s]*=') -AND
+				(Select-String -Path $DotSrcConfig -Pattern '^[\s]*(\$kid3Exe)[\s]*=') -AND
+				(Select-String -Path $DotSrcConfig -Pattern '^[\s]*(\$ytdlpExe)[\s]*=')) {
 				Write-Output "**Importing external script configuration options: $DotSrcConfig"
 				# Import the script
 				. $DotSrcConfig
@@ -201,9 +237,9 @@ If ($DotSrcConfig) {
 			}
 	}
 
-# Start debug logging if enabled in a $DotSrcConfig script and not enabled earlier
-If (($Debug) -AND ($TranscriptStarted -ne $true)) {
-	Invoke-DebugRoutine
+# Start logging if enabled in a $DotSrcConfig script and not enabled earlier
+If (($Logging) -AND ($TranscriptStarted -ne $true)) {
+	Invoke-LoggingRoutine
 	}
 
 # Don't bother searching the page if ProgramURL is already a Sounds link
@@ -407,7 +443,7 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 				}
 
 			# Call OpenVPN in a new process and connect using the config file
-			$VPNApp = Start-Process $vpnExe -ArgumentList "$vpnDebugArgs --config `"$VPNServer`"" -passthru
+			$VPNApp = Start-Process $vpnExe -ArgumentList "$vpnLoggingArgs --config `"$VPNServer`"" -passthru
 			# Add the VPN PID to the array for closing later
 			$VPNPIDArray += $VPNApp.Id
 			# Start a timer

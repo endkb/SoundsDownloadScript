@@ -35,9 +35,9 @@
 	</head>
 	<body>
 		<h1>SoundsDownloadScript.ps1 + genRSS.ps1</h1>
-		<p><i>*Updated: 30-Sep-2024 19:49 GMT</i></p>
+		<p><i>*Updated: 13-Oct-2024 19:38 GMT</i></p>
 		<p>These instructions are very crude and messy. Sorry for the windbag word vomit. I hope they help, though. If someone wants to convert this file into a markdown README.md for github, be my guest. The scripts are a little tedious to set up the first time, but once you get them working they're pretty reliable.</p>
-		<p>I recommend you check the <a href="https://github.com/endkb/SoundsDownloadScript">repo on github</a> for the <a href="https://html-preview.github.io/?url=https://github.com/endkb/SoundsDownloadScript/blob/main/README.htm">latest version of this README</a> before continuing.</p>
+		<p>I recommend you check the <a href="https://github.com/endkb/SoundsDownloadScript">repo on github</a> for the <a href="https://rawcdn.githack.com/endkb/SoundsDownloadScript/b4773fd46fef20a6d3b4293796d98688d702d79c/README.htm">latest version of this README</a> before continuing.</p>
 		<p>If you find a bug in the scripts or something is incorrect or incomplete in the documentation, feel free to <a href="https://github.com/endkb/SoundsDownloadScript/issues">open an issue on github</a>.</p>
 		<h3>Table of Contents</h3>
 		<ul class="bullets">
@@ -137,15 +137,24 @@
 					<li><code>$ytdlpUpdate</code>: [<i>$true,$false</i>] Set to <code>$true</code> to update yt-dlp before the script runs.</li>
 					<li><code>$rcloneUpdate</code>: [<i>$true,$false</i>] Set to <code>$true</code> to update rclone to the latest stable version before uploading files.<br><br></li>
 
-					<li><code>$Debug</code>: [<i>$true,$false,$Debug</i>] Can be used to force debug logs on or off for all instances. Console output and script variables are saved to a log file, and rclone and OpenVPN logs are saved to separate files. Logs will be saved in the <code>$DebugDirectory</code> specified below.
+					<li><code>$Logging</code>: [<i>$true,$false,$Logging</i>] Can be used to force log files on or off for all instances. If <code>$false</code>, then logging will be turned off regardless of whether <code>-Debug</code> is specified in the command line. Console output and script variables are saved to a log file, and rclone and OpenVPN logs are saved to separate files. Logs will be saved in the <code>$LogDirectory</code> specified below.
 						<ul>
-							<li><code>$true</code> = Save debug logs for all downloads</li>
-							<li><code>$false</code> = Don't save debug logs for any downloads</li>
-							<li><code>$Debug</code> = Use whatever is set in the command line parameter (per instance).</li>
-						</ul>
+							<li><code>$Logging = $true</code> = Save logs for all downloads</li>
+							<li><code>$Logging = $false</code> = Don't save logs for any downloads</li>
+							<li><code>$Logging > $null</code> = Use whatever is set in the command line parameter per instance (<code>$Logging = $Logging</code> will also have the same effect)</li>
+					</ul>
 					</li>
-					<li><code>$Printjson</code>: [<i>$true,$false</i>] Prints the raw json data from <code>$jsonResult</code> to the console. It will also be saved to the debug log if <code>$Debug</code> is enabled. The text can be copied and pasted into an <a href="https://codebeautify.org/jsonviewer">online json viewer</a> for better readability. Use this for troubleshooting things like parsing issues, special character issues, or finding a reference point to retrieve a json value (see <a href="#TitleFormat">TitleFormat</a> under the Documentation section). Debug log files will be significantly larger if this setting is left on.</li>
-					<li><code>$DebugDirectory</code>: [<i>Directory path</i>] This is the directory to move logs to when the <code>-Debug</code> switch is present or when <code>$Debug</code> is set to <code>$true</code>. You'll want to check this directory once in a while because the logs can get unwieldy.<br><br></li>
+					<li><code>$Printjson</code>: [<i>$true,$false</i>] Prints the raw json data from <code>$jsonResult</code> to the console. It will also be saved to the log if <code>$Logging</code> is enabled. The text can be copied and pasted into an <a href="https://codebeautify.org/jsonviewer">online json viewer</a> for better readability. Use this for troubleshooting things like parsing issues, special character issues, or finding a reference point to retrieve a json value (see <a href="#TitleFormat">TitleFormat</a> under the Documentation section). The Console+Vars log files will be significantly larger if this setting is left on.</li>
+					<li><code>$LogDirectory</code>: [<i>Directory path</i>] This is the directory to move logs to when the <code>-Logging</code> switch is present or when <code>$Logging</code> is set to <code>$true</code>. You'll want to check this directory once in a while because the logs can get unwieldy.</li>
+					<li id="LogFileNameFormat_1"><code>$LogFileNameFormat</code>: [<i>Format string</i>] This is a format string to set the file name of the log files (ex: <code>$LogFileNameFormat = "{0}-{1}-{2}-{3}.log"</code>). The string may contain the following variables in curly brackets:
+						<ul>
+							<li><code>{0}</code> = ShortTitle</li>
+							<li><code>{1}</code> = Hash of task scheduler GUID</li>
+							<li><code>{2}</code> = PID of the script that is running</li>
+							<li><code>{3}</code> = The type of log (Console+Vars, rclone, vpn)</li>
+							<li><code>{4}</code> = Current date and time</li>
+						</ul>
+					<br></li>
 
 					<li><code>$ffmpegExe</code>: [<i>File path</i>] Path to ffmpeg.exe. You can also use the Get-ChildItem cmdlet:
 						<code class="block">(Get-ChildItem -Path $PSScriptRoot -Filter "ffmpeg.exe" -Recurse | Sort-Object -Descending -Property LastWriteTime | Select-Object -First 1 | % {$_.FullName })</code>
@@ -172,7 +181,7 @@
 				<code class="block">auth-user-pass "C:\\Program Files\\OpenVPN\\config\\[YourPasswordFile].txt"</code>
 				This will let OpenVPN connect without having to enter the credentials every time. Note the double back-slashes (<code>\\</code>) in the path.</li>
 			<li>If using rclone to upload the files to a remote that isn't an S3 bucket or the Internet Archive, edit SoundsDownloadScript.ps1 to configure the script blocks to configure the <code>rclone.exe</code> command line. Script blocks must start with <code>$remote_</code> in order to be run. You will need to be a little familiar with Powershell. Use an If statement to qualify the script block (otherwise it will always run). Something like:
-				<span><code class="block">$remote_test = {If ($RemoteConfig.$Remote.type -eq "internetarchive") {& $rcloneExe sync $SaveDir $rcloneSyncDir --create-empty-src-dirs --progress --config $rcloneConfig -v $rcloneDebugArgs}}</code></span>
+				<span><code class="block">$remote_test = {If ($RemoteConfig.$Remote.type -eq "internetarchive") {& $rcloneExe sync $SaveDir $rcloneSyncDir --create-empty-src-dirs --progress --config $rcloneConfig -v $rcloneLoggingArgs}}</code></span>
 				The <code>If</code> statement reads the ini file and checks that the remote matches the one specified. In this case, "internetarchive". You can have it check any of the properties in the ini file to match.	
 				<ul>
 					<li><code>$RemoteConfig</code> is the location of the rclone configuration file</li>
@@ -184,7 +193,7 @@
 					<li><code>$SaveDir</code> is /local/path</li>
 					<li><code>$rcloneSyncDir</code> is remote:path</li>
 					<li><code>--config $RemoteConfig</code> is the location of the rclone configuration file</li>
-					<li><code>-v $rcloneDebugArgs</code> is the location to save the log file if enabled</li>
+					<li><code>-v $rcloneLoggingArgs</code> is the location to save the log file if enabled</li>
 				</ul>		
 				Different providers will need different rclone commands and options. Sometimes you'll need to include additional things like headers, depending on the remote. The script blocks can be tough to set up at first, but they allow for maximum flexibility. <a href="https://rclone.org/docs/">Read the rclone documentation for the remote you're using</a> and be ready to troubleshoot. The <a href="https://forum.rclone.org">rclone support forums</a> are very helpful. Note: the way the script is set up, rclone will not delete files from a remote unless the <code>sync</code> option is used. When it does its cleanup, it does not call  rclone, it just removes files locally.
 		</ol>
@@ -247,9 +256,18 @@
 						<code class="block">m002tc9v=Year in Review</code>
 					<br></li>
 					
-					<li><code>Debug</code>: [<i>yes,no</i>] Outputs the console and variables to a text file in the <code>$DebugDirectory</code>. Log file name structure is 'genRSS_[Profile Name]-[Script PID]-[Inc No]-Console+Vars.log'. This can be set with a command line parameter, instead.</li>
-					<li><code>DebugDirectory</code>: [<i>Directory path</i>] The directory to save log files if <code>Debug</code> is enabled. This can be set with a command line parameter, instead.<br><br></li>
-					</ul>
+					<li><code>Logging</code>: [<i>yes,no</i>] Outputs the console and variables to a text file in the <code>LogDirectory</code>. This can also be set by using the <code>-Logging</code> command line parameter. Finally, you can set it globally by adding <code>$Logging = $true</code> or <code>$Logging = $false</code> to the configurable options in the script.</li>
+					<li><code>LogDirectory</code>: [<i>Directory path</i>] The directory to save log files if <code>Logging</code> is enabled. It also can be set with a command line parameter (<code>-LogDirectory</code>) or globally as a configurable option in the script (<code>$LogDirectory</code>).</li>
+					<li id="LogFileNameFormat_2"><code>LogFileNameFormat</code>: [<i>Format string</i>] A format string to set the name of the log files (ex: <code>LogFileNameFormat = "{0}-{1}-{2}-genRSS_{3}.log"</code>). The string may contain the following variables in curly brackets:
+						<ul>
+							<li><code>{0}</code> = Profile name</li>
+							<li><code>{1}</code> = Hash of task scheduler GUID</li>
+							<li><code>{2}</code> = PID of the script that is running</li>
+							<li><code>{3}</code> = The type of log (Console+Vars, rclone)</li>
+							<li><code>{4}</code> = Current date and time</li>
+						</ul>
+						This can also be given as a command line parameter (<code>-LogFileNameFormat</code>) or globally as a configurable option in the script (<code>$LogFileNameFormat</code>), instead.
+				<br><br></ul>
 			<li>Profit! (actually, don't profit because I want this project to stay off the BBC's radar)</li>
 		</ol>
 		<br>
@@ -288,13 +306,14 @@
 				to create a config. You can copy the config text to another file and specify it here.</li>
 			<li><code>-rcloneSyncDir</code>: [<i>String array of file paths</i>] This is the remote and directory that rclone should upload to. It should be in the form of 'Remote:Directory'. Remote is the name of the appropriate config found in the config file specified in rcloneConfig. The value can be an array separated by comma if you want to put it to multiple locations. For S3 API services, use <code>Remote:BucketName\Directory</code>.</li>
 			<li><code>-DotSrcConfig</code>: [<i>File path</i>] The path to an external script file (.ps1) that contains configuration options can be specified here. At a minimum, the file must contain values for <code>$DumpDirectory</code>, <code>$ffmpegExe</code>, <code>$ffprobeExe</code>, <code>$kid3Exe</code>, and <code>$ytdlpExe</code>. The best thing to do would be to simply copy the entire 'inline' configuration options section from SoundsDownloadScript.ps1 and paste it into a new .ps1. The script will be called using dot sourcing. It will override any settings that are also set in the inline configuration options. This was implemented to make it easier to upgrade SoundsDownloadScript without having to transcribe the settings to a new file each time. The dot sourcing method was selected over 'real' config files (ini, xml, json, etc.) to account for the multi-line remote script blocks which would have been hard to reliably implement using the other ways. It's not a great option, but it's there and it works. More information on dot sourcing can be found at <a href="https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_scripts?view=powershell-7.4#script-scope-and-dot-sourcing">this Microsoft Learn page</a>.</li>
-			<li><code>-Debug</code>: [<i>Switch</i>] Output the console and variables to text files in the specified <code>-DebugDirectory</code>. If rclone and OpenVPN are used, it will create separate log files for those in the same directory with the same name structure. Log file name structure is '[ShortTitle]-[Script PID]-[Random Chars]-[Log Source].log'.</li>
-			<li><code>-DebugDirectory</code>: [<i>Directory path</i>] The directory to save log files if <code>-Debug</code> is enabled.</li>
+			<li><code>-Logging</code>: [<i>Switch</i>] Output the console and variables to text files in the specified <code>-LogDirectory</code>. If rclone and OpenVPN are used, it will create separate log files for those in the same directory with the same name structure.</li>
+			<li><code>-LogDirectory</code>: [<i>Directory path</i>] The directory to save log files if <code>-Logging</code> is enabled.</li>
+			<li><code>-LogFileNameFormat</code>: [<i>Format string</i>] A format string to set the name of the log files (ex: <code>-LogFileNameFormat "{0}-{1}-{2}-{3}.log"</code>). <a href="#LogFileNameFormat_1">Available format variables can be found above</a>.</li>
 			<li><code>-NoDL</code>: [<i>Switch</i>] Use this option to skip downloading the episode. It's useful to see the metadata to set the TitleFormat and troubleshoot escape character and encoding problems.</li>
 			<li><code>-Force</code>: [<i>Switch</i>] Download the episode even if it's already downloaded. It will append an underscore number to the end so as not to overwrite an existing file. This can be useful for testing.</li>
 		</ul>
 		<p><i>TerminatingError(Invoke-WebRequest):</i></p>
-		<p>Sometimes the BBC updates the program page before it releases the episode on Sounds. This will cause SoundsDownloadScript.ps1 to try to download the episode that isn't available yet. In the Console+Vars debug log, you'll see:</p>
+		<p>Sometimes the BBC updates the program page before it releases the episode on Sounds. This will cause SoundsDownloadScript.ps1 to try to download the episode that isn't available yet. In the Console+Vars log file, you'll see:</p>
 		<p><code class="block">PS>TerminatingError(Invoke-WebRequest):"<br>
 		<br>
 		<br>
@@ -307,21 +326,22 @@
 			<li><code>-Profile</code>: [<i>File path</i>] The path to the profile config file to use.</li>
 			<li><code>-Test</code>: [<i>File path</i>] A local file name to generate a test RSS file to. This option will not upload anything remotely. It is useful for testing without messing up a public RSS feed.</li>
 			<li><code>-Force</code>: [<i>Switch</i>] Force the script to update the RSS file, even if it doesn't need to be. This is useful for testing or pushing changes.</li>
-			<li><code>-Debug</code>: [<i>Switch</i>] Output the console and variables to a text file in the <code>$DebugDirectory</code>. Log file name structure is 'genRSS_[Profile Name]-[Script PID]-[Inc No]-Console+Vars.log'.</li>
-			<li><code>-DebugDirectory</code>: [<i>Directory path</i>] The directory to save log files if <code>-Debug</code> is enabled.</li>
+			<li><code>-Logging</code>: [<i>Switch</i>] Output the console and variables to a text file in the <code>$LogDirectory</code>.</li>
+			<li><code>-LogDirectory</code>: [<i>Directory path</i>] The directory to save log files if <code>-Logging</code> is enabled.</li>
+			<li><code>-LogFileNameFormat</code>: [<i>Format string</i>] A format string to set the name of the log files (ex: <code>-LogFileNameFormat "{0}-{1}-{2}-genRSS_{3}.log"</code>). <a href="#LogFileNameFormat_2">See the available variables above</a>.</li>
 		</ul>
 
 		<h3 id="HowToRun_3">Windows Task Scheduler Examples</h3>
 		<p>If you're using Windows Task Scheduler, here are some examples of how to format the actions:</p>
 
 		<i>Basic download:</i>
-		<ul><li><b>Program:</b> <code>"C:\Program Files\PowerShell\7\pwsh.exe"</code> <b>Arguments:</b> <code>"-Command & 'C:\Program Files\VideoLAN\VLC\SoundsDownloadScript.ps1' -ProgramURL https://www.bbc.co.uk/programmes/b006r9yq -SaveDir 'F:\Audio\The News Quiz' -ShortTitle TheNewsQuiz -TitleFormat '{1} - {2}' -Archive 0 -Debug -DebugDirectory 'C:\DebugLogs'"</code></li></ul>
+		<ul><li><b>Program:</b> <code>"C:\Program Files\PowerShell\7\pwsh.exe"</code> <b>Arguments:</b> <code>"-Command & 'C:\Program Files\VideoLAN\VLC\SoundsDownloadScript.ps1' -ProgramURL https://www.bbc.co.uk/programmes/b006r9yq -SaveDir 'F:\Audio\The News Quiz' -ShortTitle TheNewsQuiz -TitleFormat '{1} - {2}' -Archive 0 -Logging -LogDirectory 'C:\Logs'"</code></li></ul>
 		<br>
 
-		<i>Uploading to CloudFlare R2 and generate an RSS:</i>
+		<i>Uploading to CloudFlare R2 and generating an RSS:</i>
 		<ul>
-			<li><b>Program:</b> <code>"C:\Program Files\PowerShell\7\pwsh.exe"</code> <b>Arguments:</b> <code>"-Command & 'C:\Program Files\VideoLAN\VLC\SoundsDownloadScript.ps1' -ProgramURL https://www.bbc.co.uk/programmes/b006qfvv -SaveDir 'F:\Audio\Shipping Forecast' -ShortTitle ShippingForecast -TitleFormat '{1} {4:HH:mm}' -rcloneConfig 'C:\Program Files\VideoLAN\VLC\rclone\rclone.conf' -rcloneSyncDir 'bbcsoundsrss_r2:bbcsoundsrss\ShippingForecast\media' -Archive 7 -Days -Debug -DebugDirectory 'C:\DebugLogs'"</code></li>
-			<li><b>Program:</b> <code>"C:\Program Files\PowerShell\7\pwsh.exe"</code> <b>Arguments:</b> <code>"-Command & 'C:\Program Files\VideoLAN\VLC\genRSS.ps1' -Profile 'E:\FeedProfiles\ShippingForecast' -Debug -DebugDirectory 'C:\DebugLogs'"</code></li>
+			<li><b>Program:</b> <code>"C:\Program Files\PowerShell\7\pwsh.exe"</code> <b>Arguments:</b> <code>"-Command & 'C:\Program Files\VideoLAN\VLC\SoundsDownloadScript.ps1' -ProgramURL https://www.bbc.co.uk/programmes/b006qfvv -SaveDir 'F:\Audio\Shipping Forecast' -ShortTitle ShippingForecast -TitleFormat '{1} {4:HH:mm}' -rcloneConfig 'C:\Program Files\VideoLAN\VLC\rclone\rclone.conf' -rcloneSyncDir 'bbcsoundsrss_r2:bbcsoundsrss\ShippingForecast\media' -Archive 7 -Days -Logging"</code></li>
+			<li><b>Program:</b> <code>"C:\Program Files\PowerShell\7\pwsh.exe"</code> <b>Arguments:</b> <code>"-Command & 'C:\Program Files\VideoLAN\VLC\genRSS.ps1' -Profile 'E:\FeedProfiles\ShippingForecast' -Logging -LogDirectory 'C:\Logs'"</code></li>
 		</ul>
 		<br>
 
@@ -364,6 +384,11 @@
 		<i>PSP-1: The Podcast RSS Standard:</i>
 		<p>I am trying to make the RSS output to be <a href="https://github.com/Podcast-Standards-Project/PSP-1-Podcast-RSS-Specification?tab=readme-ov-file#channel-itunes-explicit">PSP-1 compliant</a> as much as I can. If a required element is missing or something isn't implemented according to the standard, open an issue on github.</p>
 		
+		<i>Global logging:</i>
+		<p>The logging variable can be set in each profile template or through the command line with the <code>-Logging</code> switch. It can also be enabled or disabled globally by adding <code>$Logging = $true</code> or <code>$Logging = $false</code> to the configuration options section in genRSS.ps1. To force logging on for all instances, set to <code>$true</code>. To disable it on all instances, set to <code>$false</code>. If set to <code>$false</code>, it will override any <code>Logging=yes</code> entries in the profile templates and <code>-Debug</code> command line parameters. It effectively forces no genRSS logging. To not force logging on or off and restore the option back to the profiles or command line, just remove or comment out the <code>$Logging</code> variable.</p>
+		<p>With the way the script is laid out, I couldn't figure out how to gracefully determine if the <code>$Logging</code> switch was explicitly set to <code>$false</code> in the script. I got stubborn and chose to use Select-String to test a regex pattern:
+			<code class="block">Select-String -Path $PSCommandPath -Pattern '^[\s*]*(\$Logging)[\s*]*=[\s*]*(\$false)(\s*$|\s*#.*)'</code>
+		Basically it searches the script for a <code>$Logging = $false</code> string. It works, but it's not efficient, goes against how powershell should work, and I don't like it. I know there's a better way. If you know what it is, open an issue. I'm all ears.</p>
 		<h3 id="ID3Tags">MP4/ID3 tags</h3>
 		<p>Having correct MP4/ID3 tags is crucial for both scripts to "work" together. SoundsDownloadScript.ps1 sets way more tags than this, but these are the important ones for genRSS.ps1 to work properly:</p>
 		<ul>
@@ -379,7 +404,7 @@
 		</ul>
 		<p>SoundsDownloadScript.ps1 uses kid3 to set tags. If you want to change them or add additional ones, <a href="https://kid3.sourceforge.io/kid3_en.html#frame-list">The Kid3 Handbook</a> has a breakout of what tags it supports. genRSS.ps1 also uses kid3 to read tags. kid3 spits out the tags in json format and then the script parses it. If you're having trouble, you can run<br>
 			<code class="block">.\kid3-cli.exe -c '{\"method\":\"get\"}' '[FILE]'</code>
-		to see exactly what kid3 is reading from the audio file and passing to the script. Sometimes special characters can trip it up and it might be necessary to add to the <code>$StringToFormat</code> variable in the Format-kid3CommandString function. It will probably take some troubleshooting. Turn on the debug logs to help.</p>
+		to see exactly what kid3 is reading from the audio file and passing to the script. Sometimes special characters can trip it up and it might be necessary to add to the <code>$StringToFormat</code> variable in the Format-kid3CommandString function. It will probably take some troubleshooting. Turn on the logging to help.</p>
 		<br>
 
 		<h2 id="Support">SUPPORT:</h2>

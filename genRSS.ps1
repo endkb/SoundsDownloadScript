@@ -5,8 +5,9 @@ param(
 	[String]$Profile,
 	[String]$Test,
 	[Switch]$Force,
-	[Switch]$Debug,
-	[String]$DebugDirectory
+	[Switch]$Logging,
+	[String]$LogDirectory,
+	[String]$LogFileNameFormat
 	)
 
 ###################################### Configure options here ######################################
@@ -17,16 +18,53 @@ $kid3Exe = (Get-ChildItem -Path $PSScriptRoot -Filter "kid3-cli.exe" -Recurse | 
 # Set the path to rclone.exe here
 $rcloneExe = (Get-ChildItem -Path $PSScriptRoot -Filter "rclone.exe" -Recurse | Select-Object -First 1 | % { $_.FullName })
 
+# Set the file name format for the logs here: {0} = Profile name, {1} = Log ID, {2} = Script PID, {3} = Log file type, {4} = Date/time
+$LogFileNameFormat = "{0}-{1}-{2}-genRSS_{3}.log"
+
 ####################################################################################################
 
-Function Get-DebugPath {Return "$DebugDirectory\genRSS_$([io.path]::GetFileNameWithoutExtension($Profile))-$PID-$i-Console+Vars.log"}
-
-If ($Debug) {
-	$i=0
-	While (Test-Path $(Get-DebugPath)) {
-		$i += 1
+Function Set-LogID {
+	If ($GetLogIDFromTask -ne $false) {
+		$TaskService = New-Object -ComObject('Schedule.Service')
+		$TaskService.Connect()
+		$runningTasks = $TaskService.GetRunningTasks(0)
+		$Script:TaskGUID = $runningTasks | Where-Object{$_.EnginePID -eq $PID} | Select-Object -ExpandProperty InstanceGuid
 		}
-	Start-Transcript -Path $(Get-DebugPath) -Append -IncludeInvocationHeader -Verbose
+	If ($TaskGUID -ne $null) {
+		$sha256 = [System.Security.Cryptography.SHA256]::Create()
+		$hashBytes = $sha256.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($TaskGUID))
+		$base64Hash = [Convert]::ToBase64String($hashBytes)
+		$alphanumericHash = ($base64Hash.ToLower() -replace '[^a-z]', '')
+		$Script:LogID = $alphanumericHash.Substring(0, [Math]::Min(4, $alphanumericHash.Length))
+		} Else {
+			$Script:LogID = -join ((97..122) | Get-Random -Count 4 | ForEach-Object {[char]$_})
+			}
+	}
+
+Function Set-LogFileName {
+	Param ([String]$LogType)
+	$LogFileNameFormatArray = $([io.path]::GetFileNameWithoutExtension($Profile)), $LogID, $PID, $LogType, $LogFileDate
+	$LogFileName = $LogFileNameFormat -f $LogFileNameFormatArray
+	Return $LogFileName
+	}
+
+If (Select-String -Path $PSCommandPath -Pattern '^[\s*]*(\$Logging)[\s*]*=[\s*]*(\$false)(\s*$|\s*#.*)') {
+	$AllowLogging = $false
+	} Else {
+		$AllowLogging = $true
+		}
+If ($PSBoundParameters.ContainsKey('LogDirectory')) {
+	$LogDirectory = $PSBoundParameters['LogDirectory']
+	}
+If ($PSBoundParameters.ContainsKey('LogFileNameFormat')) {
+	$LogFileNameFormat = $PSBoundParameters['LogFileNameFormat']
+	}
+
+If (($Logging) -AND ($LogDirectory) -AND ($LogFileNameFormat) -AND ($AllowLogging)) {
+	$LogFileDate = Get-Date
+	Set-LogID
+	$Script:LogFile = "$LogDirectory\$(Set-LogFileName -LogType 'Console+Vars')"
+	Start-Transcript -Path $LogFile -Append -IncludeInvocationHeader -Verbose
 	$TranscriptStarted = $true
 	}
 
@@ -40,17 +78,22 @@ ForEach ($key in $($Config.keys)) {
     $Config[$key] = $Config[$key] -Replace "^[`"`']" -Replace "[`"`']$"
 	}
 
-If (($Config['Debug'] -eq 'yes') -AND (!$Debug) -AND (!$TranscriptStarted)) {
-	$Debug = $true
- 	$DebugDirectory = $Config['DebugDirectory']
+If ($Config['Logging'] -eq "yes") {
+	$Logging = $true
 	}
 
-If (($Debug) -AND (!$TranscriptStarted)) {
-	$i=0
-	While (Test-Path $(Get-DebugPath)) {
-		$i += 1
+If (($Logging) -AND ($AllowLogging) -AND (!$TranscriptStarted)) {
+	$LogFileDate = Get-Date
+	If (($Config['LogDirectory'] -ne $null) -AND (-not $PSBoundParameters.ContainsKey('LogDirectory'))) {
+		$LogDirectory = $Config['LogDirectory']
 		}
-	Start-Transcript -Path $(Get-DebugPath) -Append -IncludeInvocationHeader -Verbose
+	If (($Config['LogFileNameFormat']) -AND (-not $PSBoundParameters.ContainsKey('LogFileNameFormat'))) {
+		$LogFileNameFormat = $Config['LogFileNameFormat']
+		}
+	Set-LogID
+	$Script:LogFile = "$LogDirectory\$(Set-LogFileName -LogType 'Console+Vars')"
+	Start-Transcript -Path $LogFile -Append -IncludeInvocationHeader -Verbose
+	$TranscriptStarted = $true
 	}
 
 $MediaFilter = $("*." + $($Config['MediaExtension'].Split(",") -Join ",*.")).Split(",")
@@ -111,10 +154,10 @@ If ((!$Force) -AND (Test-Path $_filename)) {
 		If ($CheckProfileHash -eq "yes") {
 			Write-Output "ProfileHash: $ProfileHash matches"
 			}
-		If ($Debug) {
+		If ($TranscriptStarted) {
 			Stop-Transcript
 			# Spit list of variables and values to file
-			Get-Variable | Out-File $(Get-DebugPath) -Append -Encoding utf8 -Width 500
+			Get-Variable | Out-File $LogFile -Append -Encoding utf8 -Width 500
 			}
 		Exit
 		}
@@ -409,10 +452,10 @@ If (($Config['rcloneConfig']) -and ($Config['RemotePublishDirectory']) -and ($Co
 	& $rcloneExe copyto $_filename $RemotePublishFile --header-upload "Content-type: text/xml; charset=utf-8" --progress --config $rcloneConfig -v
     }
 
-If ($Debug) {
+If ($TranscriptStarted) {
 	Stop-Transcript
 	# Spit list of variables and values to file
-	Get-Variable | Out-File $(Get-DebugPath) -Append -Encoding utf8 -Width 500
+	Get-Variable | Out-File $LogFile -Append -Encoding utf8 -Width 500
 	}
 
 Exit
