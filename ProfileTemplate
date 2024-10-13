@@ -41,6 +41,7 @@ SkipFiles=
 SkipTitles=
 m001ts8t=Seasonal Trimmings
 
-# Debug Logging
-Debug=yes
-DebugDirectory=C:\\Files\\Debug
+# Logging Options
+Logging=yes
+LogDirectory=E:\\FilesTemp\\Debug
+LogFileNameFormat={0}-{1}-{2}-genRSS_{3}.log
