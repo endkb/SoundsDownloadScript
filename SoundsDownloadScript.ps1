@@ -215,11 +215,11 @@ If ($DotSrcConfig) {
 		$DotSrcConfig = Get-Item -Path $DotSrcConfig -ErrorAction SilentlyContinue
 		If ([System.IO.Path]::GetExtension($DotSrcConfig) -eq '.ps1') {
 			# Check for necessary variables before importing the script
-			If ((Select-String -Path $DotSrcConfig -Pattern '^[ ]*(\$DumpDirectory)[ ]*=') -AND
-				(Select-String -Path $DotSrcConfig -Pattern '^[ ]*(\$ffmpegExe)[ ]*=') -AND
-				(Select-String -Path $DotSrcConfig -Pattern '^[ ]*(\$ffprobeExe)[ ]*=') -AND
-				(Select-String -Path $DotSrcConfig -Pattern '^[ ]*(\$kid3Exe)[ ]*=') -AND
-				(Select-String -Path $DotSrcConfig -Pattern '^[ ]*(\$ytdlpExe)[ ]*=')) {
+			If ((Select-String -Path $DotSrcConfig -Pattern '^[\s]*(\$DumpDirectory)[\s]*=') -AND
+				(Select-String -Path $DotSrcConfig -Pattern '^[\s]*(\$ffmpegExe)[\s]*=') -AND
+				(Select-String -Path $DotSrcConfig -Pattern '^[\s]*(\$ffprobeExe)[\s]*=') -AND
+				(Select-String -Path $DotSrcConfig -Pattern '^[\s]*(\$kid3Exe)[\s]*=') -AND
+				(Select-String -Path $DotSrcConfig -Pattern '^[\s]*(\$ytdlpExe)[\s]*=')) {
 				Write-Output "**Importing external script configuration options: $DotSrcConfig"
 				# Import the script
 				. $DotSrcConfig
