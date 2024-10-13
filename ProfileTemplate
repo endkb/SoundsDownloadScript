@@ -43,5 +43,5 @@ m001ts8t=Seasonal Trimmings
 
 # Logging Options
 Logging=yes
-LogDirectory=E:\\FilesTemp\\Debug
+LogDirectory=E:\\Logs
 LogFileNameFormat={0}-{1}-{2}-genRSS_{3}.log
