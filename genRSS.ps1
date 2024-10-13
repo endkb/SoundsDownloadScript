@@ -48,6 +48,11 @@ Function Set-LogFileName {
 	Return $LogFileName
 	}
 
+If (Select-String -Path $PSCommandPath -Pattern '^[\s*]*(\$Logging)[\s*]*=[\s*]*(\$false)(\s*$|\s*#.*)') {
+	$AllowLogging = $false
+	} Else {
+		$AllowLogging = $true
+		}
 If ($PSBoundParameters.ContainsKey('LogDirectory')) {
 	$LogDirectory = $PSBoundParameters['LogDirectory']
 	}
@@ -55,7 +60,7 @@ If ($PSBoundParameters.ContainsKey('LogFileNameFormat')) {
 	$LogFileNameFormat = $PSBoundParameters['LogFileNameFormat']
 	}
 
-If (($Logging) -AND ($LogDirectory) -AND ($LogFileNameFormat)) {
+If (($Logging) -AND ($LogDirectory) -AND ($LogFileNameFormat) -AND ($AllowLogging)) {
 	$LogFileDate = Get-Date
 	Set-LogID
 	$Script:LogFile = "$LogDirectory\$(Set-LogFileName -LogType 'Console+Vars')"
@@ -77,7 +82,7 @@ If ($Config['Logging'] -eq "yes") {
 	$Logging = $true
 	}
 
-If (($Logging) -AND (!$TranscriptStarted)) {
+If (($Logging) -AND ($AllowLogging) -AND (!$TranscriptStarted)) {
 	$LogFileDate = Get-Date
 	If (($Config['LogDirectory'] -ne $null) -AND (-not $PSBoundParameters.ContainsKey('LogDirectory'))) {
 		$LogDirectory = $Config['LogDirectory']
@@ -88,6 +93,7 @@ If (($Logging) -AND (!$TranscriptStarted)) {
 	Set-LogID
 	$Script:LogFile = "$LogDirectory\$(Set-LogFileName -LogType 'Console+Vars')"
 	Start-Transcript -Path $LogFile -Append -IncludeInvocationHeader -Verbose
+	$TranscriptStarted = $true
 	}
 
 $MediaFilter = $("*." + $($Config['MediaExtension'].Split(",") -Join ",*.")).Split(",")
@@ -148,7 +154,7 @@ If ((!$Force) -AND (Test-Path $_filename)) {
 		If ($CheckProfileHash -eq "yes") {
 			Write-Output "ProfileHash: $ProfileHash matches"
 			}
-		If ($Logging) {
+		If ($TranscriptStarted) {
 			Stop-Transcript
 			# Spit list of variables and values to file
 			Get-Variable | Out-File $LogFile -Append -Encoding utf8 -Width 500
@@ -446,7 +452,7 @@ If (($Config['rcloneConfig']) -and ($Config['RemotePublishDirectory']) -and ($Co
 	& $rcloneExe copyto $_filename $RemotePublishFile --header-upload "Content-type: text/xml; charset=utf-8" --progress --config $rcloneConfig -v
     }
 
-If ($Logging) {
+If ($TranscriptStarted) {
 	Stop-Transcript
 	# Spit list of variables and values to file
 	Get-Variable | Out-File $LogFile -Append -Encoding utf8 -Width 500
