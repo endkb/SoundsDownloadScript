@@ -35,7 +35,7 @@
 	</head>
 	<body>
 		<h1>SoundsDownloadScript.ps1 + genRSS.ps1</h1>
-		<p><i>*Updated: 13-Oct-2024 02:29 GMT</i></p>
+		<p><i>*Updated: 13-Oct-2024 19:38 GMT</i></p>
 		<p>These instructions are very crude and messy. Sorry for the windbag word vomit. I hope they help, though. If someone wants to convert this file into a markdown README.md for github, be my guest. The scripts are a little tedious to set up the first time, but once you get them working they're pretty reliable.</p>
 		<p>I recommend you check the <a href="https://github.com/endkb/SoundsDownloadScript">repo on github</a> for the <a href="https://rawcdn.githack.com/endkb/SoundsDownloadScript/b4773fd46fef20a6d3b4293796d98688d702d79c/README.htm">latest version of this README</a> before continuing.</p>
 		<p>If you find a bug in the scripts or something is incorrect or incomplete in the documentation, feel free to <a href="https://github.com/endkb/SoundsDownloadScript/issues">open an issue on github</a>.</p>
@@ -384,6 +384,11 @@
 		<i>PSP-1: The Podcast RSS Standard:</i>
 		<p>I am trying to make the RSS output to be <a href="https://github.com/Podcast-Standards-Project/PSP-1-Podcast-RSS-Specification?tab=readme-ov-file#channel-itunes-explicit">PSP-1 compliant</a> as much as I can. If a required element is missing or something isn't implemented according to the standard, open an issue on github.</p>
 		
+		<i>Global logging:</i>
+		<p>The logging variable can be set in each profile template or through the command line with the <code>-Logging</code> switch. It can also be enabled or disabled globally by adding <code>$Logging = $true</code> or <code>$Logging = $false</code> to the configuration options section in genRSS.ps1. To force logging on for all instances, set to <code>$true</code>. To disable it on all instances, set to <code>$false</code>. If set to <code>$false</code>, it will override any <code>Logging=yes</code> entries in the profile templates and <code>-Debug</code> command line parameters. It effectively forces no genRSS logging. To not force logging on or off and restore the option back to the profiles or command line, just remove or comment out the <code>$Logging</code> variable.</p>
+		<p>With the way the script is laid out, I couldn't figure out how to gracefully determine if the <code>$Logging</code> switch was explicitly set to <code>$false</code> in the script. I got stubborn and chose to use Select-String to test a regex pattern:
+			<code class="block">Select-String -Path $PSCommandPath -Pattern '^[\s*]*(\$Logging)[\s*]*=[\s*]*(\$false)(\s*$|\s*#.*)'</code>
+		Basically it searches the script for a <code>$Logging = $false</code> string. It works, but it's not efficient, goes against how powershell should work, and I don't like it. I know there's a better way. If you know what it is, open an issue. I'm all ears.</p>
 		<h3 id="ID3Tags">MP4/ID3 tags</h3>
 		<p>Having correct MP4/ID3 tags is crucial for both scripts to "work" together. SoundsDownloadScript.ps1 sets way more tags than this, but these are the important ones for genRSS.ps1 to work properly:</p>
 		<ul>
