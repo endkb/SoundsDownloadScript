@@ -25,12 +25,10 @@ $LogFileNameFormat = "{0}-{1}-{2}-genRSS_{3}.log"
 
 Function Set-LogID {
 	If ($LogFileNameFormat -match "\{1\}") {
-		If ($GetLogIDFromTask -ne $false) {
-			$TaskService = New-Object -ComObject('Schedule.Service')
-			$TaskService.Connect()
-			$runningTasks = $TaskService.GetRunningTasks(0)
-			$Script:TaskGUID = $runningTasks | Where-Object{$_.EnginePID -eq $PID} | Select-Object -ExpandProperty InstanceGuid
-			}
+		$TaskService = New-Object -ComObject('Schedule.Service')
+		$TaskService.Connect()
+		$runningTasks = $TaskService.GetRunningTasks(0)
+		$Script:TaskGUID = $runningTasks | Where-Object{$_.EnginePID -eq $PID} | Select-Object -ExpandProperty InstanceGuid
 		If ($TaskGUID -ne $null) {
 			$sha256 = [System.Security.Cryptography.SHA256]::Create()
 			$hashBytes = $sha256.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($TaskGUID))
