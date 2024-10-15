@@ -23,8 +23,8 @@ $LogFileNameFormat = "{0}-{1}-{2}-genRSS_{3}.log"
 
 ####################################################################################################
 
-Function Set-LogID {
-	If ($LogFileNameFormat -match "\{1\}") {
+Function Get-LogID {
+	If ($LogID -eq $null) {
 		$TaskService = New-Object -ComObject('Schedule.Service')
 		$TaskService.Connect()
 		$runningTasks = $TaskService.GetRunningTasks(0)
@@ -34,16 +34,17 @@ Function Set-LogID {
 			$hashBytes = $sha256.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($TaskGUID))
 			$base64Hash = [Convert]::ToBase64String($hashBytes)
 			$alphanumericHash = ($base64Hash.ToLower() -replace '[^a-z]', '')
-			$Script:LogID = $alphanumericHash.Substring(0, [Math]::Min(4, $alphanumericHash.Length))
+			$LogID = $alphanumericHash.Substring(0, [Math]::Min(4, $alphanumericHash.Length))
 			} Else {
-				$Script:LogID = -join ((97..122) | Get-Random -Count 4 | ForEach-Object {[char]$_})
+				$LogID = -join ((97..122) | Get-Random -Count 4 | ForEach-Object {[char]$_})
 				}
-		}
+			}
+	Return $LogID
 	}
 
 Function Set-LogFileName {
 	Param ([String]$LogType)
-	$LogFileNameFormatArray = $([io.path]::GetFileNameWithoutExtension($Profile)), $LogID, $PID, $LogType, $LogFileDate
+	$LogFileNameFormatArray = $([io.path]::GetFileNameWithoutExtension($Profile)), $(Get-LogID), $PID, $LogType, $LogFileDate
 	$LogFileName = $LogFileNameFormat -f $LogFileNameFormatArray
 	Return $LogFileName
 	}
@@ -62,7 +63,6 @@ If ($PSBoundParameters.ContainsKey('LogFileNameFormat')) {
 
 If (($Logging) -AND ($LogDirectory) -AND ($LogFileNameFormat) -AND ($AllowLogging)) {
 	$LogFileDate = Get-Date
-	Set-LogID
 	$Script:LogFile = "$LogDirectory\$(Set-LogFileName -LogType 'Console+Vars')"
 	Start-Transcript -Path $LogFile -Append -IncludeInvocationHeader -Verbose
 	$TranscriptStarted = $true
@@ -90,7 +90,6 @@ If (($Logging) -AND ($AllowLogging) -AND (!$TranscriptStarted)) {
 	If (($Config['LogFileNameFormat']) -AND (-not $PSBoundParameters.ContainsKey('LogFileNameFormat'))) {
 		$LogFileNameFormat = $Config['LogFileNameFormat']
 		}
-	Set-LogID
 	$Script:LogFile = "$LogDirectory\$(Set-LogFileName -LogType 'Console+Vars')"
 	Start-Transcript -Path $LogFile -Append -IncludeInvocationHeader -Verbose
 	$TranscriptStarted = $true
