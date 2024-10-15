@@ -34,9 +34,9 @@ Function Get-LogID {
 			$hashBytes = $sha256.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($TaskGUID))
 			$base64Hash = [Convert]::ToBase64String($hashBytes)
 			$alphanumericHash = ($base64Hash.ToLower() -replace '[^a-z]', '')
-			$LogID = $alphanumericHash.Substring(0, [Math]::Min(4, $alphanumericHash.Length))
+			$Script:LogID = $alphanumericHash.Substring(0, [Math]::Min(4, $alphanumericHash.Length))
 			} Else {
-				$LogID = -join ((97..122) | Get-Random -Count 4 | ForEach-Object {[char]$_})
+				$Script:LogID = -join ((97..122) | Get-Random -Count 4 | ForEach-Object {[char]$_})
 				}
 			}
 	Return $LogID
