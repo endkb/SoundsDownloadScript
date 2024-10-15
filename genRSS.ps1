@@ -24,21 +24,21 @@ $LogFileNameFormat = "{0}-{1}-{2}-genRSS_{3}.log"
 ####################################################################################################
 
 Function Set-LogID {
-	If ($GetLogIDFromTask -ne $false) {
+	If ($LogFileNameFormat -match "\{1\}") {
 		$TaskService = New-Object -ComObject('Schedule.Service')
 		$TaskService.Connect()
 		$runningTasks = $TaskService.GetRunningTasks(0)
 		$Script:TaskGUID = $runningTasks | Where-Object{$_.EnginePID -eq $PID} | Select-Object -ExpandProperty InstanceGuid
+		If ($TaskGUID -ne $null) {
+			$sha256 = [System.Security.Cryptography.SHA256]::Create()
+			$hashBytes = $sha256.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($TaskGUID))
+			$base64Hash = [Convert]::ToBase64String($hashBytes)
+			$alphanumericHash = ($base64Hash.ToLower() -replace '[^a-z]', '')
+			$Script:LogID = $alphanumericHash.Substring(0, [Math]::Min(4, $alphanumericHash.Length))
+			} Else {
+				$Script:LogID = -join ((97..122) | Get-Random -Count 4 | ForEach-Object {[char]$_})
+				}
 		}
-	If ($TaskGUID -ne $null) {
-		$sha256 = [System.Security.Cryptography.SHA256]::Create()
-		$hashBytes = $sha256.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($TaskGUID))
-		$base64Hash = [Convert]::ToBase64String($hashBytes)
-		$alphanumericHash = ($base64Hash.ToLower() -replace '[^a-z]', '')
-		$Script:LogID = $alphanumericHash.Substring(0, [Math]::Min(4, $alphanumericHash.Length))
-		} Else {
-			$Script:LogID = -join ((97..122) | Get-Random -Count 4 | ForEach-Object {[char]$_})
-			}
 	}
 
 Function Set-LogFileName {
