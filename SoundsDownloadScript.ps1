@@ -140,12 +140,8 @@ Function Get-IniContent ($FilePath) {
 	Return $ini
 	}
 
-Function Invoke-LoggingRoutine {
-	# Create the directory to save/move logs to
-	New-Item -ItemType Directory -Force -Path "$LogDirectory" > $null
-	$Script:LogFileDate = Get-Date
-	# Routine to check if running from Task Scheduler
-	If ($LogFileNameFormat -match "\{1\}") {
+Function Get-LogID {
+	If ($LogID -eq $null) {
 		# Initiate a COM object and connect
 		$TaskService = New-Object -ComObject('Schedule.Service')
 		$TaskService.Connect()
@@ -160,12 +156,20 @@ Function Invoke-LoggingRoutine {
 			$base64Hash = [Convert]::ToBase64String($hashBytes)
 			# Convert to lowercase and remove non-alphanumeric characters
 			$alphanumericHash = ($base64Hash.ToLower() -replace '[^a-z]', '')
-			$Script:LogID = $alphanumericHash.Substring(0, [Math]::Min(4, $alphanumericHash.Length))
+			$LogID = $alphanumericHash.Substring(0, [Math]::Min(4, $alphanumericHash.Length))
 			} Else {
 				# If $TaskGUID is empty then it's not running in a task - make something up
-				$Script:LogID = -join ((97..122) | Get-Random -Count 4 | ForEach-Object {[char]$_})
+				$LogID = -join ((97..122) | Get-Random -Count 4 | ForEach-Object {[char]$_})
 				}
-		}
+			}
+	Return $LogID
+	}
+
+Function Invoke-LoggingRoutine {
+	# Create the directory to save/move logs to
+	New-Item -ItemType Directory -Force -Path "$LogDirectory" > $null
+	$Script:LogFileDate = Get-Date
+	
 	# Build a command line arguments for openvpn and rclone to output logs
 	$Script:vpnLoggingArgs = "--log-append `"$LogDirectory\$(Set-LogFileName -LogType 'vpn')`""
 	$Script:rcloneLoggingArgs = "--log-file", "$LogDirectory\$(Set-LogFileName -LogType 'rclone')"
@@ -178,7 +182,7 @@ Function Invoke-LoggingRoutine {
 
 Function Set-LogFileName {
 	Param ([String]$LogType)
-	$LogFileNameFormatArray = $ShortTitle, $LogID, $PID, $LogType, $LogFileDate
+	$LogFileNameFormatArray = $ShortTitle, $(Get-LogID), $PID, $LogType, $LogFileDate
 	$LogFileName = $LogFileNameFormat -f $LogFileNameFormatArray
 	Return $LogFileName
 	}
