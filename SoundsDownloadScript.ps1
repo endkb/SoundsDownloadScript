@@ -67,9 +67,10 @@ $SortArticles =                             # String of definite articles to tri
 "^a |^an |^el |^l'|^la |^las |^le |^les |^lo |^los |^the |^un |^una |^une "
 
 <#	SCRIPT BLOCKS: Configure script blocks below to run rclone commands depending on the remote backend. New ones can be included. Script blocks must be
-	stored in vars that start with 'remote_'. Use the 'If' statement to match the remote type found in the rclone config file. See https://rclone.org/docs/	#>
+	stored in vars that start with 'remote_'. The other half of the var name should match the remote name in the rclone config file. See https://rclone.org/docs/	#>
 # Internet Archive
-$remote_ia = {If ($RemoteConfig.$Remote.type -eq "internetarchive") {
+$remote_internetarchive_config = {
+	Confirm-DownloadedMediaFile
 	# Build the headers to set the metadata - See https://archive.org/developers/metadata-schema/index.html and https://github.com/vmbrasseur/IAS3API/blob/master/metadata.md#setting-metadata-values-via-headers
 	$iaHeaders = @( )
 	$iaHeaders += "--header", "X-Archive-Meta-Collection: opensource_audio"
@@ -90,18 +91,27 @@ $remote_ia = {If ($RemoteConfig.$Remote.type -eq "internetarchive") {
 	# Create a page with the metadata and upload the cover art
 	& $rcloneExe copyto "$DumpDirectory\$ImageName" "$rcloneSyncDir\$(([system.io.fileinfo]$MoveLoc).BaseName)\$(([system.io.fileinfo]$MoveLoc).BaseName)_itemimage.jpg" $iaHeaders --metadata --config $rcloneConfig --progress -v --dump headers $rcloneLoggingArgs
 	# Upload the audio file to the page
-	& $rcloneExe copyto $MoveLoc "$rcloneSyncDir$(([system.io.fileinfo]$MoveLoc).BaseName)\$(Split-Path $MoveLoc -leaf)" --metadata --config $rcloneConfig --progress -v --dump headers $rcloneLoggingArgs
-	}}
+	& $rcloneExe copyto $MoveLoc "$rcloneSyncDir$(([system.io.fileinfo]$MoveLoc).BaseName)\$(Split-Path $MoveLoc -leaf)" --check-first --metadata --config $rcloneConfig --progress -v --dump headers $rcloneLoggingArgs
+	}
 
 # Cloudflare Storage
-$remote_r2 = {If ($RemoteConfig.$Remote.provider -eq "Cloudflare") {
+$remote_bbcsoundsrss_r2 = {
 	# Sync the SaveDir with the remote dir
-	& $rcloneExe sync $SaveDir $rcloneSyncDir --create-empty-src-dirs --progress --config $rcloneConfig -v $rcloneLoggingArgs
-	}}
+	& $rcloneExe sync $SaveDir $rcloneSyncDir --check-first --create-empty-src-dirs --progress --config $rcloneConfig -v $rcloneLoggingArgs
+	}
 
 <#      ┌────────────────────────────────────────────────────────────────────────────────┐
         │                   ▲    End script configuration options    ▲                   │
         └────────────────────────────────────────────────────────────────────────────────┘      #>
+
+# Checks if a media file was downloaded - if not it exits the script block
+# Call this function at the top of script blocks that copy the media file instead of syncing a directory
+Function Confirm-DownloadedMediaFile {
+	If (-not [System.IO.File]::Exists($MoveLoc)) {
+		Write-Output "**Exiting script block: No media file to transfer"
+		Break
+		}
+	}
 
 Function Exit-Script {
 	# Clean up the cover art from the DumpDirectory
@@ -169,7 +179,7 @@ Function Invoke-LoggingRoutine {
 	# Create the directory to save/move logs to
 	New-Item -ItemType Directory -Force -Path "$LogDirectory" > $null
 	$Script:LogFileDate = Get-Date
-	
+
 	# Build a command line arguments for openvpn and rclone to output logs
 	$Script:vpnLoggingArgs = "--log-append `"$LogDirectory\$(Set-LogFileName -LogType 'vpn')`""
 	$Script:rcloneLoggingArgs = "--log-file", "$LogDirectory\$(Set-LogFileName -LogType 'rclone')"
@@ -177,7 +187,7 @@ Function Invoke-LoggingRoutine {
 	# Start recording the console
 	Start-Transcript -Path "$LogDirectory\$(Set-LogFileName -LogType 'Console+Vars')" -Append -IncludeInvocationHeader -Verbose
 	$Script:TranscriptStarted = $true
-	Write-Output "**Logging: Saving log files to $LogDirectory\$(Set-LogFileName -LogType '*')"	
+	Write-Output "**Logging: Saving log files to $LogDirectory\$(Set-LogFileName -LogType '*')"
 	}
 
 Function Set-LogFileName {
@@ -246,6 +256,22 @@ If (($Logging) -AND ($TranscriptStarted -ne $true)) {
 	Invoke-LoggingRoutine
 	}
 
+If (($rcloneConfig) -AND ($rcloneSyncDir)) {
+	# Grab the saved hash from the last time the script ran to compare changes later
+	If ([System.Environment]::GetEnvironmentVariable($SaveDir)) {
+		$SaveDirHashBefore = [System.Environment]::GetEnvironmentVariable($SaveDir)
+		# For troubleshooting only
+		$SaveDirHashIsFromEnvVar = $true
+		} Else {
+			# If the hash isn't already saved get it now
+			$MediaFileListBefore = Get-ChildItem -Path $SaveDir -Recurse | Sort-Object Name | Select -Expand FullName
+			$md5hash = New-Object -TypeName System.Security.Cryptography.MD5CryptoServiceProvider
+			$utf = New-Object -TypeName System.Text.UTF8Encoding
+			$SaveDirHashBefore = [System.BitConverter]::ToString($md5hash.ComputeHash($utf.GetBytes($MediaFileListBefore))).Replace("-", "")
+			# For troubleshooting only
+			$SaveDirHashIsFromEnvVar = $false
+			}
+	}
 # Don't bother searching the page if ProgramURL is already a Sounds link
 If ($ProgramURL -like "https://www.bbc.co.uk/sounds/play/*") {
 	$SoundsPlayLink = $ProgramURL
@@ -418,7 +444,7 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 	Write-Output "**Station: $Station"
 	Write-Output "**Released On: $ReleaseDate"
 	Write-Output "**Released On: $($ReleaseDate.ToUniversalTime())"
-	
+
 	If ($Printjson) {
 		Write-Output "**Beginning of json output (line below):"
 		Write-Output $jsonResult
@@ -673,34 +699,44 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 			Exit-Script
 			}
 
-	# Don't clean up unless the file was sucessfully moved (for troubleshooting purposes)
-	If ([System.IO.File]::Exists($MoveLoc)) {
-		# Check if $Archive value is set
-		If ($Archive -ge 1) {
-			# RegEx pattern looks for the number pattern after the dash to account for dashes in the $ShortTitle
-			$TitleMatchPattern = "$ShortTitle-([0-9]*)-([A-Za-z0-9]*|[A-Za-z0-9]*_[0-9]*)\."
-			If (!$Days) {
-				# Remove all audio files except the most recent ones
-				Get-ChildItem $SaveDir -Recurse -Force | Where-Object { $_.Name -match $($TitleMatchPattern) } | Sort-Object LastWriteTime -Descending | Select-Object -Skip $Archive | Remove-Item -Force -Verbose
-				}
-			If ($Days) {
-				# Run through all items in the SaveDir
-				Get-ChildItem $SaveDir -Recurse -Force | Where-Object {$_.Name -match $($TitleMatchPattern)} | ForEach {
-					# Parse the release date from the title of each episode
-					$ParseReleaseDate = [regex]::match($_.Name, "(\d\d\d\d\d\d\d\d+)")
-					# Convert the release date to a DateTime object
-					$TitleReleaseDate = [Datetime]::ParseExact($ParseReleaseDate, 'yyyyMMdd', (New-Object System.Globalization.CultureInfo "en-US"))
-					# Check if the release date of the ep is older than the specified archive date
-					If ($TitleReleaseDate -lt (Get-Date).Date.AddDays(-$Archive)) {
-						# Remove it if it is
-						Remove-Item $_.FullName -Force -Verbose
-						}
-					}
+	} Else {
+		Write-Output "**Program ID $ProgramID already downloaded $($File.CreationTime)"
+		If ($ScriptInstanceControl) {Unlock-Control}
+		}
+
+If ($Archive -ge 1) {
+	# RegEx pattern looks for the number pattern after the dash to account for dashes in the $ShortTitle
+	$TitleMatchPattern = "$ShortTitle-([0-9]*)-([A-Za-z0-9]*|[A-Za-z0-9]*_[0-9]*)\."
+	If (!$Days) {
+		# Remove all audio files except the most recent ones
+		Get-ChildItem $SaveDir -Recurse -Force | Where-Object { $_.Name -match $($TitleMatchPattern) } | Sort-Object LastWriteTime -Descending | Select-Object -Skip $Archive | Remove-Item -Force -Verbose
+		}
+	If ($Days) {
+		# Run through all items in the SaveDir
+		Get-ChildItem $SaveDir -Recurse -Force | Where-Object {$_.Name -match $($TitleMatchPattern)} | ForEach {
+			# Parse the release date from the title of each episode
+			$ParseReleaseDate = [regex]::match($_.Name, "(\d\d\d\d\d\d\d\d+)")
+			# Convert the release date to a DateTime object
+			$TitleReleaseDate = [Datetime]::ParseExact($ParseReleaseDate, 'yyyyMMdd', (New-Object System.Globalization.CultureInfo "en-US"))
+			# Check if the release date of the ep is older than the specified archive date
+			If ($TitleReleaseDate -lt (Get-Date).Date.AddDays(-$Archive)) {
+				# Remove it if it is
+				Remove-Item $_.FullName -Force -Verbose
 				}
 			}
 		}
+	}
 
 	If (($rcloneConfig) -AND ($rcloneSyncDir)) {
+	# Calculate the hash again to see if changes were made
+	$MediaFileListAfter = Get-ChildItem -Path $SaveDir -Recurse | Sort-Object Name | Select -Expand FullName
+	$md5hash = New-Object -TypeName System.Security.Cryptography.MD5CryptoServiceProvider
+	$utf = New-Object -TypeName System.Text.UTF8Encoding
+	$SaveDirHashAfter = [System.BitConverter]::ToString($md5hash.ComputeHash($utf.GetBytes($MediaFileListAfter))).Replace("-", "")
+	# Save the new hash back to an environment variable
+	[System.Environment]::SetEnvironmentVariable($SaveDir, $SaveDirHashAfter)
+
+	If ($SaveDirHashAfter -ne $SaveDirHashBefore) {
 		# Function to escape double quotes in parameters before passing them to rclone
 		Function Format-rcloneCommandString ($StringToFormat) {
 			Return $StringToFormat.replace("`"","\`"")
@@ -721,15 +757,15 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 			$Remote = $rcloneSyncDir.Substring(0, $rcloneSyncDir.IndexOf(":"))
 			# Run through all script blocks that start with 'remote_'
 			ForEach ($RemoteItem in $(Get-Variable remote_*)) {
-				# Execute each script block (each script block determines whether it matches the remote type to run rclone)
-				& (Get-Variable -Name $RemoteItem.Name).Value
+				# Looks for a script block with a similar name to the remote config to run
+				If ($RemoteItem.Name -replace 'remote_*' -eq $Remote) {
+					Write-Output "**Running script block: $($RemoteItem.Name)"
+					# Execute the script block
+					& (Get-Variable -Name $RemoteItem.Name).Value
+					}
 				}
 			}
 		}
-
-	} Else {
-		Write-Output "**Program ID $ProgramID already downloaded $($File.CreationTime)"
-		If ($ScriptInstanceControl) {Unlock-Control}
-		}
+	}
 
 Exit-Script
