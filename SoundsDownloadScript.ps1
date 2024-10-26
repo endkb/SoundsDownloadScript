@@ -89,9 +89,9 @@ $remote_internetarchive_config = {
 	$iaHeaders += "--header", "X-Archive-Meta-Year: $($ReleaseDate.ToString("yyyy"))"
 
 	# Create a page with the metadata and upload the cover art
-	& $rcloneExe copyto "$DumpDirectory\$ImageName" "$rcloneSyncDir\$(([system.io.fileinfo]$MoveLoc).BaseName)\$(([system.io.fileinfo]$MoveLoc).BaseName)_itemimage.jpg" $iaHeaders --metadata --config $rcloneConfig --progress -v --dump headers $rcloneLoggingArgs
+	& $rcloneExe copyto "$DumpDirectory\$ImageName" "$rcloneSyncDir\$(([system.io.fileinfo]$MediaFile).BaseName)\$(([system.io.fileinfo]$MediaFile).BaseName)_itemimage.jpg" $iaHeaders --metadata --config $rcloneConfig --progress -v --dump headers $rcloneLoggingArgs
 	# Upload the audio file to the page
-	& $rcloneExe copyto $MoveLoc "$rcloneSyncDir$(([system.io.fileinfo]$MoveLoc).BaseName)\$(Split-Path $MoveLoc -leaf)" --check-first --metadata --config $rcloneConfig --progress -v --dump headers $rcloneLoggingArgs
+	& $rcloneExe copyto $MediaFile "$rcloneSyncDir$(([system.io.fileinfo]$MediaFile).BaseName)\$(Split-Path $MediaFile -leaf)" --check-first --metadata --config $rcloneConfig --progress -v --dump headers $rcloneLoggingArgs
 	}
 
 # Cloudflare Storage
@@ -107,7 +107,7 @@ $remote_bbcsoundsrss_r2 = {
 # Checks if a media file was downloaded - if not it exits the script block
 # Call this function at the top of script blocks that copy the media file instead of syncing a directory
 Function Confirm-DownloadedMediaFile {
-	If (-not [System.IO.File]::Exists($MoveLoc)) {
+	If (-not [System.IO.File]::Exists($MediaFile)) {
 		Write-Output "**Exiting script block: No media file to transfer"
 		Break
 		}
@@ -257,21 +257,22 @@ If (($Logging) -AND ($TranscriptStarted -ne $true)) {
 	}
 
 If (($rcloneConfig) -AND ($rcloneSyncDir)) {
+	$HashEnvVarName = $SaveDir.TrimEnd('/', '\')
 	# Grab the saved hash from the last time the script ran to compare changes later
-	If ([System.Environment]::GetEnvironmentVariable($SaveDir)) {
-		$SaveDirHashBefore = [System.Environment]::GetEnvironmentVariable($SaveDir)
+	If ([System.Environment]::GetEnvironmentVariable($HashEnvVarName)) {
+		$SaveDirHashBefore = [System.Environment]::GetEnvironmentVariable($HashEnvVarName)
 		# For troubleshooting only
 		$SaveDirHashIsFromEnvVar = $true
 		} Else {
 			# If the hash isn't already saved get it now
-			$MediaFileListBefore = Get-ChildItem -Path $SaveDir -Recurse | Sort-Object Name | Select -Expand FullName
 			$md5hash = New-Object -TypeName System.Security.Cryptography.MD5CryptoServiceProvider
 			$utf = New-Object -TypeName System.Text.UTF8Encoding
-			$SaveDirHashBefore = [System.BitConverter]::ToString($md5hash.ComputeHash($utf.GetBytes($MediaFileListBefore))).Replace("-", "")
+			$SaveDirHashBefore = [System.BitConverter]::ToString($md5hash.ComputeHash($utf.GetBytes((Get-ChildItem -Path $SaveDir -Recurse | Sort-Object Name | Select -ExpandProperty FullName) -join "`n"))).Replace("-", "")
 			# For troubleshooting only
 			$SaveDirHashIsFromEnvVar = $false
 			}
 	}
+
 # Don't bother searching the page if ProgramURL is already a Sounds link
 If ($ProgramURL -like "https://www.bbc.co.uk/sounds/play/*") {
 	$SoundsPlayLink = $ProgramURL
@@ -671,17 +672,17 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 
 	# Build the new filename
 	[System.IO.Path]::GetExtension($DumpFile)
-	$MoveLoc = $SaveDir + "\" + $ShortTitle + "-" + $ReleaseDate.ToString("yyyyMMdd") + "-" + $ProgramID + $Ext
+	$MediaFile = $SaveDir + "\" + $ShortTitle + "-" + $ReleaseDate.ToString("yyyyMMdd") + "-" + $ProgramID + $Ext
 
 	# Make sure the filename doesn't already exist
-	If (Test-Path $MoveLoc) {
+	If (Test-Path $MediaFile) {
 		$i = 0
 		# Keep trying with a different instance until the filename doesn't exist
-		While (Test-Path $MoveLoc) {
+		While (Test-Path $MediaFile) {
 			# Increase the instance on each loop
 			$i += 1
 			# Rebuild the filename and append the loop instance
-			$MoveLoc = $SaveDir + "\" + $ShortTitle + "-" + $ReleaseDate.ToString("yyyyMMdd") + "-" + $ProgramID + "_" + $i + $ext
+			$MediaFile = $SaveDir + "\" + $ShortTitle + "-" + $ReleaseDate.ToString("yyyyMMdd") + "-" + $ProgramID + "_" + $i + $ext
 			}
 		}
 
@@ -693,7 +694,7 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 	$CheckAlbum = $($ffprobeXMLData.ffprobe.format.tag | Where {$_.key -eq 'album'}).value
 	If (($CheckTitle) -AND ($CheckArtist) -AND ($CheckAlbum)) {
 		# Move the file
-		Move-Item $DumpFile$ext -Destination $MoveLoc
+		Move-Item $DumpFile$ext -Destination $MediaFile
 		} Else {
 			Write-Output "**Metadata not set correctly"
 			Exit-Script
@@ -727,14 +728,14 @@ If ($Archive -ge 1) {
 		}
 	}
 
-	If (($rcloneConfig) -AND ($rcloneSyncDir)) {
+If (($rcloneConfig) -AND ($rcloneSyncDir)) {
 	# Calculate the hash again to see if changes were made
-	$MediaFileListAfter = Get-ChildItem -Path $SaveDir -Recurse | Sort-Object Name | Select -Expand FullName
 	$md5hash = New-Object -TypeName System.Security.Cryptography.MD5CryptoServiceProvider
 	$utf = New-Object -TypeName System.Text.UTF8Encoding
-	$SaveDirHashAfter = [System.BitConverter]::ToString($md5hash.ComputeHash($utf.GetBytes($MediaFileListAfter))).Replace("-", "")
-	# Save the new hash back to an environment variable
-	[System.Environment]::SetEnvironmentVariable($SaveDir, $SaveDirHashAfter)
+	$SaveDirHashAfter = [System.BitConverter]::ToString($md5hash.ComputeHash($utf.GetBytes((Get-ChildItem -Path $SaveDir -Recurse | Sort-Object Name | Select -ExpandProperty FullName) -join "`n"))).Replace("-", "")
+	# Save the new hash back to an environment variable for the next time
+	[System.Environment]::SetEnvironmentVariable($HashEnvVarName, $SaveDirHashAfter)
+	[System.Environment]::SetEnvironmentVariable($HashEnvVarName, $SaveDirHashAfter, 'User')
 
 	If ($SaveDirHashAfter -ne $SaveDirHashBefore) {
 		# Function to escape double quotes in parameters before passing them to rclone
@@ -744,6 +745,7 @@ If ($Archive -ge 1) {
 
 		# thumbs.db is not necessary - save an upload by deleting it first
 		If (Test-Path "$SaveDir\thumbs.db") {Remove-Item "$SaveDir\thumbs.db" -Force -Verbose}
+
 		# Check for rclone updates and download
 		If ($rcloneUpdate -eq $true) {& $rcloneExe selfupdate --stable}
 
