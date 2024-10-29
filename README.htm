@@ -35,8 +35,8 @@
 	</head>
 	<body>
 		<h1>SoundsDownloadScript.ps1 + genRSS.ps1</h1>
-		<p><i>*Updated: 16-Oct-2024 23:19 GMT</i></p>
-		<p>These instructions are very crude and messy. Sorry for the windbag word vomit. I hope they help, though. If someone wants to convert this file into a markdown README.md for github, be my guest. The scripts are a little tedious to set up the first time, but once you get them working they're pretty reliable.</p>
+		<p><i>*Updated: 28-Oct-2024 22:45 GMT</i></p>
+		<p>These instructions are very crude and messy. Sorry for the windbag word vomit. I hope they help, though. If someone wants to convert this file into a markdown README.md for github, be my guest. The scripts are a little tedious to set up the first time, but once you get them working they're pretty reliable and easy to maintain.</p>
 		<p>I recommend you check the <a href="https://github.com/endkb/SoundsDownloadScript">repo on github</a> for the <a href="https://raw.githack.com/endkb/SoundsDownloadScript/main/README.htm">latest version of this README</a> before continuing.</p>
 		<p>If you find a bug in the scripts or something is incorrect or incomplete in the documentation, feel free to <a href="https://github.com/endkb/SoundsDownloadScript/issues">open an issue on github</a>.</p>
 		<h3>Table of Contents</h3>
@@ -167,9 +167,9 @@
 						This must be the command line executable, not the gui. You can comment this line out with <code>#</code> if not using a VPN.</li>
 					<li><code>$ytdlpExe</code>: [<i>File path</i>] Path or Get-ChildItem cmdlet to <code>yt-dlp.exe</code>.<br><br></li>
 
-					<li><code>$SortArticles</code>: [<i>Delimited string</i>] This isn't used much. This is a string of definite articles in various languages separated by a pipe (|). The script will strip these to fill tags specifically used for sorting. For example 'The Beatles' sort tags will become 'Beatles' and will get sorted in the Bs instead of the Ts. You can add your own for other languages, if needed. The caret (^)denotes the beginning of the string. Without it, it will also strip characters from the middle. Put a space after the definite article if it's its own word. For contractions like l', don't put a space. The defaults should be fine for most people, especially since this isn't music.<br></li>
+					<li><code>$SortArticles</code>: [<i>Delimited string</i>] This isn't used much. This is a string of definite articles in various languages separated by a pipe (|). The script will strip these to fill tags specifically used for sorting. For example 'The Beatles' sort tags will become 'Beatles' and will get sorted in the Bs instead of the Ts. You can add your own for other languages, if needed. The caret (^) denotes the beginning of the string. Without it, it will also strip characters from the middle. Put a space after the definite article if it's its own word. For contractions like l', don't put a space. The defaults should be fine for most people, especially since this isn't music.<br></li>
 				</ul>
-				<li>If using rclone, configure it by setting up remotes: <code>rclone.exe config</code><br>
+				<li>If using rclone to upload the files to a remote location, configure it by setting up remotes: <code>rclone.exe config</code><br>
 				<ul>
 					<li><a href="https://rclone.org/install/">See the rclone installation instructions here</a></li>
 					<li><a href="https://rclone.org/docs/">Detailed instructions for configuring specific remotes are here</a></li>
@@ -180,22 +180,27 @@
 				<br>
 				<code class="block">auth-user-pass "C:\\Program Files\\OpenVPN\\config\\[YourPasswordFile].txt"</code>
 				This will let OpenVPN connect without having to enter the credentials every time. Note the double back-slashes (<code>\\</code>) in the path.</li>
-			<li>If using rclone to upload the files to a remote that isn't an S3 bucket or the Internet Archive, edit SoundsDownloadScript.ps1 to configure the script blocks to configure the <code>rclone.exe</code> command line. Script blocks must start with <code>$remote_</code> in order to be run. You will need to be a little familiar with Powershell. Use an If statement to qualify the script block (otherwise it will always run). Something like:
-				<span><code class="block">$remote_test = {If ($RemoteConfig.$Remote.type -eq "internetarchive") {& $rcloneExe sync $SaveDir $rcloneSyncDir --create-empty-src-dirs --progress --config $rcloneConfig -v $rcloneLoggingArgs}}</code></span>
-				The <code>If</code> statement reads the ini file and checks that the remote matches the one specified. In this case, "internetarchive". You can have it check any of the properties in the ini file to match.	
-				<ul>
-					<li><code>$RemoteConfig</code> is the location of the rclone configuration file</li>
-					<li><code>$Remote</code> is the currently specified remote</li>
-				</ul>
-				If it matches, then it calls rclone with the parameters specified. Your rclone command should include all of the following parameters and variables:
+			<li>If using rclone, edit SoundsDownloadScript.ps1 and configure the script blocks to format the <code>rclone.exe</code> command line parameters to your needs. Script blocks must start with <code>$remote_</code> and must be named the same as the specified remote config in order to be run. For example, if you have an rclone remote called <code>poop</code>, you should have a script block named <code>$remote_poop</code>. This is how the script will know which rclone command to use. You will need to be a little familiar with Powershell. Something like:
+				<code class="block">$remote_poop = {<br>
+	& $rcloneExe sync $SaveDir $rcloneSyncDir --create-empty-src-dirs --progress --config $rcloneConfig -v $rcloneLoggingArgs<br>
+	}</code>
+				Your rclone commands should include all of the following parameters and variables:
 				<ul>
 					<li><code>$rcloneExe</code> is the path to rclone.exe</li>
-					<li><code>$SaveDir</code> is /local/path</li>
+					<li><code>$SaveDir</code> is the local directory (for syncing) or <code>$MediaFile</code> is the downloaded media file (for copying)</li>
 					<li><code>$rcloneSyncDir</code> is remote:path</li>
 					<li><code>--config $RemoteConfig</code> is the location of the rclone configuration file</li>
 					<li><code>-v $rcloneLoggingArgs</code> is the location to save the log file if enabled</li>
 				</ul>		
-				Different providers will need different rclone commands and options. Sometimes you'll need to include additional things like headers, depending on the remote. The script blocks can be tough to set up at first, but they allow for maximum flexibility. <a href="https://rclone.org/docs/">Read the rclone documentation for the remote you're using</a> and be ready to troubleshoot. The <a href="https://forum.rclone.org">rclone support forums</a> are very helpful. Note: the way the script is set up, rclone will not delete files from a remote unless the <code>sync</code> option is used. When it does its cleanup, it does not call  rclone, it just removes files locally.
+				Different providers will need different rclone commands and options. Sometimes you'll need to include additional things like headers, depending on the remote. <a href="https://rclone.org/docs/">Read the rclone documentation for the remote you're using</a> and be ready to troubleshoot. The <a href="https://forum.rclone.org">rclone support forums</a> are very helpful.
+				If you are using <code>rclone.exe copy</code> or <code>copyto</code>, then you will need to call the <code>Confirm-DownloadedMediaFile</code> function at the top of your script block like below:
+
+				<code class="block">$remote_poop2 = {<br>
+	Confirm-DownloadedMediaFile<br>
+	& $rcloneExe copyto $MediaFile $rcloneSyncDir --check-first --metadata --config $rcloneConfig --progress -v --dump headers $rcloneLoggingArgs<br>
+	}</code>
+
+				Calling <code>Confirm-DownloadedMediaFile</code> will exit the script block if there was no file downloaded. Otherwise if rclone runs and tries to copy a file that doesn't exist, it will throw a fit. It is not needed when using <code>sync</code>. Note: the way the script is set up, rclone will not delete files from a remote unless the <code>sync</code> option is used.
 		</ol>
 
 		<h3 id="Installation_2">genRSS.ps1 (if using)</h3>
@@ -232,7 +237,7 @@
 					<li><code>PodcastAuthor</code>: [<i>String</i>] It makes sense to use the name of the BBC station here.</li>
 					<li><code>OwnerName</code>: [<i>String</i>] You. I don't want my name out there, so I just put my domain here. This populates the &lt;itunes:owner&gt; element. If left empty, this will be omitted from the RSS.</li>
 					<li><code>OwnerEmail</code>: [<i>E-mail address</i>] An e-mail address. This populates the &lt;itunes:email&gt; element. If left empty, this will be omitted from the RSS.</li>
-					<li><code>PodcastURL</code>: [<i>URL</i>] Populates the &lt;link&gt; tag at the &lt;channel&gt; (podcast) level. I set this to the BBC program page of the show.</li>
+					<li><code>PodcastURL</code>: [<i>URL</i>] Populates the &lt;link&gt; tag at the &lt;channel&gt; (podcast) level. It's supposed to be website or web page associated with a podcast. I set it to the BBC program page of the show.</li>
 					<li><code>PodcastLanguage</code>: [<i>ISO 639 language code</i>] This should be a <a href="https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes">two letter code</a>, optionally with a <a href="https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2">country code</a> (ex: <code>en-US</code>).</li>
 					<li><code>PodcastCopyright</code>: [<i>String</i>] I put the BBC's info here (ex: <code>(C) BBC 2024</code>) since I don't own the copyright for the media. If this is empty, the element will be omitted from the RSS.</li>
 					<li><code>Category</code>: [<i>String array</i>] Specify one or more categories to define the podcast. Categories may be separated by a comma with no space in between. Subcategories can be specified with a <code>&gt;</code> angle bracket. The first value will be the category. An unlimited number of subcategories can be specified. Take the example:
@@ -357,6 +362,10 @@
 		
 		<i>Audio file name:</i>
 		<p>The naming format for finished audio file is [ShortTitle]-[YYYYMMDD]-[Program ID]. If you decide to change that format, you could break some things unintentionally. For example, the script specifically looks for the 8-character Program ID in the file name to decide whether it's already been downloaded. genRSS.ps1 also relies on it for certain options. The script also uses a regex pattern to match files to delete if the <code>-Archive</code> parameter is set. Just be sure you update all of those things if you make changes to the file name format.</p>
+
+		<i>RCLONE script blocks:</i>
+		<p>If rclone is enabled, the script will take a hash of the <code>-SaveDir</code> and save it to a user-level environment variable with the same name as the SaveDir. This will track folder changes between instances. It will then take a hash of the SaveDir after running and compare the two hashes to decide whether to run the through the script blocks to run rclone.</p>
+		<p>You can test whether the environment variable is working properly by checking the <code>$SaveDirHashIsFromEnvVar</code> variable in the Console+Vars log. If it's <code>$true</code> then the hash was successfully pulled from the environment variable. If it's <code>$false</code>, then it couldn't find the variable and it generated the hash on the fly.</p>
 
 		<i>Tags with special characters:</i>
 		<p>Certain special characters have to be escaped with a backslash (<code>\</code>) in kid3 or kid3 will choke. I don't think a complete list exists. SoundsDownloadService escapes single quotes, double quotes, and pipes in a function called Format-kid3CommandString. If you find another character that needs to be escaped, you can add it to the <code>Return</code> line using the <code>replace</code> method.
