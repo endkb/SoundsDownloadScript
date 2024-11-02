@@ -318,8 +318,10 @@ If (($ScriptInstanceControl) -AND (!$NoDL)) {
 				$GetLockFiles = Get-ChildItem -Path $LockFileDirectory -Filter "*.lock" -Force | Where-Object {$_.CreationTime -lt (Get-Date).AddSeconds($LockFileMaxDuration*-1)}
 				# Delete each one
 				ForEach ($OrphanedLockFile in $GetLockFiles) {
-					Remove-Item $OrphanedLockFile.FullName
-					Write-Output "**Released $OrphanedLockFile (possibly orphaned)"
+					Remove-Item $OrphanedLockFile.FullName -ErrorAction SilentlyContinue
+     					If ($?) {
+						Write-Output "**Released $OrphanedLockFile (possibly orphaned)"
+      						}
 					}
 				# Only check every 4 instances to save resources
 				$NextCheck = $NextCheck+4
