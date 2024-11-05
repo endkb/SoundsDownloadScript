@@ -340,18 +340,18 @@
 		<p>If you're using Windows Task Scheduler, here are some examples of how to format the actions:</p>
 
 		<i>Basic download:</i>
-		<ul><li><b>Program:</b> <code>"C:\Program Files\PowerShell\7\pwsh.exe"</code> <b>Arguments:</b> <code>"-Command & 'C:\Program Files\VideoLAN\VLC\SoundsDownloadScript.ps1' -ProgramURL https://www.bbc.co.uk/programmes/b006r9yq -SaveDir 'F:\Audio\The News Quiz' -ShortTitle TheNewsQuiz -TitleFormat '{1} - {2}' -Archive 0 -Logging -LogDirectory 'C:\Logs'"</code></li></ul>
+		<ul><li><b>Program:</b> <code>"C:\Program Files\PowerShell\7\pwsh.exe"</code> <b>Arguments:</b> <code>-Command "& 'C:\Program Files\VideoLAN\VLC\SoundsDownloadScript.ps1' -ProgramURL https://www.bbc.co.uk/programmes/b006r9yq -SaveDir 'F:\Audio\The News Quiz' -ShortTitle TheNewsQuiz -TitleFormat '{1} - {2}' -Archive 0 -Logging -LogDirectory 'C:\Logs'"</code></li></ul>
 		<br>
 
 		<i>Uploading to CloudFlare R2 and generating an RSS:</i>
 		<ul>
-			<li><b>Program:</b> <code>"C:\Program Files\PowerShell\7\pwsh.exe"</code> <b>Arguments:</b> <code>"-Command & 'C:\Program Files\VideoLAN\VLC\SoundsDownloadScript.ps1' -ProgramURL https://www.bbc.co.uk/programmes/b006qfvv -SaveDir 'F:\Audio\Shipping Forecast' -ShortTitle ShippingForecast -TitleFormat '{1} {4:HH:mm}' -rcloneConfig 'C:\Program Files\VideoLAN\VLC\rclone\rclone.conf' -rcloneSyncDir 'bbcsoundsrss_r2:bbcsoundsrss\ShippingForecast\media' -Archive 7 -Days -Logging"</code></li>
-			<li><b>Program:</b> <code>"C:\Program Files\PowerShell\7\pwsh.exe"</code> <b>Arguments:</b> <code>"-Command & 'C:\Program Files\VideoLAN\VLC\genRSS.ps1' -Profile 'E:\FeedProfiles\ShippingForecast' -Logging -LogDirectory 'C:\Logs'"</code></li>
+			<li><b>Program:</b> <code>"C:\Program Files\PowerShell\7\pwsh.exe"</code> <b>Arguments:</b> <code>-Command "& 'C:\Program Files\VideoLAN\VLC\SoundsDownloadScript.ps1' -ProgramURL https://www.bbc.co.uk/programmes/b006qfvv -SaveDir 'F:\Audio\Shipping Forecast' -ShortTitle ShippingForecast -TitleFormat '{1} {4:HH:mm}' -rcloneConfig 'C:\Program Files\VideoLAN\VLC\rclone\rclone.conf' -rcloneSyncDir 'bbcsoundsrss_r2:bbcsoundsrss\ShippingForecast\media' -Archive 7 -Days -Logging"</code></li>
+			<li><b>Program:</b> <code>"C:\Program Files\PowerShell\7\pwsh.exe"</code> <b>Arguments:</b> <code>-Command "& 'C:\Program Files\VideoLAN\VLC\genRSS.ps1' -Profile 'E:\FeedProfiles\ShippingForecast' -Logging -LogDirectory 'C:\Logs'"</code></li>
 		</ul>
 		<br>
 
 		<i>Using VPN and uploading to archive.org:</i>
-		<ul><li><b>Program:</b> <code>"C:\Program Files\PowerShell\7\pwsh.exe"</code> <b>Arguments:</b> <code>"-Command & 'C:\Program Files\VideoLAN\VLC\SoundsDownloadScript.ps1' -ProgramURL https://www.bbc.co.uk/programmes/b0100rp6 -SaveDir 'F:\Audio\Radcliffe and Maconie' -ShortTitle RadMac -VPNConfig 'C:\Program Files\OpenVPN\config\uk_streaming.ovpn,C:\Program Files\OpenVPN\config\uk_southampton.ovpn,C:\Program Files\OpenVPN\config\uk_manchester.ovpn,C:\Program Files\OpenVPN\config\uk_london.ovpn' -rcloneConfig 'C:\Program Files\VideoLAN\VLC\rclone\rclone.conf' -rcloneSyncDir 'internetarchive_config:' -Archive 0"</code></li></ul>	
+		<ul><li><b>Program:</b> <code>"C:\Program Files\PowerShell\7\pwsh.exe"</code> <b>Arguments:</b> <code>-Command "& 'C:\Program Files\VideoLAN\VLC\SoundsDownloadScript.ps1' -ProgramURL https://www.bbc.co.uk/programmes/b0100rp6 -SaveDir 'F:\Audio\Radcliffe and Maconie' -ShortTitle RadMac -VPNConfig 'C:\Program Files\OpenVPN\config\uk_streaming.ovpn,C:\Program Files\OpenVPN\config\uk_southampton.ovpn,C:\Program Files\OpenVPN\config\uk_manchester.ovpn,C:\Program Files\OpenVPN\config\uk_london.ovpn' -rcloneConfig 'C:\Program Files\VideoLAN\VLC\rclone\rclone.conf' -rcloneSyncDir 'internetarchive_config:' -Archive 0"</code></li></ul>	
 		<br>
 
 		<h2 id="Documentation">DOCUMENTATION:</h2>
