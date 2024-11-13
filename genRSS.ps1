@@ -115,12 +115,24 @@ If ($Test) {
 	$_filename = $Test
 	}
 
-If ($CheckMediaDirectoryHash -eq "yes") {
+If (($CheckMediaDirectoryHash -eq "filenames") -OR ($CheckMediaDirectoryHash -eq "yes")) {
 	$MediaFileList = Get-ChildItem -Path $MediaDirectory -Recurse | Sort-Object Name | Select -Expand FullName
 	$md5hash = New-Object -TypeName System.Security.Cryptography.MD5CryptoServiceProvider
 	$utf = New-Object -TypeName System.Text.UTF8Encoding
 	$MediaDirectoryHash = [System.BitConverter]::ToString($md5hash.ComputeHash($utf.GetBytes($MediaFileList)))
 	$MediaDirectoryHash = $MediaDirectoryHash.Replace("-", "")
+	}
+
+If ($CheckMediaDirectoryHash -eq "contents") {
+	$MediaFileList = Get-ChildItem -Path $MediaDirectory -Recurse | Sort-Object Name
+	$md5hash = New-Object -TypeName System.Security.Cryptography.MD5CryptoServiceProvider
+	$hashBuilder = New-Object -TypeName System.Text.StringBuilder
+	ForEach ($file in $MediaFileList) {
+		$fileBytes = [System.IO.File]::ReadAllBytes($file.FullName)
+		$fileHash = [System.BitConverter]::ToString($md5hash.ComputeHash($fileBytes)).Replace("-", "")
+		$null = $hashBuilder.Append($fileHash)
+		}
+	$MediaDirectoryHash = [System.BitConverter]::ToString($md5hash.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($hashBuilder.ToString()))).Replace("-", "")
 	}
 
 If ($CheckProfileHash -eq "yes") {
@@ -130,7 +142,7 @@ If ($CheckProfileHash -eq "yes") {
 If ((!$Force) -AND (Test-Path $_filename)) {
 	$ExitFlag++
 	[xml]$RSSData = Get-Content $_filename
-	If ($CheckMediaDirectoryHash -eq "yes") {
+	If (($CheckMediaDirectoryHash -eq "yes") -OR ($CheckMediaDirectoryHash -eq "filenames") -OR ($CheckMediaDirectoryHash -eq "contents")) {
 		If ($($RSSData.rss.MediaDirectoryHash).InnerText -eq $MediaDirectoryHash) {
 			$ExitFlag--
 			$UpdateMessage = "MediaDirectoryHash: $MediaDirectoryHash matches"
@@ -421,7 +433,7 @@ try {$SkipTitles = $Config['SkipTitles'].Split(",")} catch {}
 	$null = $itemimage.SetAttribute('medium', 'image')
 	}
 
-If ($CheckMediaDirectoryHash -eq "yes") {
+If (($CheckMediaDirectoryHash -eq "yes") -OR ($CheckMediaDirectoryHash -eq "filenames") -OR ($CheckMediaDirectoryHash -eq "contents")) {
 	$null = Add-RssElement -elementName 'MediaDirectoryHash' -ns 'genRSS' -value $MediaDirectoryHash -parent $rssTag
 	}
 
