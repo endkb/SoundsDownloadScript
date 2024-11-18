@@ -15,7 +15,7 @@ param(
 [Switch]$mp3,                               # Transcode the audio file to mp3 after downloading
 [Int32]$Archive,                            # The number of episodes to keep - omit or set to 0 to keep everything
 [Switch]$Days,                              # Measure -Archive by the number of days instead of the number of episodes to keep
-[Switch]$SyncMetadata,                      # Scan ALL media files and update with the latest metadata from the BBC
+[Switch]$RecheckMetadata,                      # Scan ALL media files and update with the latest metadata from the BBC
 [String]$VPNConfig,                         # Path to the ovpn file(s) separated by comma - also create and set auth-user-pass file if applicable
 [String]$rcloneConfig,                      # Path to the rclone config file - rclone.exe config create
 [String]$rcloneSyncDir,                     # Remote and directory rclone should upload to separated by comma if multiple - for AWS S3 use config:bucket\directory
@@ -739,7 +739,7 @@ If ($Archive -ge 1) {
 		}
 	}
 	
-If ($SyncMetadata) {
+If ($RecheckMetadata) {
 	Get-ChildItem $SaveDir -Recurse -Force | Where-Object {$_.Name -match $($TitleMatchPattern)} | ForEach-Object {
 		$kid3data = & $kid3Exe -c '{\"method\":\"get\"}' $_.FullName
 		$kid3json = $kid3data | ConvertFrom-Json
