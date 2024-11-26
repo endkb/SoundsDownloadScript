@@ -15,6 +15,7 @@ param(
 [Switch]$mp3,                               # Transcode the audio file to mp3 after downloading
 [Int32]$Archive,                            # The number of episodes to keep - omit or set to 0 to keep everything
 [Switch]$Days,                              # Measure -Archive by the number of days instead of the number of episodes to keep
+[Switch]$RecheckMetadata,                   # Scan ALL media files and update with the latest metadata from the BBC
 [String]$VPNConfig,                         # Path to the ovpn file(s) separated by comma - also create and set auth-user-pass file if applicable
 [String]$rcloneConfig,                      # Path to the rclone config file - rclone.exe config create
 [String]$rcloneSyncDir,                     # Remote and directory rclone should upload to separated by comma if multiple - for AWS S3 use config:bucket\directory
@@ -51,7 +52,7 @@ $rcloneUpdate = $false                      # Update rclone to the latest stable
 $Logging = $true                            # Force logging: $true = logging on, $false = no logging, $Logging > $null = read cmd line & don't force
 $Printjson = $false                         # Print the episode metadata in json format to the console for troubleshooting
 $LogDirectory = 'E:\FilesTemp\Debug'        # Directory to save/move logs to when -Logging switch is present
-$LogFileNameFormat = "{0}-{1}-{2}-{3}.log"	# Format the log file name: {0} = ShortTitle, {1} = log id, {2} = PID, {3} = log type, {4} = date/time
+$LogFileNameFormat = "{0}-{1}-{2}-{3}.log"  # Format the log file name: {0} = ShortTitle, {1} = log id, {2} = PID, {3} = log type, {4} = date/time
 
 <#	Paths to ffmpeg, ffprobe kid3-cli, openvpn (optional), rclone (optional), and yt-dlp executables - or use the following:
 		(Get-ChildItem -Path $PSScriptRoot -Filter "<name-of.exe>" -Recurse | Sort-Object -Descending -Property LastWriteTime | Select-Object -First 1 | % { $_.FullName })
@@ -97,7 +98,7 @@ $remote_internetarchive_config = {
 # Cloudflare Storage
 $remote_bbcsoundsrss_r2 = {
 	# Sync the SaveDir with the remote dir
-	& $rcloneExe sync $SaveDir $rcloneSyncDir --check-first --create-empty-src-dirs --progress --config $rcloneConfig -v $rcloneLoggingArgs
+	& $rcloneExe sync $SaveDir $rcloneSyncDir --create-empty-src-dirs --progress --config $rcloneConfig -v $rcloneLoggingArgs
 	}
 
 <#      ┌────────────────────────────────────────────────────────────────────────────────┐
@@ -123,6 +124,11 @@ Function Exit-Script {
 		Get-Variable | Out-File "$LogDirectory\$(Set-LogFileName -LogType 'Console+Vars')" -Append -Encoding utf8 -Width 500
 		}
 	Exit
+	}
+
+# Function to escape quotes in tags before passing them to kid3
+Function Format-kid3CommandString ($StringToFormat) {
+	Return $StringToFormat.replace("'","\'").replace("\`"","`"").replace("`"","\`"").replace("|","\|")
 	}
 
 Function Get-IniContent ($FilePath) {
@@ -173,6 +179,19 @@ Function Get-LogID {
 				}
 			}
 	Return $LogID
+	}
+
+Function Initialize-TitleFormatArray {
+	# Put the titles into a table
+	$TitleTable = $($jsonData.modules.data[0].data.titles)
+
+	# Grab the release date
+	If (!$UseOrigRelease) {$ReleaseDate = [datetime]$($jsonData.modules.data[0].data.availability.from)}
+	If ($UseOrigRelease) {$ReleaseDate = [datetime]$($jsonData.modules.data[0].data.release.date)}
+
+	# Format the episode title (after pulling all other metadata)
+	$TitleFormatArray = $TitleTable.'primary', $TitleTable.'secondary', $TitleTable.'tertiary', $ReleaseDate.ToUniversalTime(), [System.TimeZoneInfo]::ConvertTimeBySystemTimeZoneId($ReleaseDate, 'GMT Standard Time')
+	Return $TitleFormatArray
 	}
 
 Function Invoke-LoggingRoutine {
@@ -318,8 +337,10 @@ If (($ScriptInstanceControl) -AND (!$NoDL)) {
 				$GetLockFiles = Get-ChildItem -Path $LockFileDirectory -Filter "*.lock" -Force | Where-Object {$_.CreationTime -lt (Get-Date).AddSeconds($LockFileMaxDuration*-1)}
 				# Delete each one
 				ForEach ($OrphanedLockFile in $GetLockFiles) {
-					Remove-Item $OrphanedLockFile.FullName
-					Write-Output "**Released $OrphanedLockFile (possibly orphaned)"
+					Remove-Item $OrphanedLockFile.FullName -ErrorAction SilentlyContinue
+     				If ($?) {
+						Write-Output "**Released $OrphanedLockFile (possibly orphaned)"
+						}
 					}
 				# Only check every 4 instances to save resources
 				$NextCheck = $NextCheck+4
@@ -360,15 +381,8 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 	$jsonResult = "$jsonResult" -replace '[\u201C\u201D\u201E\u201F\u2033\u2036]', "$([char]92)$([char]34)" -replace "[\u2018\u2019\u201A\u201B\u2032\u2035]", "$([char]39)"
 	$jsonData = $jsonResult | ConvertFrom-Json
 
-	# Put the titles into a table
-	$TitleTable = $($jsonData.modules.data[0].data.titles)
-
-	If (!$TitleFormat) {
-		$TitleFormat = $DefaultTitleFormat
-		}
-
 	# Set the name of the program
-	$ShowTitle = $TitleTable.'primary'
+	$ShowTitle = $jsonData.modules.data[0].data.titles.primary
 
 	# Parse the synopses to set the comment
 	$SynopsesTable = $($jsonData.modules.data[0].data.synopses)
@@ -412,14 +426,15 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 	$CoverResult = $($jsonData.modules.data[0].data.image_url).replace("{recipe}","1024x1024")
 
 	# Format the episode title (after pulling all other metadata)
-	$TitleFormatArray = $TitleTable.'primary', $TitleTable.'secondary', $TitleTable.'tertiary', $ReleaseDate.ToUniversalTime(), [System.TimeZoneInfo]::ConvertTimeBySystemTimeZoneId($ReleaseDate, 'GMT Standard Time')
-	$EpisodeTitle = $TitleFormat -f $TitleFormatArray
-
+	If (!$TitleFormat) {$TitleFormat = $DefaultTitleFormat}
+	# Put the titles into a table
+	$TitleTable = $($jsonData.modules.data[0].data.titles)
+	$EpisodeTitle = $TitleFormat -f $(Initialize-TitleFormatArray)
 	# Put each variable in the title format into an array
 	$TitleCheckVarArray=[Regex]::Matches($TitleFormat, '(?={)(.*?})') | ForEach-Object {$_.Groups[1].value}
  	# Run through the array and look for blank variables
 	:TitleCheck ForEach ($var in $TitleCheckVarArray) {
-		$TitleCheck = $var -f $TitleFormatArray
+		$TitleCheck = $var -f $(Initialize-TitleFormatArray)
 		If ($TitleCheck -eq '') {
 			Write-Output "**Correcting null title: $EpisodeTitle"
 			# Set the title to the primary (usually the show name)
@@ -604,11 +619,6 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 	$ytdlpName = (Get-Item -Path $ytdlpExe).VersionInfo.ProductName
 	$ytdlpVer = (Get-Item -Path $ytdlpExe).VersionInfo.ProductVersion
 
-	# Function to escape quotes in tags before passing them to kid3
-	Function Format-kid3CommandString ($StringToFormat) {
-		Return $StringToFormat.replace("'","\'").replace("\`"","`"").replace("`"","\`"").replace("|","\|")
-		}
-
 	$kid3Commands = @( )
 	# Build MP4 or ID3v2.4 metadata commands to pass to kid3 - See kid3 handbook
 	If ($Ext -eq ".m4a") {
@@ -705,9 +715,10 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 		If ($ScriptInstanceControl) {Unlock-Control}
 		}
 
+# RegEx pattern looks for the number pattern after the dash to account for dashes in the $ShortTitle
+$TitleMatchPattern = "$ShortTitle-([0-9]*)-([A-Za-z0-9]*|[A-Za-z0-9]*_[0-9]*)\."
+
 If ($Archive -ge 1) {
-	# RegEx pattern looks for the number pattern after the dash to account for dashes in the $ShortTitle
-	$TitleMatchPattern = "$ShortTitle-([0-9]*)-([A-Za-z0-9]*|[A-Za-z0-9]*_[0-9]*)\."
 	If (!$Days) {
 		# Remove all audio files except the most recent ones
 		Get-ChildItem $SaveDir -Recurse -Force | Where-Object { $_.Name -match $($TitleMatchPattern) } | Sort-Object LastWriteTime -Descending | Select-Object -Skip $Archive | Remove-Item -Force -Verbose
@@ -727,6 +738,76 @@ If ($Archive -ge 1) {
 			}
 		}
 	}
+	
+If ($RecheckMetadata) {
+	Get-ChildItem $SaveDir -Recurse -Force | Where-Object {$_.Name -match $($TitleMatchPattern)} | ForEach-Object {
+		$kid3data = & $kid3Exe -c '{\"method\":\"get\"}' $_.FullName
+		$kid3json = $kid3data | ConvertFrom-Json
+
+		$SoundsShowPage = (Invoke-WebRequest –Uri $($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'audiosourceURL'}).value -Method Get -UseBasicParsing -ContentType "text/plain; charset=utf-8").Content
+		$Getjson = "(?<=<script> window.__PRELOADED_STATE__ = )(.*?)(?=; </script>)"
+		$jsonResult = [regex]::match($SoundsShowPage, $Getjson)
+		# Clean up stupid smart quotes
+		$jsonResult = $jsonResult -replace '[\u201C\u201D\u201E\u201F\u2033\u2036]', "$([char]92)$([char]34)" -replace "[\u2018\u2019\u201A\u201B\u2032\u2035]", "$([char]39)"
+		$jsonData = $jsonResult | ConvertFrom-Json -ErrorAction Stop
+		If ($jsonData -ne $null -and $jsonData.PSObject.Properties.Count -gt 0) {
+			
+			If (!$TitleFormat) {$TitleFormat = $DefaultTitleFormat}
+			#Initialize-TitleFormatArray
+			$RecheckEpisodeTitle = $TitleFormat -f $(Initialize-TitleFormatArray)
+
+			# Parse the synopses to set the comment
+			$SynopsesTable = $($jsonData.modules.data[0].data.synopses)
+
+			# Default the comment to the short description
+			$RecheckComment = $SynopsesTable.'short'
+			# Use the medium description if it's available
+			If ($SynopsesTable.'medium') {
+				$RecheckComment = $SynopsesTable.'medium'
+				}
+			# Use the long description if it's available
+			If ($SynopsesTable.'long') {
+				$RecheckComment = $SynopsesTable.'long'
+				}
+
+			# Put all of the tracks in an array
+			$TrackTable = $($jsonData.tracklist.tracks)
+			If ($TrackTable) {
+				$trackno = 0
+				# Run through each track to build the track list
+				ForEach ($item in $TrackTable) {
+					# Build the track list line by line
+					$TrackList = $TrackList + "$([string]$($trackno+1)). $($item.titles.primary)-$($item.titles.secondary)`n"
+					$trackno++
+					}
+				# Add the track list to the comments
+				$RecheckComment = $RecheckComment + "`n`nTracklist:`n" + $TrackList
+				}
+
+			If ((($($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'Title'}).value -ne $RecheckEpisodeTitle) -OR ($(($kid3json.result.taggedFile.tag2.frames | Where {$_.Name -eq 'Comment'}).value) -ne $RecheckComment)) -AND ((-not [string]::IsNullOrEmpty($RecheckEpisodeTitle)) -AND (-not [string]::IsNullOrEmpty($RecheckComment)))) {
+				$kid3Commands = @( )
+				# Build MP4 or ID3v2.4 metadata kid3 commands to set title and comment- See kid3 handbook
+				If ($_.Extension -eq ".m4a") {
+					# Note: ©nam is required for genRSS.ps1 - sets <title> and <itunes:title>
+					$kid3Commands += "-c", "set ©nam '$(Format-kid3CommandString($RecheckEpisodeTitle))'"
+					# Note: ©cmt is required for genRSS.ps1 - sets <description> and <itunes:summary>
+					$kid3Commands += "-c", "set ©cmt '$(Format-kid3CommandString($RecheckComment))'"
+					} Else {
+						# Note: TIT2 is required for genRSS.ps1 - sets <title> and <itunes:title>
+						$kid3Commands += "-c", "set TIT2 '$(Format-kid3CommandString($RecheckEpisodeTitle))'"
+						# Note: ©cmt is required for genRSS.ps1 - sets <description> and <itunes:summary>
+						$kid3Commands += "-c", "set COMM '$(Format-kid3CommandString($RecheckComment))'"
+						}
+				# Don't want to change the last modified date
+				$OriginalTimestamps = Get-Item $_ | Select-Object LastWriteTime
+				# Call kid3 on the current file to set the new title and comment
+				& $kid3Exe $kid3Commands $_
+				Set-ItemProperty -Path $_ -Name LastWriteTime -Value $OriginalTimestamps.LastWriteTime
+				Write-Output "**Updated metadata on $_"
+				}
+			}
+		}
+	}
 
 If (($rcloneConfig) -AND ($rcloneSyncDir)) {
 	# Calculate the hash again to see if changes were made
@@ -737,7 +818,7 @@ If (($rcloneConfig) -AND ($rcloneSyncDir)) {
 	[System.Environment]::SetEnvironmentVariable($HashEnvVarName, $SaveDirHashAfter)
 	[System.Environment]::SetEnvironmentVariable($HashEnvVarName, $SaveDirHashAfter, 'User')
 
-	If ($SaveDirHashAfter -ne $SaveDirHashBefore) {
+	If (($SaveDirHashAfter -ne $SaveDirHashBefore) -OR ($Force)) {
 		# Function to escape double quotes in parameters before passing them to rclone
 		Function Format-rcloneCommandString ($StringToFormat) {
 			Return $StringToFormat.replace("`"","\`"")
