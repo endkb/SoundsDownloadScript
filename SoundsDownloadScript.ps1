@@ -52,7 +52,7 @@ $rcloneUpdate = $false                      # Update rclone to the latest stable
 $Logging = $true                            # Force logging: $true = logging on, $false = no logging, $Logging > $null = read cmd line & don't force
 $Printjson = $false                         # Print the episode metadata in json format to the console for troubleshooting
 $LogDirectory = 'E:\FilesTemp\Debug'        # Directory to save/move logs to when -Logging switch is present
-$LogFileNameFormat = "{0}-{1}-{2}-{3}.log"	# Format the log file name: {0} = ShortTitle, {1} = log id, {2} = PID, {3} = log type, {4} = date/time
+$LogFileNameFormat = "{0}-{1}-{2}-{3}.log"  # Format the log file name: {0} = ShortTitle, {1} = log id, {2} = PID, {3} = log type, {4} = date/time
 
 <#	Paths to ffmpeg, ffprobe kid3-cli, openvpn (optional), rclone (optional), and yt-dlp executables - or use the following:
 		(Get-ChildItem -Path $PSScriptRoot -Filter "<name-of.exe>" -Recurse | Sort-Object -Descending -Property LastWriteTime | Select-Object -First 1 | % { $_.FullName })
