@@ -1,6 +1,6 @@
 # SoundsDownloadScript vX
 
-# Copyright (c) 2024 endkb (https://github.com/endkb)
+# Copyright (c) 2025 endkb (https://github.com/endkb)
 # MIT License (see README.htm for details)
 
 # Expect the following variables to be set as parameters
@@ -16,7 +16,8 @@ param(
 [Int32]$Archive,                            # The number of episodes to keep - omit or set to 0 to keep everything
 [Switch]$Days,                              # Measure -Archive by the number of days instead of the number of episodes to keep
 [Switch]$RecheckMetadata,                   # Scan ALL media files and update with the latest metadata from the BBC
-[String]$VPNConfig,                         # Path to the ovpn file(s) separated by comma - also create and set auth-user-pass file if applicable
+[String]$VPNConfig,                         # Path(s) to the ovpn file(s) separated by comma - also create and set auth-user-pass file if applicable
+[String]$ProxyUrl,                          # URL(s) separated by a comma of the proxy server(s) with embedded credentials - http://user:pass@domain.com:port
 [String]$rcloneConfig,                      # Path to the rclone config file - rclone.exe config create
 [String]$rcloneSyncDir,                     # Remote and directory rclone should upload to separated by comma if multiple - for AWS S3 use config:bucket\directory
 [String]$DotSrcConfig,                      # Path to external .ps1 script file containing script configuration options
@@ -54,15 +55,17 @@ $Printjson = $false                         # Print the episode metadata in json
 $LogDirectory = 'E:\FilesTemp\Debug'        # Directory to save/move logs to when -Logging switch is present
 $LogFileNameFormat = "{0}-{1}-{2}-{3}.log"  # Format the log file name: {0} = ShortTitle, {1} = log id, {2} = PID, {3} = log type, {4} = date/time
 
-<#	Paths to ffmpeg, ffprobe kid3-cli, openvpn (optional), rclone (optional), and yt-dlp executables - or use the following:
+<#  REQUIRED paths to ffmpeg, ffprobe kid3-cli, and yt-dlp executables - or use the following:
 		(Get-ChildItem -Path $PSScriptRoot -Filter "<name-of.exe>" -Recurse | Sort-Object -Descending -Property LastWriteTime | Select-Object -First 1 | % { $_.FullName })
-	to recurively search subdirectories for these files  #>
+    to recurively search subdirectories for these files  #>
 $ffmpegExe = (Get-ChildItem -Path $PSScriptRoot -Filter "ffmpeg.exe" -Recurse | Sort-Object -Descending -Property LastWriteTime | Select-Object -First 1 | % { $_.FullName })
 $ffprobeExe = (Get-ChildItem -Path $PSScriptRoot -Filter "ffprobe.exe" -Recurse |  Sort-Object -Descending -Property LastWriteTime | Select-Object -First 1 | % { $_.FullName })
 $kid3Exe = (Get-ChildItem -Path $PSScriptRoot -Filter "kid3-cli.exe" -Recurse |  Sort-Object -Descending -Property LastWriteTime | Select-Object -First 1 | % { $_.FullName })
+$ytdlpExe = (Get-ChildItem -Path $PSScriptRoot -Filter "yt-dlp.exe" -Recurse |  Sort-Object -Descending -Property LastWriteTime | Select-Object -First 1 | % { $_.FullName })
+
+# OPTIONAL paths to rclone and openvpn executables:
 $rcloneExe = (Get-ChildItem -Path $PSScriptRoot -Filter "rclone.exe" -Recurse |  Sort-Object -Descending -Property LastWriteTime | Select-Object -First 1 | % { $_.FullName })
 $vpnExe = (Get-ChildItem -Path $env:Programfiles -Filter 'openvpn.exe' -Recurse -ErrorAction SilentlyContinue |  Sort-Object -Descending -Property LastWriteTime | Select-Object -First 1 | % { $_.FullName })
-$ytdlpExe = (Get-ChildItem -Path $PSScriptRoot -Filter "yt-dlp.exe" -Recurse |  Sort-Object -Descending -Property LastWriteTime | Select-Object -First 1 | % { $_.FullName })
 
 $SortArticles =                             # String of definite articles to trim from fields for sorting tags - separate with a pipe, ^ is beginning of string
 "^a |^an |^el |^l'|^la |^las |^le |^les |^lo |^los |^the |^un |^una |^une "
@@ -217,16 +220,48 @@ Function Set-LogFileName {
 	}
 
 Function Start-ytdlp {
+	#Build the yt-dlp parameters
+	$ytdlpParams = @()
+	$ytdlpParams += "--ffmpeg-location", "$ffmpegExe"
+	$ytdlpParams += "--audio-quality", "0"
+	
 	# Use the default bitrate if not speficied in CL
 	If (!$Bitrate) {
 		$Bitrate = $DefaultBitrate
 		}
 	If ($Bitrate -ge 1) {
- 		# Build the yt-dlp argument to specify the bitrate
 		$ytdlpBitrate = "[abr=$Bitrate]"
 		}
-  	# Start yt-dlp
-	& $ytdlpExe --ffmpeg-location $ffmpegExe --audio-quality 0 -f ba[ext=m4a]$ytdlpBitrate -o "$DumpFile.%(ext)s" $SoundsPlayLink
+	$ytdlpParams += "-f", "ba[ext=m4a]$ytdlpBitrate"
+	$ytdlpParams += "-o", "$DumpFile.%(ext)s"
+
+	If ($ProxyUrl) {
+		:ProxyLoop for (; $ProxyPosition -lt $ProxyList.Count; $ProxyPosition++) {
+			$proxy = $ProxyList[$ProxyPosition]
+
+			# Add proxy to yt-dlp parameters
+			$ytdlpParams += "--proxy", "$($proxy.Url)"
+
+			# Start yt-dlp using the proxy
+			& $ytdlpExe $ytdlpParams $SoundsPlayLink
+
+			# Check for completed download (ignore .part files)
+			If (Get-ChildItem "$DumpFile.*" | Where-Object { $_.Name -notlike "*.part*" }) {
+				Write-Host "Finished $DumpFile"
+				break ProxyLoop
+				} Else {
+					Write-Host "DID NOT Finish $DumpFile"
+					}
+
+			# If there's another proxy to try, show its BaseUrl
+			If ($ProxyPosition -lt ($ProxyList.Count - 1)) {
+				Write-Host "**Trying with proxy $($ProxyList[$ProxyPosition + 1].BaseUrl)"
+				}
+			}
+		} Else {
+			# If no proxy - start yt-dlp
+			& $ytdlpExe $ytdlpParams $SoundsPlayLink
+			}
 	}
 
 # Use LogDirectory from the CL if it's there
@@ -371,12 +406,92 @@ If (($Download -eq 1) -OR ($NoDL) -OR ($Force)) {
 	# Check for yt-dlp updates and download
 	If ((!$NoDL) -AND ($ytdlpUpdate -eq $true)) {& $ytdlpExe -U}
 
-	# Load the Sounds page to grab the tag information
-	$SoundsShowPage = (Invoke-WebRequest –Uri $SoundsPlayLink -Method Get -UseBasicParsing -ContentType "text/plain; charset=utf-8").Content
+	# Hash table for the Invoke-WebRequest splat
+	$SoundsShowPageParams = @{
+		ContentType = 'text/plain; charset=utf-8'
+		Method = 'Get'
+		Uri = $SoundsPlayLink
+		UseBasicParsing = $true
+		}
 
-	# Parse the metadata section from the Sounds page and read it as JSON
-	$Getjson = "(?<=<script> window.__PRELOADED_STATE__ = )(.*?)(?=; </script>)"
-	$jsonResult = [regex]::match($SoundsShowPage, $Getjson)
+	If ($ProxyUrl) {
+		[array]$ProxyUrl = $ProxyUrl -split "," | ForEach-Object { $_.Trim() }
+		$ProxyList = @()
+		ForEach ($proxy in $ProxyUrl) {
+			Write-Host $proxy
+			$uri = [System.Uri]::new($proxy)
+			$ProxyList += [pscustomobject]@{
+				Url = $uri.AbsoluteUri
+				BaseUrl	= "$($uri.Scheme)://$($uri.Host):$($uri.Port)"
+				Scheme = $uri.Scheme
+				User = $uri.UserInfo.Split(':')[0]
+				Password = $uri.UserInfo.Split(':')[1]
+				Host = $uri.Host
+				Port = $uri.Port
+				SecurePassword = $null
+				ProxyCred = $null
+				}
+			}
+		}
+
+	If ($ProxyUrl) {
+		$ProxyPosition = 0
+		Write-Host "**Trying with proxy $($ProxyList[$ProxyPosition].BaseUrl)"
+
+		:ProxyLoop for ($ProxyPosition = 0; $ProxyPosition -lt $ProxyList.Count; $ProxyPosition++) {
+			$proxy = $ProxyList[$ProxyPosition]
+
+			# Convert plain text password to secure string
+			$proxy.SecurePassword = ConvertTo-SecureString $proxy.Password -AsPlainText -Force
+			$proxy.ProxyCred = New-Object System.Management.Automation.PSCredential ($proxy.User, $proxy.SecurePassword)
+
+			# Add proxy info to the Invoke-WebRequest splat
+			$SoundsShowPageParams['Proxy'] = $proxy.BaseUrl
+			$SoundsShowPageParams['ProxyCredential'] = $proxy.ProxyCred
+
+			try {
+				# Load the Sounds page to grab the tag information
+				$SoundsShowPage = (Invoke-WebRequest @SoundsShowPageParams).Content
+
+				# Parse the metadata section from the Sounds page and read it as JSON
+				$Getjson = "(?<=<script> window.__PRELOADED_STATE__ = )(.*?)(?=; </script>)"
+				$jsonResult = [regex]::match($SoundsShowPage, $Getjson)
+
+				If ($jsonResult) {break ProxyLoop}
+
+				} catch [System.Net.Http.HttpRequestException] {
+					Write-Output "HTTP Request failed: $($_.Exception.Message)"
+					If ($_.Exception.InnerException) {
+						Write-Output "Inner exception: $($_.Exception.InnerException.Message)"
+						}
+					} catch {
+						Write-Output "**Error: $($_.Exception.Message)"
+						}
+
+			# Check if there's another proxy to try
+			If ($ProxyPosition -lt ($ProxyList.Count - 1)) {
+				Write-Host "**Trying with proxy $($ProxyList[$ProxyPosition + 1].BaseUrl)"
+				}
+			}
+
+		} Else {
+			# If proxy is not used
+			Try {
+				# Load the Sounds page to grab the tag information
+				$SoundsShowPage = (Invoke-WebRequest @SoundsShowPageParams).Content
+				# Parse the metadata section from the Sounds page and read it as JSON
+				$Getjson = "(?<=<script> window.__PRELOADED_STATE__ = )(.*?)(?=; </script>)"
+				$jsonResult = [regex]::match($SoundsShowPage, $Getjson)
+				} Catch [System.Net.Http.HttpRequestException] {
+					Write-Output "HTTP Request failed: $($_.Exception.Message)"
+					If ($_.Exception.InnerException) {
+						Write-Output "Inner exception: $($_.Exception.InnerException.Message)"
+						}
+					} Catch {
+						Write-Output "**Error: $($_.Exception.Message)"
+						}
+			}
+
 	# Clean up stupid smart quotes
 	$jsonResult = "$jsonResult" -replace '[\u201C\u201D\u201E\u201F\u2033\u2036]', "$([char]92)$([char]34)" -replace "[\u2018\u2019\u201A\u201B\u2032\u2035]", "$([char]39)"
 	$jsonData = $jsonResult | ConvertFrom-Json
@@ -758,7 +873,6 @@ If ($RecheckMetadata) {
 
 			# Parse the synopses to set the comment
 			$SynopsesTable = $($jsonData.modules.data[0].data.synopses)
-
 			# Default the comment to the short description
 			$RecheckComment = $SynopsesTable.'short'
 			# Use the medium description if it's available
@@ -769,7 +883,6 @@ If ($RecheckMetadata) {
 			If ($SynopsesTable.'long') {
 				$RecheckComment = $SynopsesTable.'long'
 				}
-
 			# Put all of the tracks in an array
 			$TrackTable = $($jsonData.tracklist.tracks)
 			If ($TrackTable) {
@@ -850,5 +963,4 @@ If (($rcloneConfig) -AND ($rcloneSyncDir)) {
 			}
 		}
 	}
-
 Exit-Script
